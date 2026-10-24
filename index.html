@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#26393d">
+<title>ZA srl Rapportini</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f2f3f0; --panel:#ffffff; --panel2:#f7f8f5; --ink:#1c2320; --muted:#5b665f; --line:#d8dcd6;
+  --steel:#26393d; --steel-2:#304a4f; --on-steel:#eef3f1; --on-steel-muted:#a9bcb8;
+  --accent:#d4950f; --accent-ink:#7a5000; --accent-soft:#f6e7c4; --band:#f4f08a;
+  --good:#2c7a4b; --good-soft:#dcefe2; --warn:#a96300; --warn-soft:#f7e6cc; --bad:#b0352d; --bad-soft:#f6dcd9; --blue:#1d3a6e;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121614; --panel:#1b201e; --panel2:#171c1a; --ink:#e4eae6; --muted:#97a39c; --line:#2d3532;
+  --steel:#1d2e31; --steel-2:#253b3f; --on-steel:#e4eeeb; --on-steel-muted:#8fa6a1;
+  --accent:#e2a92e; --accent-ink:#f0c46a; --accent-soft:#3a2f17; --good:#5cc08a; --good-soft:#1f3a2a; --warn:#e0a24a; --warn-soft:#3a2c17; --bad:#ef7d72; --bad-soft:#3a1f1d; --blue:#9dbcf0;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font-body);-webkit-text-size-adjust:100%}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:3px solid var(--accent);padding:10px 16px calc(10px) 16px;padding-top:max(10px, env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
+header .b{font-weight:700;font-size:21px;color:#e8e22a;letter-spacing:.01em}
+header .s{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-steel-muted)}
+header .me{margin-left:auto;text-align:right;font-size:13px;line-height:1.2}
+header .me b{display:block;font-size:14px;color:#fff;text-transform:uppercase}
+header .me button{background:none;border:0;color:var(--on-steel-muted);padding:0;font-size:12px;text-decoration:underline}
+main{max-width:720px;margin:0 auto;padding:16px 16px 110px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+h1{font-family:var(--font-display);font-weight:700;font-size:28px;text-transform:uppercase;letter-spacing:.02em;margin:4px 0 12px}
+h2{font-family:var(--font-display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px;color:var(--accent-ink)}
+label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 4px}
+.f{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:11px 12px;min-height:46px}
+.f:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+textarea.f{min-height:96px;resize:vertical;text-transform:uppercase}
+.row{display:flex;gap:10px;align-items:center}
+.row > *{flex:1 1 0;min-width:0}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:11px 16px;font-weight:600;min-height:46px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#1d1606}
+.btn.big{width:100%;font-size:18px;min-height:54px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.danger{color:var(--bad)}
+.btn.sm{min-height:38px;padding:7px 12px;font-size:14px}
+.hint{color:var(--muted);font-size:13px}
+.err{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:10px 12px;font-weight:600;margin-top:12px}
+.ok{background:var(--good-soft);color:var(--good)}
+.tot{display:flex;justify-content:space-between;align-items:baseline;background:var(--band);color:#1c2320;border-radius:8px;padding:10px 14px;margin-top:12px;font-weight:700}
+.tot b{font-family:var(--font-display);font-size:28px}
+.sub{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;background:var(--panel2)}
+.sub .row{margin-top:6px}
+.x{flex:0 0 auto !important;width:44px;min-height:44px;border:0;background:none;color:var(--bad);font-size:20px}
+.rap{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:10px;overflow:hidden;color:var(--ink)}
+.rap .h{background:var(--steel);color:var(--on-steel);padding:9px 12px;display:flex;gap:8px;align-items:center;border-bottom:3px solid var(--accent)}
+.rap .h .d{font-weight:700;text-transform:capitalize}
+.rap .h .o{margin-left:auto;font-family:var(--font-display);font-size:20px;font-weight:700;color:#e8e22a}
+.rap .c{padding:10px 12px}
+.rap .c .cm{font-weight:700;text-transform:uppercase}
+.rap .c .ds{color:var(--blue);font-weight:700;text-transform:uppercase;margin-top:4px}
+.chip{display:inline-block;border-radius:5px;padding:2px 8px;font-weight:700;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.chip.ok{background:var(--good-soft);color:var(--good)}
+.chip.wait{background:var(--accent-soft);color:var(--accent-ink)}
+.code{font-family:var(--font-mono);font-size:12.5px;font-weight:500;background:var(--accent);color:#1c2320;border-radius:4px;padding:1px 6px;margin-right:6px}
+.fab{position:fixed;left:16px;right:16px;bottom:max(16px, env(safe-area-inset-bottom));max-width:688px;margin:0 auto;z-index:6;box-shadow:0 6px 20px rgb(0 0 0/.18)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--steel);color:var(--on-steel);padding:10px 16px;border-radius:8px;z-index:9;max-width:90vw;text-align:center}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pinpad button{min-height:58px;font-size:24px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:10px;color:var(--ink)}
+.pindots{display:flex;gap:12px;justify-content:center;margin:14px 0 4px}
+.pindots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted)}
+.pindots i.on{background:var(--accent);border-color:var(--accent)}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="b">ZA srl</div><div class="s">Rapportini</div></div>
+  <div class="me" id="me" hidden></div>
+</header>
+<main id="main"><div class="empty">Caricamento…</div></main>
+<button class="btn pri big fab" id="fab" hidden>+ Nuovo rapportino</button>
+<div class="toast" id="toast" hidden></div>
+<datalist id="dlCan"></datalist><datalist id="dlMez"></datalist>
+<script>
+"use strict";
+/* Collegamento a Supabase: solo le funzioni dei rapportini (la chiave pubblica non dà accesso ad altro) */
+const SB_URL = "https://mzyvermpfusbbufhjwbu.supabase.co", SB_KEY = "sb_publishable_P_r6pi6oRahzgvfwU-PgeQ_lGecNqwo";
+async function rpc(fn, args){
+  const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY }, body: JSON.stringify(args || {}) });
+  if (!r.ok) { let m = ""; try { m = (await r.json()).message || ""; } catch {} throw new Error("Errore " + r.status + (m ? ": " + m : "")); }
+  return r.json();
+}
+const $ = s => document.querySelector(s), esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const U = s => String(s || "").trim().toUpperCase();
+const iso = d => { const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); };
+const oggi = () => iso(new Date());
+const GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
+const itData = s => { const [y, m, d] = s.split("-"); return d + "." + m + "." + y; };
+const giorno = s => GIORNI[new Date(s + "T12:00:00").getDay()];
+function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 3200); }
+function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
+  let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
+  return { code, rest }; }
+const MSG = { PIN_ERRATO: "PIN errato.", DATA_NON_VALIDA: "Data non valida: puoi inserire rapportini degli ultimi 60 giorni.", NON_MODIFICABILE: "Questo rapportino è già stato approvato e non si può modificare." };
+const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + e.toLowerCase().replace("bloccato", "bloccato") + "." : (MSG[e] || e || "Errore");
+
+const S = { el: { operatori: [], cantieri: [], mezzi: [] }, me: null, pin: "", list: [], view: "login", edit: null, pinIn: "" };
+try { const m = JSON.parse(localStorage.getItem("za-rap-me") || "null"); if (m && m.nome && m.pin) { S.me = m.nome; S.pin = m.pin; } } catch {}
+
+async function caricaElenchi(){ S.el = await rpc("rap_elenchi"); $("#dlCan").innerHTML = (S.el.cantieri || []).map(c => `<option value="${esc(c)}">`).join(""); $("#dlMez").innerHTML = (S.el.mezzi || []).map(c => `<option value="${esc(c)}">`).join(""); }
+async function caricaMiei(){ const r = await rpc("rap_miei", { p_nome: S.me, p_pin: S.pin }); if (!r.ok) { esci(msgErr(r.err)); return false; } S.list = r.rapportini || []; return true; }
+function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; try { localStorage.removeItem("za-rap-me"); } catch {} S.view = "login"; render(); if (msg) toast(msg); }
+
+function render(){
+  const m = $("#main"); $("#fab").hidden = !(S.me && S.view === "lista");
+  $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><button id="out">Esci</button>`;
+  if (!S.me || S.view === "login") return renderLogin(m);
+  if (S.view === "form") return renderForm(m);
+  renderLista(m);
+}
+function renderLogin(m){
+  const ops = S.el.operatori || [];
+  m.innerHTML = `<h1>Accesso</h1><div class="card">
+    <label class="l" for="op">Il tuo nome</label>
+    <select class="f" id="op"><option value="">— Scegli il tuo nome —</option>${ops.map(o => `<option ${o === S.loginNome ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
+    ${ops.length ? "" : `<p class="hint">Nessun operatore abilitato: chiedi in ufficio di assegnarti un PIN.</p>`}
+    <label class="l">PIN (6 cifre)</label>
+    <div class="pindots">${[0,1,2,3,4,5].map(i => `<i class="${i < S.pinIn.length ? "on" : ""}"></i>`).join("")}</div>
+    <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" aria-label="Cancella">⌫</button><button data-k="0">0</button><button data-k="ok" style="background:var(--accent);border-color:var(--accent);color:#1d1606">OK</button></div>
+    <div id="lerr"></div></div>`;
+}
+function renderLista(m){
+  const L = S.list;
+  m.innerHTML = `<h1>I miei rapportini</h1>` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
+    return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
+      <div class="c"><div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}
+      ${(p.mezzi || []).filter(x => x.mezzo).length ? `<div class="hint" style="margin-top:4px">${(p.mezzi || []).filter(x => x.mezzo).map(x => esc(U(x.mezzo)) + (x.ore ? " · " + fmtOre(x.ore) + " h" : "")).join(" — ")}</div>` : ""}</div></button>`; }).join("")
+    : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
+}
+const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
+function minuti(t){ if (!t) return null; const [h, mm] = t.split(":").map(Number); return h * 60 + mm; }
+function calcOre(p){ const a = minuti(p.inizio), b = minuti(p.fine); if (a == null || b == null) return 0; let d = b - a; if (d < 0) d += 1440; d -= (+p.pausa || 0); return Math.max(0, Math.round(d / 60 * 100) / 100); }
+function nuovo(){ const last = S.list[0] && S.list[0].payload || {};
+  return { id: null, data: oggi(), p: { cantiere: "", inizio: last.inizio || "07:30", fine: last.fine || "17:00", pausa: last.pausa ?? 60, mezzi: [{ mezzo: "", ore: "" }], materiali: [], lavori: "", note: "" } }; }
+function renderForm(m){
+  const E = S.edit, p = E.p, ro = !!p.approvato; p.ore = calcOre(p);
+  const dis = ro ? "disabled" : "";
+  m.innerHTML = `<div class="row" style="margin-bottom:4px"><button class="btn ghost sm" id="back" style="flex:0 0 auto">‹ Indietro</button></div>
+  <h1>${E.id ? (ro ? "Rapportino approvato" : "Modifica rapportino") : "Nuovo rapportino"}</h1>
+  ${ro ? `<div class="err ok" style="margin:0 0 12px">Approvato dall'ufficio: non si può più modificare.</div>` : ""}
+  <div class="card">
+    <div class="row"><div><label class="l" for="fData">Data</label><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}></div></div>
+    <label class="l" for="fCan">Cantiere / commessa</label>
+    <input class="f" id="fCan" list="dlCan" value="${esc(p.cantiere)}" placeholder="Scrivi per cercare…" autocomplete="off" ${dis}>
+  </div>
+  <div class="card"><h2>Orario</h2>
+    <div class="row"><div><label class="l" for="fIni">Inizio</label><input class="f" type="time" id="fIni" value="${esc(p.inizio)}" ${dis}></div>
+      <div><label class="l" for="fFin">Fine</label><input class="f" type="time" id="fFin" value="${esc(p.fine)}" ${dis}></div></div>
+    <label class="l" for="fPau">Pausa</label>
+    <select class="f" id="fPau" ${dis}>${[0, 15, 30, 45, 60, 90, 120].map(v => `<option value="${v}" ${+p.pausa === v ? "selected" : ""}>${v ? (v >= 60 ? (v / 60).toLocaleString("it-IT") + (v === 60 ? " ora" : " ore") : v + " minuti") : "Nessuna pausa"}</option>`).join("")}</select>
+    <div class="tot"><span>ORE LAVORATE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
+  </div>
+  <div class="card"><h2>Mezzi usati</h2>
+    ${(p.mezzi || []).map((x, i) => `<div class="sub"><div class="row"><input class="f" list="dlMez" data-mz="${i}" data-k="mezzo" value="${esc(x.mezzo)}" placeholder="Mezzo" autocomplete="off" ${dis} style="text-transform:uppercase">
+      ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli mezzo">✕</button>`}</div>
+      <div class="row"><input class="f" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore macchina" ${dis}></div></div>`).join("")}
+    ${ro ? "" : `<button class="btn sm" id="addMz" style="margin-top:10px">+ Aggiungi mezzo</button>`}
+  </div>
+  <div class="card"><h2>Materiali</h2>
+    ${(p.materiali || []).map((x, i) => `<div class="sub"><div class="row"><input class="f" data-mt="${i}" data-k="desc" value="${esc(x.desc)}" placeholder="Materiale" ${dis} style="text-transform:uppercase">
+      ${ro ? "" : `<button class="x" data-delmt="${i}" aria-label="Togli materiale">✕</button>`}</div>
+      <div class="row"><input class="f" type="number" inputmode="decimal" step="any" min="0" data-mt="${i}" data-k="qta" value="${esc(x.qta)}" placeholder="Quantità" ${dis}>
+      <select class="f" data-mt="${i}" data-k="um" ${dis}>${["mc", "t", "kg", "viaggi", "pz", "m", "mq", "l", "h"].map(u => `<option ${x.um === u ? "selected" : ""}>${u}</option>`).join("")}</select></div></div>`).join("") || `<p class="hint" style="margin:0">Nessun materiale.</p>`}
+    ${ro ? "" : `<button class="btn sm" id="addMt" style="margin-top:10px">+ Aggiungi materiale</button>`}
+  </div>
+  <div class="card"><h2>Lavori</h2>
+    <label class="l" for="fLav">Descrizione lavori</label><textarea class="f" id="fLav" placeholder="Cosa è stato fatto oggi" ${dis}>${esc(p.lavori)}</textarea>
+    <label class="l" for="fNote">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
+  </div>
+  ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
+  ${E.id && !ro ? `<button class="btn danger big" id="del" style="margin-top:10px;background:transparent">Elimina rapportino</button>` : ""}
+  <div id="ferr"></div>`;
+}
+function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
+  E.data = $("#fData").value; p.cantiere = $("#fCan").value.trim(); p.inizio = $("#fIni").value; p.fine = $("#fFin").value; p.pausa = +$("#fPau").value;
+  p.lavori = U($("#fLav").value); p.note = $("#fNote").value.trim(); p.ore = calcOre(p);
+  document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (x) x[e.dataset.k] = e.dataset.k === "mezzo" ? U(e.value) : e.value; });
+  document.querySelectorAll("[data-mt]").forEach(e => { const x = p.materiali[+e.dataset.mt]; if (x) x[e.dataset.k] = e.dataset.k === "desc" ? U(e.value) : e.value; }); }
+
+async function login(){
+  const nome = $("#op") && $("#op").value; S.loginNome = nome;
+  if (!nome) { $("#lerr").innerHTML = `<div class="err">Scegli il tuo nome.</div>`; return; }
+  if (S.pinIn.length < 6) { $("#lerr").innerHTML = `<div class="err">Il PIN ha 6 cifre.</div>`; return; }
+  $("#lerr").innerHTML = `<p class="hint">Verifica…</p>`;
+  try { const r = await rpc("rap_login", { p_nome: nome, p_pin: S.pinIn });
+    if (!r.ok) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">${esc(msgErr(r.err))}</div>`; return; }
+    S.me = nome; S.pin = S.pinIn; S.pinIn = ""; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome, pin: S.pin })); } catch {}
+    await caricaMiei(); S.view = "lista"; render(); toast("Ciao " + nome + "!");
+  } catch (e) { $("#lerr").innerHTML = `<div class="err">Connessione non riuscita. Controlla internet e riprova.</div>`; }
+}
+async function salva(){
+  leggiForm(); const E = S.edit, p = E.p, er = $("#ferr");
+  if (!E.data) { er.innerHTML = `<div class="err">Indica la data.</div>`; return; }
+  if (!p.cantiere) { er.innerHTML = `<div class="err">Indica il cantiere.</div>`; $("#fCan").focus(); return; }
+  if (!p.ore) { er.innerHTML = `<div class="err">Controlla orario di inizio e fine.</div>`; return; }
+  p.mezzi = (p.mezzi || []).filter(x => x.mezzo || x.ore); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
+  const b = $("#save"); b.disabled = true; b.textContent = "Salvataggio…";
+  try { const r = await rpc("rap_salva", { p_nome: S.me, p_pin: S.pin, p_id: E.id, p_data: E.data, p_payload: p });
+    if (!r.ok) { b.disabled = false; b.textContent = "Salva rapportino"; if (r.err === "PIN_ERRATO" || String(r.err).startsWith("BLOCCATO")) return esci(msgErr(r.err)); er.innerHTML = `<div class="err">${esc(msgErr(r.err))}</div>`; return; }
+    await caricaMiei(); S.view = "lista"; S.edit = null; render(); window.scrollTo(0, 0); toast("Rapportino salvato.");
+  } catch (e) { b.disabled = false; b.textContent = "Salva rapportino"; er.innerHTML = `<div class="err">Non salvato: connessione non riuscita. Riprova tra poco, i dati restano qui.</div>`; }
+}
+async function elimina(){
+  const E = S.edit; if (!E.id) return;
+  if (!S.confDel) { S.confDel = true; $("#del").textContent = "Tocca di nuovo per confermare l'eliminazione"; setTimeout(() => { S.confDel = false; const d = $("#del"); if (d) d.textContent = "Elimina rapportino"; }, 4000); return; }
+  S.confDel = false;
+  try { const r = await rpc("rap_elimina", { p_nome: S.me, p_pin: S.pin, p_id: E.id }); if (!r.ok) { $("#ferr").innerHTML = `<div class="err">${esc(msgErr(r.err) || "Non eliminato.")}</div>`; return; }
+    await caricaMiei(); S.view = "lista"; S.edit = null; render(); toast("Rapportino eliminato."); } catch { $("#ferr").innerHTML = `<div class="err">Connessione non riuscita.</div>`; }
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "out") return esci("Sei uscito.");
+  if (t.dataset.k) { const k = t.dataset.k; if (k === "del") S.pinIn = S.pinIn.slice(0, -1); else if (k === "ok") return login(); else if (S.pinIn.length < 6) S.pinIn += k;
+    const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
+  if (t.id === "fab") { S.edit = nuovo(); S.view = "form"; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.id) { const r = S.list.find(x => x.id === t.dataset.id); if (!r) return; S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" }); S.view = "form"; render(); window.scrollTo(0, 0); return; }
+  if (t.id === "back") { S.view = "lista"; S.edit = null; render(); return; }
+  if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); return; }
+  if (t.id === "addMt") { leggiForm(); S.edit.p.materiali.push({ desc: "", qta: "", um: "mc" }); render(); return; }
+  if (t.dataset.delmz) { leggiForm(); S.edit.p.mezzi.splice(+t.dataset.delmz, 1); render(); return; }
+  if (t.dataset.delmt) { leggiForm(); S.edit.p.materiali.splice(+t.dataset.delmt, 1); render(); return; }
+  if (t.id === "save") return salva();
+  if (t.id === "del") return elimina();
+});
+document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value; if (["fIni", "fFin", "fPau"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
+document.addEventListener("input", e => { if (["fIni", "fFin"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
+document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
+
+(async () => {
+  try { await caricaElenchi(); } catch (e) { $("#main").innerHTML = `<div class="card err">Impossibile collegarsi al server. Controlla la connessione e ricarica la pagina.</div>`; return; }
+  if (S.me) { S.view = "lista"; try { if (!(await caricaMiei())) return; } catch { toast("Connessione lenta: riprova."); } }
+  render();
+})();
+</script>
+</body>
+</html>
