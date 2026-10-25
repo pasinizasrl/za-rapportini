@@ -112,6 +112,9 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .pasto label{flex:1 1 140px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;min-height:50px}
 .pasto input{width:22px;height:22px;accent-color:var(--good)}
 .pasto label.on{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.ceB{margin-left:auto;background:#1f6f43;color:#fff;font:700 11px/1 Inter,system-ui,sans-serif;letter-spacing:.04em;padding:4px 6px;border-radius:6px}
+.rap .h .ceB+.o{margin-left:8px}
+.rap .h .o,.rap .h .chip,.rap .h .ceB{white-space:nowrap;flex-shrink:0}
 .cnceAltrove{border-style:dashed;background:var(--panel2)}
 .ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
 .ecG label{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
@@ -377,7 +380,7 @@ function renderLista(m){
     if (fuori(p)) return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">—</span></div>
       <div class="c"><div class="cm" style="color:${p.malattia ? "#7a3d8f" : "var(--blue)"}">${p.malattia ? "Malattia" : "Ferie"}</div>${p.note ? `<div class="hint">${esc(p.note)}</div>` : ""}</div></button>`;
     const det = (S.det || {})[r.id], ms = (p.mezzi || []).filter(x => x.mezzo || x.ore), accs = x => x.accs || (x.acc ? [{ acc: x.acc, ore: x.ore }] : []);
-    return `<div class="rap"><button class="rapApri" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
+    return `<div class="rap"><button class="rapApri" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}${haCnce(p) ? `<span class="ceB" title="Qui è compilata la sezione Cassa Edile CNCE">CE</span>` : ""}<span class="o">${fmtOre(p.ore)} h</span></div>
       <div class="c">${p.cantiere ? `<div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>` : ""}${p.permesso > 0 ? `<div class="permR">Permesso ${fmtOre(p.permesso)} h</div>` : ""}</div></button>
       ${ms.length || p.note || p.lavori || p.ord != null || (p.foto || []).length ? `<button class="detTog" data-det="${esc(r.id)}" aria-expanded="${det ? "true" : "false"}"><b>${det ? "−" : "+"}</b> ${det ? "Nascondi dettagli" : "Dettagli"}${det ? "" : ` <span class="hint">${ms.length} ${ms.length === 1 ? "lavorazione" : "lavorazioni"}${(p.foto || []).length ? " · 📷 " + p.foto.length : ""}</span>`}</button>` : ""}
       ${det ? `<div class="det">${ms.map((x, i) => `<div class="detL"><div class="detT">Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}</div>
