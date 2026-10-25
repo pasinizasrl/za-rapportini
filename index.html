@@ -107,6 +107,10 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .leg i.mal{background:#7a3d8f}
 .assenze{flex-wrap:wrap}.assenze > label.perm{flex-basis:100%}.assenze .ferie.mal.on{background:#f1e4f6;border-color:#7a3d8f;color:#7a3d8f}
 .ecCard h2 small{font-size:13px;color:var(--muted);text-transform:none;letter-spacing:0;font-family:var(--font-body);font-weight:600}
+.pasto{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.pasto label{flex:1 1 140px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;min-height:50px}
+.pasto input{width:22px;height:22px;accent-color:var(--good)}
+.pasto label.on{background:var(--good-soft);border-color:var(--good);color:var(--good)}
 .ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
 .ecG label{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .ecG .f{text-align:center;font-size:20px;font-weight:700;margin:0}
@@ -366,7 +370,7 @@ function renderLista(m){
         <div class="detR"><b>${esc(U(x.mezzo))}</b><span>${fmtOre(x.ore)} h</span></div>
         ${accs(x).map(a => `<div class="detR acc"><span>${esc(U(a.acc))}</span><span>${a.ore !== "" && a.ore != null ? fmtOre(String(a.ore).replace(",", ".")) + " h" : ""}</span></div>`).join("")}
         ${x.desc ? `<div class="ds">${esc(x.desc)}</div>` : ""}</div>`).join("")}
-        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${p.ord != null ? `<div class="detN"><b>Ore:</b> ordinarie ${fmtOre(p.ord)}${p.stra ? " · straordinarie " + fmtOre(p.stra) : ""}${p.trasf ? " · trasferta " + fmtOre(p.trasf) : ""}${p.permesso ? " · permesso " + fmtOre(p.permesso) : ""}${p.noteEc ? `<br><span class="hint">${esc(p.noteEc)}</span>` : ""}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><button class="fotoV" data-vedi="${esc(f.th || "")}" aria-label="Ingrandisci">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</button></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }).join("")
+        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${p.ord != null ? `<div class="detN"><b>Ore:</b> ordinarie ${fmtOre(p.ord)}${p.stra ? " · straordinarie " + fmtOre(p.stra) : ""}${p.trasf ? " · trasferta " + fmtOre(p.trasf) : ""}${p.permesso ? " · permesso " + fmtOre(p.permesso) : ""}${p.pasto ? " · " + (p.pasto === "rist" ? "🍽 ristorante" : "🏠 a casa") : ""}${p.noteEc ? `<br><span class="hint">${esc(p.noteEc)}</span>` : ""}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><button class="fotoV" data-vedi="${esc(f.th || "")}" aria-label="Ingrandisci">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</button></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }).join("")
     : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
 }
 const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
@@ -418,6 +422,8 @@ function renderForm(m){
       <label><span>Straord.</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fStra" value="${esc(p.stra || "")}" placeholder="0" ${dis}></label>
       <label><span>Trasferta</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fTrasf" value="${esc(p.trasf || "")}" placeholder="0" ${dis}></label>
     </div>
+    <label class="l">Pranzo</label>
+    <div class="pasto"><label class="${p.pasto === "rist" ? "on" : ""}"><input type="checkbox" id="fPastoR" ${p.pasto === "rist" ? "checked" : ""} ${dis}>🍽 Ristorante aziendale</label><label class="${p.pasto === "casa" ? "on" : ""}"><input type="checkbox" id="fPastoC" ${p.pasto === "casa" ? "checked" : ""} ${dis}>🏠 Mangiato a casa</label></div>
     <label class="l" for="fNoteEc">Note ore</label><textarea class="f" id="fNoteEc" style="min-height:56px" placeholder="Es. trasferta a Mantova, rientro alle 20…" ${dis}>${esc(p.noteEc || "")}</textarea>
     <p class="hint" style="margin:6px 0 0">Ferie, malattia e permessi si segnano in alto, sotto la data.</p></div>`}
   ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
@@ -430,7 +436,8 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   p.malattia = !p.ferie && !!($("#fMal") && $("#fMal").checked); if (!p.malattia) delete p.malattia;
   const nn = id => { const e = $(id); if (!e) return null; const v = String(e.value).replace(",", ".").trim(); return v === "" ? null : +v; };
   if ($("#fOrd")) { const o = nn("#fOrd"); p.ord = o == null ? 0 : o; const st = nn("#fStra"), tr = nn("#fTrasf"); if (st) p.stra = st; else delete p.stra; if (tr) p.trasf = tr; else delete p.trasf;
-    const ne = $("#fNoteEc").value.trim(); if (ne) p.noteEc = ne; else delete p.noteEc; }
+    const ne = $("#fNoteEc").value.trim(); if (ne) p.noteEc = ne; else delete p.noteEc;
+    const pr = $("#fPastoR") && $("#fPastoR").checked, pc = $("#fPastoC") && $("#fPastoC").checked; if (pr) p.pasto = "rist"; else if (pc) p.pasto = "casa"; else delete p.pasto; }
   const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !fuori(p)) p.permesso = pm; else delete p.permesso;
   if ($("#fCan")) p.cantiere = $("#fCan").value.trim();
   p.note = $("#fNote").value.trim();
@@ -484,7 +491,7 @@ async function salva(){
     S.attesaFoto = false; if (S.view !== "form") return; }
   leggiForm(); const E = S.edit, p = E.p, er = $("#ferr");
   if (!E.data) { er.innerHTML = `<div class="err">Indica la data.</div>`; return; }
-  if (fuori(p)) { p.cantiere = ""; delete p.lavorazione; p.mezzi = []; p.materiali = []; p.lavori = ""; p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; p.ord = 0; delete p.stra; delete p.trasf; delete p.noteEc; }
+  if (fuori(p)) { p.cantiere = ""; delete p.lavorazione; p.mezzi = []; p.materiali = []; p.lavori = ""; p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; p.ord = 0; delete p.stra; delete p.trasf; delete p.noteEc; delete p.pasto; }
   else {
     const soloPerm = p.permesso > 0 && !p.cantiere;
     if (soloPerm) { p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; }
@@ -566,6 +573,8 @@ document.addEventListener("click", e => {
   if (t.id === "del") return elimina();
 });
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
+  if ((e.target.id === "fPastoR" || e.target.id === "fPastoC") && S.edit) { if (e.target.checked) { const o = $(e.target.id === "fPastoR" ? "#fPastoC" : "#fPastoR"); if (o) o.checked = false; }
+    document.querySelectorAll(".pasto label").forEach(l => l.classList.toggle("on", l.querySelector("input").checked)); return; }
   if (e.target.id === "fFoto" && S.edit) { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) aggiungiFoto(fs); return; }
   if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); if (lk !== isBenna({ acc: e.target.value }, j)) { leggiForm(); render(); } return; }
