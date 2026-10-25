@@ -205,12 +205,13 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
 .gal button{aspect-ratio:1/1;border:0;padding:0;border-radius:8px;overflow:hidden;background:var(--panel2);cursor:pointer}
 .gal img{width:100%;height:100%;object-fit:cover;display:block}
-.lb{position:fixed;inset:0;z-index:50;background:rgba(10,14,12,.96);display:flex;flex-direction:column;color:#fff}
+.lb{position:fixed;inset:0;z-index:50;background:#0d1110;display:flex;flex-direction:column;color:#fff}
 .lb .top{display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:max(10px, env(safe-area-inset-top))}
-.lb .top .i{flex:1;font-size:13px;line-height:1.3}
+.lb .top{flex-wrap:nowrap}.lb .top .i{flex:1 1 120px;min-width:0;font-size:13px;line-height:1.3}
 .lb .top button,.lb .top a{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;text-decoration:none}
-.lb .img{flex:1;display:grid;place-items:center;overflow:hidden;position:relative;touch-action:pan-y}
-.lb .img img{max-width:100%;max-height:100%;object-fit:contain}
+.lb .img{flex:1;display:grid;place-items:center;overflow:hidden;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
+.lb .img img{width:100%;height:100%;object-fit:contain;transform-origin:center center;will-change:transform;touch-action:none}
+.lb .top{gap:6px}.lb .top button,.lb .top a{min-width:40px;height:40px;font-size:18px;padding:0 10px;display:inline-grid;place-items:center}
 .lb .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:0;color:#fff;width:48px;height:64px;font-size:30px;border-radius:8px}
 .lb .nav.p{left:8px}.lb .nav.n{right:8px}
 .lb .cnt{text-align:center;padding:8px;padding-bottom:max(8px, env(safe-area-inset-bottom));font-size:13px;opacity:.8}
@@ -274,12 +275,33 @@ async function caricaGrande(f){ const id = fileId(f); if (!id || S.big[id] || !S
   catch (e) { const l = $("#lbLoad"); if (l && S.lista[S.lb] === f) l.textContent = "Foto grande non disponibile" + (String(e.message).includes("NON_ABILITATO") ? ": non sei abilitato" : ""); return; }
   if (S.lb != null && S.lista[S.lb] === f) renderLb();
   const nx = S.lista[S.lb + 1]; if (nx && !S.big[fileId(nx)]) caricaGrande(nx); }
+/* zoom e spostamento: rotella, doppio tocco, pizzico con due dita, trascinamento */
+const Z = { s: 1, x: 0, y: 0 }, PT = new Map(); let pinch = null, pan = null, lastTap = 0;
+function applicaZ(){ const im = $("#lbImg"); if (!im) return; if (Z.s <= 1) { Z.s = 1; Z.x = 0; Z.y = 0; } im.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.s})`; im.style.cursor = Z.s > 1 ? "grab" : "zoom-in"; }
+function zoomA(ns, cx, cy){ const box = $("#lb .img"); if (!box) return; const r = box.getBoundingClientRect(), px = (cx ?? r.left + r.width / 2) - (r.left + r.width / 2), py = (cy ?? r.top + r.height / 2) - (r.top + r.height / 2);
+  ns = Math.max(1, Math.min(6, ns)); const k = ns / Z.s; Z.x = px - (px - Z.x) * k; Z.y = py - (py - Z.y) * k; Z.s = ns; applicaZ(); }
+function resetZ(){ Z.s = 1; Z.x = 0; Z.y = 0; }
+document.addEventListener("wheel", e => { if (S.lb == null || !e.target.closest("#lb .img")) return; e.preventDefault(); zoomA(Z.s * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX, e.clientY); }, { passive: false });
+document.addEventListener("dblclick", e => { if (S.lb == null || !e.target.closest("#lb .img") || e.target.closest("button")) return; zoomA(Z.s > 1 ? 1 : 2.5, e.clientX, e.clientY); });
+document.addEventListener("pointerdown", e => { if (S.lb == null || !e.target.closest("#lb .img") || e.target.closest("button")) return; PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (PT.size === 2) { const [a, b] = [...PT.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: Z.s, cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 }; pan = null; }
+  else if (PT.size === 1) { pan = { x: e.clientX, y: e.clientY, zx: Z.x, zy: Z.y, t: Date.now() };
+    if (e.pointerType === "touch") { const now = Date.now(); if (now - lastTap < 300) { zoomA(Z.s > 1 ? 1 : 2.5, e.clientX, e.clientY); lastTap = 0; } else lastTap = now; } } });
+document.addEventListener("pointermove", e => { if (!PT.has(e.pointerId)) return; PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && PT.size === 2) { const [a, b] = [...PT.values()]; zoomA(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, pinch.cx, pinch.cy); }
+  else if (pan && Z.s > 1) { Z.x = pan.zx + e.clientX - pan.x; Z.y = pan.zy + e.clientY - pan.y; applicaZ(); } });
+const fineP = e => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; if (!PT.size) pan = null; };
+document.addEventListener("pointerup", fineP); document.addEventListener("pointercancel", fineP);
+function schermoIntero(){ const d = document, el = d.documentElement;
+  if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+  else if (el.requestFullscreen) el.requestFullscreen().catch(() => toast("Schermo intero non disponibile su questo telefono: usa il pizzico per ingrandire."));
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); else toast("Schermo intero non disponibile su questo telefono: usa il pizzico per ingrandire."); }
 function renderLb(){ let el = $("#lb"); if (S.lb == null) { if (el) el.remove(); document.body.style.overflow = ""; return; }
   const f = S.lista[S.lb]; if (!el) { el = document.createElement("div"); el.id = "lb"; el.className = "lb"; document.body.appendChild(el); document.body.style.overflow = "hidden"; }
-  el.innerHTML = `<div class="top"><div class="i"><b>${esc(f.op)}</b><br>${esc(giorno(f.data))} ${esc(itData(f.data))}</div><a id="lbDl" ${S.big[fileId(f)] ? `href="${S.big[fileId(f)]}" download="${esc(f.nome || "foto.jpg")}"` : 'hidden'}>⬇ Scarica</a><button data-lbx="1" aria-label="Chiudi">✕</button></div>
-    <div class="img"><img src="${esc(S.big[fileId(f)] || f.th || "")}" alt="" id="lbImg">${S.big[fileId(f)] ? "" : `<div id="lbLoad" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:13px;opacity:.8">Caricamento foto…</div>`}${S.lb > 0 ? `<button class="nav p" data-lbm="-1" aria-label="Precedente">‹</button>` : ""}${S.lb < S.lista.length - 1 ? `<button class="nav n" data-lbm="1" aria-label="Successiva">›</button>` : ""}</div>
+  el.innerHTML = `<div class="top"><div class="i"><b>${esc(f.op)}</b><br>${esc(giorno(f.data))} ${esc(itData(f.data))}</div><a id="lbDl" ${S.big[fileId(f)] ? `href="${S.big[fileId(f)]}" download="${esc(f.nome || "foto.jpg")}"` : 'hidden'}title="Scarica" aria-label="Scarica">⬇</a><button data-zoom="-1" aria-label="Riduci">−</button><button data-zoom="1" aria-label="Ingrandisci">+</button><button data-fs="1" aria-label="Schermo intero">⛶</button><button data-lbx="1" aria-label="Chiudi">✕</button></div>
+    <div class="img"><img src="${esc(S.big[fileId(f)] || f.th || "")}" alt="" id="lbImg" draggable="false">${S.big[fileId(f)] ? "" : `<div id="lbLoad" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:13px;opacity:.8">Caricamento foto…</div>`}${S.lb > 0 ? `<button class="nav p" data-lbm="-1" aria-label="Precedente">‹</button>` : ""}${S.lb < S.lista.length - 1 ? `<button class="nav n" data-lbm="1" aria-label="Successiva">›</button>` : ""}</div>
     <div class="cnt">${S.lb + 1} / ${S.lista.length}</div>`;
-  caricaGrande(f);
+  applicaZ(); caricaGrande(f);
 }
 function renderLogin(m){
   m.innerHTML = `<h1>Foto cantieri</h1><div class="card">
@@ -307,14 +329,16 @@ document.addEventListener("click", e => { const t = e.target.closest("button"); 
   if (t.dataset.per) { S.per = +t.dataset.per; S.righe = null; render(); carica(); return; }
   if (t.dataset.can != null) { S.can = t.dataset.can; render(); window.scrollTo(0, 0); return; }
   if (t.id === "back") { S.can = null; render(); return; }
-  if (t.dataset.foto != null) { S.lb = +t.dataset.foto; renderLb(); return; }
-  if (t.dataset.lbm) { S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + +t.dataset.lbm)); renderLb(); return; }
-  if (t.dataset.lbx) { S.lb = null; renderLb(); return; } });
+  if (t.dataset.zoom) { zoomA(Z.s * (+t.dataset.zoom > 0 ? 1.5 : 1 / 1.5)); return; }
+  if (t.dataset.fs) { schermoIntero(); return; }
+  if (t.dataset.foto != null) { resetZ(); S.lb = +t.dataset.foto; renderLb(); return; }
+  if (t.dataset.lbm) { resetZ(); S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + +t.dataset.lbm)); renderLb(); return; }
+  if (t.dataset.lbx) { resetZ(); S.lb = null; renderLb(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); return; } });
 document.addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; const p = e.target.selectionStart; render(); const i = $("#q"); if (i) { i.focus(); i.setSelectionRange(p, p); } } });
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value; });
-document.addEventListener("keydown", e => { if (S.lb == null) return; if (e.key === "Escape") { S.lb = null; renderLb(); } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + (e.key === "ArrowLeft" ? -1 : 1))); renderLb(); } });
-let tx = null; document.addEventListener("touchstart", e => { if (S.lb != null) tx = e.touches[0].clientX; }, { passive: true });
-document.addEventListener("touchend", e => { if (S.lb == null || tx == null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 50) { S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + (dx < 0 ? 1 : -1))); renderLb(); } }, { passive: true });
+document.addEventListener("keydown", e => { if (S.lb == null) return; if (e.key === "Escape") { S.lb = null; renderLb(); } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { resetZ(); S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + (e.key === "ArrowLeft" ? -1 : 1))); renderLb(); } });
+let tx = null; document.addEventListener("touchstart", e => { if (S.lb != null && e.touches.length === 1 && Z.s <= 1) tx = e.touches[0].clientX; else tx = null; }, { passive: true });
+document.addEventListener("touchend", e => { if (S.lb == null || tx == null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 50 && Z.s <= 1 && !pinch) { resetZ(); S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + (dx < 0 ? 1 : -1))); renderLb(); } }, { passive: true });
 (async () => { try { const el = await rpc("rap_elenchi"); S.ops = el.operatori || []; S.fotoUrl = el.foto_url || ""; } catch {} render(); if (S.me) carica(); })();
 </script>
 </body>
