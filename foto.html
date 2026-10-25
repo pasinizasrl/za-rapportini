@@ -214,6 +214,7 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .lb .top{gap:6px}.lb .top button,.lb .top a{min-width:40px;height:40px;font-size:18px;padding:0 10px;display:inline-grid;place-items:center}
 .lb .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:0;color:#fff;width:48px;height:64px;font-size:30px;border-radius:8px}
 .lb .nav.p{left:8px}.lb .nav.n{right:8px}
+.lb .tmb{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:13px;font-weight:600;padding:6px 10px;line-height:1.35;pointer-events:none}.lb .tmb b{color:#e8e22a}
 .lb .cnt{text-align:center;padding:8px;padding-bottom:max(8px, env(safe-area-inset-bottom));font-size:13px;opacity:.8}
 </style>
 </head>
@@ -311,7 +312,7 @@ function schermoIntero(){ const d = document, el = d.documentElement;
 function renderLb(){ let el = $("#lb"); if (S.lb == null) { if (el) el.remove(); document.body.style.overflow = ""; return; }
   const f = S.lista[S.lb]; if (!el) { el = document.createElement("div"); el.id = "lb"; el.className = "lb"; document.body.appendChild(el); document.body.style.overflow = "hidden"; }
   el.innerHTML = `<div class="top"><div class="i"><b>${esc(f.op)}</b> · ${esc(itData(f.data))}<br><span style="opacity:.8">${esc(f.can || "")}</span></div><a id="lbDl" ${S.big[fileId(f)] ? `href="${S.big[fileId(f)]}" download="${esc(f.nome || "foto.jpg")}"` : 'hidden'}title="Scarica" aria-label="Scarica">⬇</a><button data-zoom="-1" aria-label="Riduci">−</button><button data-fit="1" aria-label="Adatta allo schermo" title="Adatta allo schermo" id="zPct" style="font-size:13px;min-width:56px">${Math.round(Z.s * 100)}%</button><button data-zoom="1" aria-label="Ingrandisci">+</button><button data-fs="1" aria-label="Schermo intero">⛶</button><button data-lbx="1" aria-label="Chiudi">✕</button></div>
-    <div class="img"><img src="${esc(S.big[fileId(f)] || f.th || "")}" alt="" id="lbImg" draggable="false">${S.big[fileId(f)] ? "" : `<div id="lbLoad" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:13px;opacity:.8">Caricamento alta qualità…</div>`}${S.lb > 0 ? `<button class="nav p" data-lbm="-1" aria-label="Precedente">‹</button>` : ""}${S.lb < S.lista.length - 1 ? `<button class="nav n" data-lbm="1" aria-label="Successiva">›</button>` : ""}</div>
+    <div class="img"><img src="${esc(S.big[fileId(f)] || f.th || "")}" alt="" id="lbImg" draggable="false">${f.timbro ? "" : `<div class="tmb"><b>${esc(f.can || "")}</b><br>${esc(itData(f.data))}  ·  ${esc(f.op)}</div>`}${S.big[fileId(f)] ? "" : `<div id="lbLoad" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:13px;opacity:.8">Caricamento alta qualità…</div>`}${S.lb > 0 ? `<button class="nav p" data-lbm="-1" aria-label="Precedente">‹</button>` : ""}${S.lb < S.lista.length - 1 ? `<button class="nav n" data-lbm="1" aria-label="Successiva">›</button>` : ""}</div>
     <div class="cnt">${S.lb + 1} / ${S.lista.length} · tocca la % per adattare allo schermo</div>`;
   const im0 = $("#lbImg"); if (im0) im0.onload = applicaZ; applicaZ(); precarica();
 }

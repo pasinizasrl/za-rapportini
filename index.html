@@ -313,10 +313,10 @@ function timbra(g, w, h, righe){ const fs = Math.max(14, Math.round(Math.min(w, 
 async function aggiungiFoto(files){ leggiForm(); const E = S.edit, p = E.p; if (!p.cantiere) { toast("Scegli prima il cantiere, poi aggiungi le foto."); return; }
   S.upl = S.upl || [];
   for (const file of files) { const u = { th: "" }; S.upl.push(u); render();
-    try { const im = await caricaImg(file); u.th = ridimensiona(im, 180, .6); render(); const ora = new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }), big = ridimensiona(im, 1400, .7, [p.cantiere, itData(E.data) + " ore " + ora + "  ·  " + S.me]);
+    try { const im = await caricaImg(file); u.th = ridimensiona(im, 180, .6); render(); const big = ridimensiona(im, 1400, .7, [p.cantiere, itData(E.data) + "  ·  " + S.me]);
       const r = await fetch(S.el.foto_url, { method: "POST", body: JSON.stringify({ nome: S.me, pin: S.pin, cantiere: p.cantiere, data: E.data, b64: big.split(",")[1] }) });
       const j = await r.json(); if (!j.ok) throw new Error(j.err || "errore");
-      (p.foto = p.foto || []).push({ id: j.id, url: j.url, cartella: j.cartella, nome: j.nome, th: u.th }); S.upl.splice(S.upl.indexOf(u), 1); }
+      (p.foto = p.foto || []).push({ id: j.id, url: j.url, cartella: j.cartella, nome: j.nome, th: u.th, timbro: true }); S.upl.splice(S.upl.indexOf(u), 1); }
     catch (e) { u.err = true; toast("Foto non inviata: " + (e.message || "controlla la connessione")); }
     if (S.view === "form") { leggiForm(); render(); } }
   if (S.upl.some(u => u.err)) setTimeout(() => { S.upl = (S.upl || []).filter(u => !u.err); if (S.view === "form") { leggiForm(); render(); } }, 4000); }
