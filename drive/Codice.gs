@@ -32,9 +32,17 @@ function doPost(e) {
         giorno = cartella_(cantiere, data); CACHE.put('g|' + nomeCan + '|' + data, giorno.getId(), 21600);
       } finally { lock.releaseLock(); }
     }
-    const ora = Utilities.formatDate(new Date(), 'Europe/Rome', 'HHmmss');
-    const nomeFile = pulisci_(d.nome).replace(/\s+/g, '_') + '_' + ora + '_' + Math.floor(Math.random() * 1000) + '.jpg';
-    const f = giorno.createFile(Utilities.newBlob(Utilities.base64Decode(d.b64), 'image/jpeg', nomeFile));
+    // nome file: AAAA.MM.GG - <cantiere> - 001.jpg  (numerazione progressiva nella cartella del giorno)
+    const base = data.replace(/-/g, '.') + ' - ' + nomeCan.slice(0, 90);
+    const lock2 = LockService.getScriptLock(); lock2.waitLock(20000);
+    let nomeFile, f;
+    try {
+      const kn = 'n|' + giorno.getId(); let n = +(CACHE.get(kn) || 0);
+      if (!n) { const it = giorno.getFiles(); while (it.hasNext()) { it.next(); n++; } }
+      n++; CACHE.put(kn, String(n), 21600);
+      nomeFile = base + ' - ' + ('00' + n).slice(-3) + '.jpg';
+      f = giorno.createFile(Utilities.newBlob(Utilities.base64Decode(d.b64), 'image/jpeg', nomeFile));
+    } finally { lock2.releaseLock(); }
     f.setDescription('Operatore: ' + d.nome + '\nCantiere: ' + (d.cantiere || '') + '\nData: ' + data);
     CACHE.put('in|' + f.getId(), '1', 21600);
     return risposta_({ ok: true, id: f.getId(), nome: nomeFile, url: f.getUrl(), cartella: giorno.getUrl(), cartellaCantiere: cantiere.getUrl() });

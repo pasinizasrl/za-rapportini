@@ -217,6 +217,46 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .lb .nav.p{left:8px}.lb .nav.n{right:8px}
 .lb .tmb{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:13px;font-weight:600;padding:6px 10px;line-height:1.35;pointer-events:none}.lb .tmb b{color:#e8e22a}
 .lb .cnt{text-align:center;padding:8px;padding-bottom:max(8px, env(safe-area-inset-bottom));font-size:13px;opacity:.8}
+
+body.galW main{max-width:1180px}
+.gtop{display:flex;align-items:flex-end;gap:12px;margin:4px 0 10px}.gtop h1{margin:0}
+.gsub{color:var(--muted);font-size:14px;margin-top:2px}.gsub b{color:var(--ink)}.gsub a{color:var(--ink);font-weight:600}
+.tbar{position:sticky;top:var(--hdr,62px);z-index:4;background:var(--bg);display:flex;flex-wrap:wrap;gap:8px;padding:8px 0 10px;margin-bottom:6px}
+.srch{flex:1 1 260px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 10px;min-height:44px}
+.srch input{flex:1;border:0;background:none;font:inherit;font-size:16px;color:var(--ink);outline:none;min-width:0}
+.srch button{border:0;background:var(--panel2);border-radius:50%;width:26px;height:26px;color:var(--muted)}
+.tbar .seg{flex:0 1 auto;margin:0}.tbar .seg button{padding:9px 12px;white-space:nowrap;font-size:14px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ccard{display:flex;flex-direction:column;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;padding:0;font:inherit;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s}
+.ccard:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.12)}
+.cov{position:relative;display:grid;gap:2px;aspect-ratio:16/10;background:var(--panel2)}
+.cov img{width:100%;height:100%;object-fit:cover;display:block;min-height:0}
+.cov.n1{grid-template-columns:1fr}.cov.n2{grid-template-columns:1fr 1fr}.cov.n3{grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr}.cov.n3 img:first-child{grid-row:span 2}
+.cov.n4{grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr}.cov.n4 img:first-child{grid-row:span 2}.cov.n4 img:nth-child(4){grid-column:2/4}
+.cov .cnt{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.7);color:#fff;font-weight:700;font-size:13px;border-radius:999px;padding:3px 10px}
+.cb{padding:10px 12px 12px}.cb .code{margin-right:0}
+.cli{font-family:var(--font-display);font-weight:700;font-size:18px;text-transform:uppercase;line-height:1.1;margin-top:6px}
+.cds{font-weight:600;text-transform:uppercase;font-size:14px;color:var(--muted);line-height:1.25;margin-top:2px}
+.meta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}.meta b{color:var(--ink);text-transform:capitalize}
+.ccard.sk .cov{animation:pl 1.2s infinite ease-in-out}.ccard.sk .cb i{display:block;height:12px;border-radius:6px;background:var(--panel2);margin:6px 0;animation:pl 1.2s infinite ease-in-out}
+@keyframes pl{50%{opacity:.5}}
+.vuoto{display:flex;flex-direction:column;align-items:center;gap:6px;padding:48px 16px;color:var(--muted);font-size:34px;text-align:center}.vuoto b{font-size:18px;color:var(--ink)}.vuoto span{font-size:14px}
+.chead{display:flex;flex-direction:column;gap:6px;margin:0 0 8px}
+.back{align-self:flex-start;border:0;background:none;font:inherit;font-weight:700;color:var(--muted);padding:6px 0;font-size:15px}
+.ct h1{margin:6px 0 0;font-size:26px;line-height:1.1}.ct .cli{font-size:16px;color:var(--muted);margin-top:4px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chips button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px 6px 6px;font:inherit;font-size:13px;font-weight:600;color:var(--ink)}
+.chips button:first-child{padding-left:12px}.chips button.on{background:var(--steel);border-color:var(--steel);color:#fff}
+.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#1c2320;font-size:11px;font-weight:800;flex:0 0 auto}
+.day{margin-bottom:14px}
+.dayh{position:sticky;top:calc(var(--hdr,62px) + 0px);z-index:3;display:flex;justify-content:space-between;align-items:baseline;background:var(--bg);padding:8px 0;border-bottom:2px solid var(--line);margin-bottom:8px}
+.dayh b{font-family:var(--font-display);font-size:20px;text-transform:uppercase;letter-spacing:.02em}.dayh span{color:var(--muted);font-size:13px;font-weight:600}
+.grp{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
+.grph{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.grph .gn{font-weight:700;text-transform:uppercase;font-size:14px}.grph .hint{font-size:12px}
+.drv{margin-left:auto;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;white-space:nowrap}
+.gal{display:flex !important;flex-wrap:wrap;justify-content:center;gap:4px}
+.gal button{width:calc((100% - 8px) / 3) !important;flex:0 0 calc((100% - 8px) / 3) !important;max-width:150px;aspect-ratio:1/1;border-radius:6px}
+@media (min-width:700px){.gal button{width:150px !important;flex:0 0 150px !important}}
 </style>
 </head>
 <body>
@@ -242,33 +282,58 @@ function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, 
 
 const MSG = { PIN_ERRATO: "PIN errato.", NON_ABILITATO: "Non sei abilitato a vedere la galleria foto: chiedi in ufficio." };
 const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso bloccato per qualche minuto." : (MSG[e] || e || "Errore");
-const S = { ops: [], me: null, pin: "", pinIn: "", righe: null, per: 30, q: "", can: null, lb: null };
+const S = { vista: (() => { try { return localStorage.getItem("za-foto-vista") || "can"; } catch { return "can"; } })(), opF: "", ops: [], me: null, pin: "", pinIn: "", righe: null, per: 30, q: "", can: null, lb: null };
 try { const m = JSON.parse(localStorage.getItem("za-foto-me") || "null"); if (m && m.nome && m.pin) { S.me = m.nome; S.pin = m.pin; } } catch {}
 const fileId = f => f.id || ((String(f.url || "").match(/\/d\/([^/?]+)/) || [])[1] || "");
 function render(){
+  try { document.documentElement.style.setProperty("--hdr", (document.querySelector("header") || {}).offsetHeight + "px"); } catch {}
   const m = $("#main"); $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><button id="out">Esci</button>`;
+  document.body.classList.toggle("galW", !!S.me);
   if (!S.me) return renderLogin(m);
-  if (S.righe == null) { m.innerHTML = `<div class="empty">Caricamento foto…</div>`; return; }
+  if (S.righe == null) { m.innerHTML = barraHTML(0, 0) + `<div class="cgrid">${[1, 2, 3, 4].map(() => `<div class="ccard sk"><div class="cov"></div><div class="cb"><i></i><i style="width:60%"></i></div></div>`).join("")}</div>`; return; }
   const q = U(S.q), R = S.righe.filter(r => !q || U(r.cantiere + " " + r.nome).includes(q)), perCan = {};
   R.forEach(r => { const k = r.cantiere || "SENZA CANTIERE"; (perCan[k] = perCan[k] || []).push(r); });
   if (S.can && perCan[S.can]) return renderCan(m, S.can, perCan[S.can]);
   S.can = null;
+  const nFoto = R.reduce((t, r) => t + (r.foto || []).length, 0);
+  if (S.vista === "giorni") { S.lista = []; m.innerHTML = barraHTML(nFoto, Object.keys(perCan).length) + giorniHTML(R, true); return; }
   const cans = Object.keys(perCan).sort((a, b) => (perCan[b][0].data).localeCompare(perCan[a][0].data) || a.localeCompare(b));
-  m.innerHTML = `<h1>Foto cantieri</h1>
-    <div class="flt"><div class="f"><input class="f" id="q" value="${esc(S.q)}" placeholder="Cerca cantiere, cliente o nome…" autocomplete="off"></div></div>
-    <div class="seg" style="margin-bottom:12px">${[[7, "7 giorni"], [30, "30 giorni"], [90, "3 mesi"], [365, "1 anno"]].map(([v, l]) => `<button data-per="${v}" class="${S.per === v ? "on" : ""}">${l}</button>`).join("")}</div>
-    ${cans.map(k => { const c = parseCant(k), L = perCan[k], ff = L.flatMap(r => r.foto || []);
-      return `<button class="canC" data-can="${esc(k)}"><div class="t"><div>${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}<span class="cm">${esc(c.rest || k)}</span><div class="hint">ultima: ${esc(giorno(L[0].data))} ${esc(itData(L[0].data))}</div></div><span class="n">📷 ${ff.length}</span></div>
-        <div class="strip">${ff.slice(0, 6).map(f => f.th ? `<img src="${esc(f.th)}" alt="" loading="lazy">` : "").join("")}</div></button>`; }).join("") || `<div class="card empty">Nessuna foto nel periodo scelto.</div>`}`;
+  m.innerHTML = barraHTML(nFoto, cans.length) + (cans.length ? `<div class="cgrid">${cans.map(k => { const c = parseCant(k), L = perCan[k], ff = L.flatMap(r => r.foto || []), gg = new Set(L.map(r => r.data)).size, [cli, ...ds] = (c.rest || k).split(" : ");
+      const cov = ff.slice(0, 4);
+      return `<button class="ccard" data-can="${esc(k)}"><div class="cov n${Math.min(cov.length, 4)}">${cov.map(f => f.th ? `<img src="${esc(f.th)}" alt="" loading="lazy">` : `<span></span>`).join("")}<span class="cnt">📷 ${ff.length}</span></div>
+        <div class="cb">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}<div class="cli">${esc(ds.length ? cli : "")}</div><div class="cds">${esc(ds.length ? ds.join(" : ") : cli)}</div>
+          <div class="meta"><span>Ultima: <b>${esc(giorno(L[0].data).slice(0, 3))} ${esc(itData(L[0].data))}</b></span><span>${gg} ${gg === 1 ? "giorno" : "giorni"}</span></div></div></button>`; }).join("")}</div>`
+    : `<div class="vuoto">📷<b>Nessuna foto</b><span>${q ? "Nessun cantiere corrisponde alla ricerca." : "Nel periodo scelto non sono state inviate foto."}</span></div>`);
 }
+function barraHTML(nFoto, nCan){
+  return `<div class="gtop"><div><h1>Foto cantieri</h1><div class="gsub">${S.righe == null ? "Caricamento…" : `<b>${nFoto}</b> foto · <b>${nCan}</b> ${nCan === 1 ? "cantiere" : "cantieri"}`}</div></div></div>
+    <div class="tbar"><div class="srch"><span>🔍</span><input id="q" value="${esc(S.q)}" placeholder="Cerca cantiere, cliente o operatore" autocomplete="off">${S.q ? `<button data-clr="1" aria-label="Cancella ricerca">✕</button>` : ""}</div>
+      <div class="seg">${[[7, "7 gg"], [30, "30 gg"], [90, "3 mesi"], [365, "1 anno"]].map(([v, l]) => `<button data-per="${v}" class="${S.per === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      <div class="seg vis"><button data-vista="can" class="${S.vista !== "giorni" ? "on" : ""}">▦ Cantieri</button><button data-vista="giorni" class="${S.vista === "giorni" ? "on" : ""}">☰ Per giorno</button></div></div>`;
+}
+/* elenco per giorno (tutti i cantieri, oppure un solo cantiere) */
+function giorniHTML(R, conCantiere){
+  const perG = {}; R.forEach(r => (perG[r.data] = perG[r.data] || []).push(r));
+  const days = Object.keys(perG).sort().reverse();
+  if (!days.length) return `<div class="vuoto">📷<b>Nessuna foto</b><span>Prova a cambiare periodo o ricerca.</span></div>`;
+  return days.map(d => { const gr = {}; perG[d].forEach(r => { const k = conCantiere ? r.cantiere || "SENZA CANTIERE" : r.nome; (gr[k] = gr[k] || []).push(r); });
+    const tot = perG[d].reduce((t, r) => t + (r.foto || []).length, 0);
+    return `<section class="day"><div class="dayh"><b>${esc(giorno(d))} ${esc(itData(d))}</b><span>${tot} foto</span></div>
+      ${Object.entries(gr).map(([k, rs]) => { const ff = rs.flatMap(r => (r.foto || []).map(f => Object.assign({ op: r.nome, data: d, can: r.cantiere }, f))), c = parseCant(k);
+        return `<div class="grp"><div class="grph">${conCantiere ? `${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}<span class="gn">${esc(c.rest || k)}</span>` : `<span class="av">${esc(iniziali(k))}</span><span class="gn">${esc(k)}</span>`}
+          ${conCantiere ? `<span class="hint">${esc([...new Set(rs.map(r => r.nome))].join(", "))}</span>` : ""}${ff[0] && ff[0].cartella ? `<a href="${esc(ff[0].cartella)}" target="_blank" rel="noopener" class="drv">📂 Drive</a>` : ""}</div>
+          <div class="gal">${ff.map(f => { const i = S.lista.push(f) - 1; return `<button data-foto="${i}" aria-label="Apri foto">${f.th ? `<img src="${esc(f.th)}" alt="" loading="lazy">` : "📷"}${conCantiere ? "" : ""}</button>`; }).join("")}</div></div>`; }).join("")}</section>`; }).join("");
+}
+const iniziali = n => String(n || "").split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join("");
 function renderCan(m, k, L){
-  const c = parseCant(k), perG = {}; L.forEach(r => (perG[r.data] = perG[r.data] || []).push(r));
-  const days = Object.keys(perG).sort().reverse(); S.lista = [];
-  m.innerHTML = `<div class="row" style="margin-bottom:4px"><button class="btn ghost sm" id="back" style="flex:0 0 auto">‹ Tutti i cantieri</button></div>
-    <h1 style="font-size:22px">${c.code ? `<span class="code" style="font-size:15px">${esc(c.code)}</span>` : ""}${esc(c.rest || k)}</h1>
-    ${days.map(d => { const ff = perG[d].flatMap(r => (r.foto || []).map(f => Object.assign({ op: r.nome, data: d, can: k }, f)));
-      return `<div class="giorno"><b>${esc(giorno(d))} ${esc(itData(d))}</b><span class="hint">${esc([...new Set(perG[d].map(r => r.nome))].join(", "))} · ${ff.length} foto</span>${ff[0] && ff[0].cartella ? `<a class="hint" href="${esc(ff[0].cartella)}" target="_blank" rel="noopener">📂 Drive</a>` : ""}</div>
-        <div class="gal">${ff.map(f => { const i = S.lista.push(f) - 1; return `<button data-foto="${i}" aria-label="Apri foto">${f.th ? `<img src="${esc(f.th)}" alt="" loading="lazy">` : "📷"}</button>`; }).join("")}</div>`; }).join("")}`;
+  const c = parseCant(k), [cli, ...ds] = (c.rest || k).split(" : "), ops = [...new Set(L.map(r => r.nome))].sort();
+  if (S.opF && !ops.includes(S.opF)) S.opF = "";
+  const R = L.filter(r => !S.opF || r.nome === S.opF), nF = R.reduce((t, r) => t + (r.foto || []).length, 0), cart = ((L[0].foto || [])[0] || {}).cartella; S.lista = [];
+  m.innerHTML = `<div class="chead"><button class="back" id="back">‹ Cantieri</button>
+      <div class="ct">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}<h1>${esc(ds.length ? ds.join(" : ") : cli)}</h1>${ds.length ? `<div class="cli">${esc(cli)}</div>` : ""}
+      <div class="gsub"><b>${nF}</b> foto · <b>${new Set(R.map(r => r.data)).size}</b> giorni${cart ? ` · <a href="${esc(cart)}" target="_blank" rel="noopener">📂 Apri su Drive</a>` : ""}</div></div></div>
+    ${ops.length > 1 ? `<div class="chips"><button data-op="" class="${!S.opF ? "on" : ""}">Tutti</button>${ops.map(o => `<button data-op="${esc(o)}" class="${S.opF === o ? "on" : ""}"><span class="av">${esc(iniziali(o))}</span>${esc(o)}</button>`).join("")}</div>` : ""}
+    ${giorniHTML(R, false)}`;
 }
 S.big = {};
 /* cache sul telefono delle foto già viste (IndexedDB): la seconda volta si aprono subito */
@@ -354,7 +419,10 @@ document.addEventListener("click", e => { const t = e.target.closest("button"); 
     S.loginNome = $("#op") && $("#op").value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); return; }
   if (t.dataset.per) { S.per = +t.dataset.per; S.righe = null; render(); carica(); return; }
   if (t.dataset.can != null) { S.can = t.dataset.can; render(); window.scrollTo(0, 0); carica_((S.lista || []).slice(0, 6), "m"); return; }
-  if (t.id === "back") { S.can = null; render(); return; }
+  if (t.id === "back") { S.can = null; S.opF = ""; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.vista) { S.vista = t.dataset.vista; try { localStorage.setItem("za-foto-vista", S.vista); } catch {} render(); return; }
+  if (t.dataset.op != null) { S.opF = t.dataset.op; render(); return; }
+  if (t.dataset.clr) { S.q = ""; render(); const i = $("#q"); if (i) i.focus(); return; }
   if (t.dataset.dl) { scarica(S.lista[S.lb]); return; }
   if (t.dataset.fit) { resetZ(); applicaZ(); return; }
   if (t.dataset.zoom) { zoomA(Z.s * (+t.dataset.zoom > 0 ? 1.5 : 1 / 1.5)); return; }
