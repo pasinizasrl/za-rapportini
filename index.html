@@ -39,6 +39,11 @@ label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase
 .f:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
 textarea.f{min-height:96px;resize:vertical;text-transform:uppercase}
 .row{display:flex;gap:10px;align-items:center}
+.dataNav{display:flex;gap:8px;align-items:stretch}
+.dataNav .f{flex:1 1 auto;min-width:0;text-align:center;font-weight:600}
+.dnav{flex:0 0 54px;font-size:26px;line-height:1;padding:0;font-weight:700}
+.dnav:disabled{opacity:.35}
+.dGiorno{text-align:center;font-weight:600;color:var(--muted);margin:6px 0 4px;font-size:14px}
 .row > *{flex:1 1 0;min-width:0}
 .btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:11px 16px;font-weight:600;min-height:46px}
 .btn.pri{background:var(--accent);border-color:var(--accent);color:#1d1606}
@@ -101,6 +106,9 @@ const oggi = () => iso(new Date());
 const GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
 const itData = s => { const [y, m, d] = s.split("-"); return d + "." + m + "." + y; };
 const giorno = s => GIORNI[new Date(s + "T12:00:00").getDay()];
+const spostaGiorno = (s, n) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + n); return iso(d); };
+const etichettaGiorno = s => { if (!s) return ""; const g = giorno(s), t = oggi(); return (s === t ? "Oggi · " : s === spostaGiorno(t, -1) ? "Ieri · " : "") + g.charAt(0).toUpperCase() + g.slice(1) + " " + itData(s); };
+function aggData(v){ const t = oggi(); if (!v) v = t; if (v > t) v = t; const f = $("#fData"); f.value = v; S.edit.data = v; $("#dGiorno").textContent = etichettaGiorno(v); $("#dNext").disabled = v >= t; }
 function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 3200); }
 function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{3,4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
   let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
@@ -153,7 +161,9 @@ function renderForm(m){
   <h1>${E.id ? (ro ? "Rapportino approvato" : "Modifica rapportino") : "Nuovo rapportino"}</h1>
   ${ro ? `<div class="err ok" style="margin:0 0 12px">Approvato dall'ufficio: non si può più modificare.</div>` : ""}
   <div class="card">
-    <div class="row"><div><label class="l" for="fData">Data</label><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}></div></div>
+    <label class="l" for="fData">Data</label>
+    <div class="dataNav"><button class="btn dnav" id="dPrev" aria-label="Giorno prima" ${dis}>‹</button><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}><button class="btn dnav" id="dNext" aria-label="Giorno dopo" ${dis || E.data >= oggi() ? "disabled" : ""}>›</button></div>
+    <div class="dGiorno" id="dGiorno">${esc(etichettaGiorno(E.data))}</div>
     <label class="l" for="fCan">Cantiere / commessa</label>
     <input class="f" id="fCan" list="dlCan" value="${esc(p.cantiere)}" placeholder="Scrivi per cercare…" autocomplete="off" ${dis}>
   </div>
@@ -228,6 +238,7 @@ document.addEventListener("click", e => {
     const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
   if (t.id === "fab") { S.edit = nuovo(); S.view = "form"; render(); window.scrollTo(0, 0); return; }
   if (t.dataset.id) { const r = S.list.find(x => x.id === t.dataset.id); if (!r) return; S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" }); S.view = "form"; render(); window.scrollTo(0, 0); return; }
+  if (t.id === "dPrev" || t.id === "dNext") { aggData(spostaGiorno($("#fData").value || oggi(), t.id === "dPrev" ? -1 : 1)); return; }
   if (t.id === "back") { S.view = "lista"; S.edit = null; render(); return; }
   if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); return; }
   if (t.id === "addMt") { leggiForm(); S.edit.p.materiali.push({ desc: "", qta: "", um: "mc" }); render(); return; }
@@ -236,7 +247,7 @@ document.addEventListener("click", e => {
   if (t.id === "save") return salva();
   if (t.id === "del") return elimina();
 });
-document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value; if (["fIni", "fFin", "fPau"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
+document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value; if (e.target.id === "fData" && S.edit) aggData(e.target.value); if (["fIni", "fFin", "fPau"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("input", e => { if (["fIni", "fFin"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
 
