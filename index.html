@@ -102,7 +102,7 @@ const GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerd�
 const itData = s => { const [y, m, d] = s.split("-"); return d + "." + m + "." + y; };
 const giorno = s => GIORNI[new Date(s + "T12:00:00").getDay()];
 function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 3200); }
-function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
+function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{3,4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
   let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
   return { code, rest }; }
 const MSG = { PIN_ERRATO: "PIN errato.", DATA_NON_VALIDA: "Data non valida: puoi inserire rapportini degli ultimi 60 giorni.", NON_MODIFICABILE: "Questo rapportino è già stato approvato e non si può modificare." };
