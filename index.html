@@ -299,17 +299,9 @@ function renderForm(m){
     ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>`}
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
-  <div class="card"><h2>Materiali</h2>
-    ${(p.materiali || []).map((x, i) => `<div class="sub"><div class="row"><input class="f" data-mt="${i}" data-k="desc" value="${esc(x.desc)}" placeholder="Materiale" ${dis} style="text-transform:uppercase">
-      ${ro ? "" : `<button class="x" data-delmt="${i}" aria-label="Togli materiale">✕</button>`}</div>
-      <div class="row"><input class="f" type="number" inputmode="decimal" step="any" min="0" data-mt="${i}" data-k="qta" value="${esc(x.qta)}" placeholder="Quantità" ${dis}>
-      <select class="f" data-mt="${i}" data-k="um" ${dis}>${["mc", "t", "kg", "viaggi", "pz", "m", "mq", "l", "h"].map(u => `<option ${x.um === u ? "selected" : ""}>${u}</option>`).join("")}</select></div></div>`).join("") || `<p class="hint" style="margin:0">Nessun materiale.</p>`}
-    ${ro ? "" : `<button class="btn sm" id="addMt" style="margin-top:10px">+ Aggiungi materiale</button>`}
-  </div>
-  <div class="card"><h2>Lavori</h2>
-    <label class="l" for="fLav">Descrizione lavori</label><textarea class="f" id="fLav" placeholder="Cosa è stato fatto oggi" ${dis}>${esc(p.lavori)}</textarea></div></div>`}
+  </div>`}
   <div class="card">
-    <label class="l" for="fNote">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
+    <h2>Note</h2><label class="l" for="fNote" style="position:absolute;left:-9999px">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
   </div>
   ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
   ${E.id && !ro ? `<button class="btn danger big" id="del" style="margin-top:10px;background:transparent">Elimina rapportino</button>` : ""}
@@ -319,12 +311,12 @@ function renderForm(m){
 function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   E.data = $("#fData").value; p.ferie = !!($("#fFerie") && $("#fFerie").checked); if (!p.ferie) delete p.ferie;
   const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !p.ferie) p.permesso = pm; else delete p.permesso;
-  if ($("#fCan")) { p.cantiere = $("#fCan").value.trim(); p.lavori = U($("#fLav").value); }
+  if ($("#fCan")) p.cantiere = $("#fCan").value.trim();
   p.note = $("#fNote").value.trim();
   document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (!x) return; const k = e.dataset.k, v = k === "ore" ? e.value : U(e.value); if ((k === "desc" || k === "lav") && !v) delete x[k]; else x[k] = v; });
   document.querySelectorAll("[data-ac]").forEach(e => { const [i, j] = e.dataset.ac.split("|").map(Number), x = p.mezzi[i]; if (!x) return; normMz(x); while (x.accs.length <= j) x.accs.push({ acc: "", ore: "" }); x.accs[j][e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
   p.ore = p.ferie ? 0 : calcOre(p);
-  document.querySelectorAll("[data-mt]").forEach(e => { const x = p.materiali[+e.dataset.mt]; if (x) x[e.dataset.k] = e.dataset.k === "desc" ? U(e.value) : e.value; }); }
+ }
 
 async function login(){
   const nome = $("#op") && $("#op").value; S.loginNome = nome;
