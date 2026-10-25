@@ -131,6 +131,20 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .sub .row{margin-top:6px}
 .x{flex:0 0 auto !important;width:44px;min-height:44px;border:0;background:none;color:var(--bad);font-size:20px}
 .rap{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:10px;overflow:hidden;color:var(--ink)}
+.rap{cursor:default}
+.rapApri{display:block;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
+.detTog{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:9px 12px;font:inherit;font-weight:700;color:var(--ink);text-align:left;cursor:pointer}
+.detTog b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#1d1606;font-size:17px;line-height:1}
+.det{padding:4px 12px 12px;border-top:1px dashed var(--line)}
+.detL{padding:8px 0;border-bottom:1px solid var(--line)}
+.detL:last-child{border-bottom:0}
+.detT{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.detT b{color:var(--ink);font-size:14px}
+.detR{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.detR span:last-child{font-weight:700;white-space:nowrap}
+.detR.acc{padding-left:12px;border-left:3px solid var(--accent);margin-left:2px;font-size:14px}
+.detN{margin-top:8px;font-size:14px}
+.det .ds{color:var(--blue);font-weight:700;text-transform:uppercase;margin-top:4px}
 .rap .h{background:var(--steel);color:var(--on-steel);padding:9px 12px;display:flex;gap:8px;align-items:center;border-bottom:3px solid var(--accent)}
 .rap .h .d{font-weight:700;text-transform:capitalize}
 .rap .h .o{margin-left:auto;font-family:var(--font-display);font-size:20px;font-weight:700;color:#e8e22a}
@@ -264,9 +278,15 @@ function renderLista(m){
     ${S.calOpen ? calHTML(perData) : ""}` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
     if (p.ferie) return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">—</span></div>
       <div class="c"><div class="cm" style="color:var(--blue)">Ferie</div>${p.note ? `<div class="hint">${esc(p.note)}</div>` : ""}</div></button>`;
-    return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
-      <div class="c">${p.cantiere ? `<div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>` : ""}${[...new Set([p.lavorazione].concat((p.mezzi || []).map(x => x.lav)).filter(Boolean))].map(l => `<span class="lavz">${esc(l)}</span> `).join("")}${p.permesso > 0 ? `<div class="permR">Permesso ${fmtOre(p.permesso)} h</div>` : ""}${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}
-      ${(p.mezzi || []).filter(x => x.mezzo).length ? `<div class="hint" style="margin-top:4px">${(p.mezzi || []).filter(x => x.mezzo).map(x => esc(U(x.mezzo)) + (x.ore ? " · " + fmtOre(x.ore) + " h" : "") + (x.accs || (x.acc ? [{ acc: x.acc, ore: x.ore }] : [])).map(a => " + " + esc(U(a.acc)) + (a.ore ? " " + fmtOre(a.ore) + " h" : "")).join("")).join(" — ")}</div>` : ""}</div></button>`; }).join("")
+    const det = (S.det || {})[r.id], ms = (p.mezzi || []).filter(x => x.mezzo || x.ore), accs = x => x.accs || (x.acc ? [{ acc: x.acc, ore: x.ore }] : []);
+    return `<div class="rap"><button class="rapApri" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
+      <div class="c">${p.cantiere ? `<div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>` : ""}${p.permesso > 0 ? `<div class="permR">Permesso ${fmtOre(p.permesso)} h</div>` : ""}</div></button>
+      ${ms.length || p.note || p.lavori ? `<button class="detTog" data-det="${esc(r.id)}" aria-expanded="${det ? "true" : "false"}"><b>${det ? "−" : "+"}</b> ${det ? "Nascondi dettagli" : "Dettagli"}${det ? "" : ` <span class="hint">${ms.length} ${ms.length === 1 ? "lavorazione" : "lavorazioni"}</span>`}</button>` : ""}
+      ${det ? `<div class="det">${ms.map((x, i) => `<div class="detL"><div class="detT">Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}</div>
+        <div class="detR"><b>${esc(U(x.mezzo))}</b><span>${fmtOre(x.ore)} h</span></div>
+        ${accs(x).map(a => `<div class="detR acc"><span>${esc(U(a.acc))}</span><span>${a.ore !== "" && a.ore != null ? fmtOre(String(a.ore).replace(",", ".")) + " h" : ""}</span></div>`).join("")}
+        ${x.desc ? `<div class="ds">${esc(x.desc)}</div>` : ""}</div>`).join("")}
+        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}</div>` : ""}</div>`; }).join("")
     : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
 }
 const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
@@ -406,6 +426,7 @@ document.addEventListener("click", e => {
   if (t.id === "out") return esci("Sei uscito.");
   if (t.dataset.k) { const k = t.dataset.k; if (k === "del") S.pinIn = S.pinIn.slice(0, -1); else if (k === "ok") return login(); else if (S.pinIn.length < 6) S.pinIn += k;
     const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
+  if (t.dataset.det) { S.det = S.det || {}; S.det[t.dataset.det] = !S.det[t.dataset.det]; render(); return; }
   if (t.id === "calTog") { S.calOpen = !S.calOpen; try { localStorage.setItem("za-rap-cal", S.calOpen ? "1" : ""); } catch {} render(); return; }
   if (t.dataset.calm) { const [y, mo] = S.calM.split("-").map(Number), d = new Date(y, mo - 1 + +t.dataset.calm, 1, 12); S.calM = iso(d).slice(0, 7); render(); return; }
   if (t.dataset.cal) { const rs = (S.perData || {})[t.dataset.cal] || []; if (rs.length) { apri(rs[0]); return; } S.edit = nuovo(t.dataset.cal); S.view = "form"; render(); window.scrollTo(0, 0); return; }
