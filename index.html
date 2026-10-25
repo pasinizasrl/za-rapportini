@@ -316,13 +316,17 @@ function timbra(g, w, h, righe){ const fs = Math.max(16, Math.round(w * .034)), 
   g.textBaseline = "top"; out.forEach(([r, i], n) => { g.fillStyle = i === 0 ? "#e8e22a" : "#ffffff"; g.fillText(r, pad, h - bh + pad * .6 + n * lh); }); }
 async function aggiungiFoto(files){ leggiForm(); const E = S.edit, p = E.p; if (!p.cantiere) { toast("Scegli prima il cantiere, poi aggiungi le foto."); return; }
   S.upl = S.upl || [];
-  for (const file of files) { const u = { th: "" }; S.upl.push(u); render();
-    try { try { await document.fonts.load('700 40px "Barlow Condensed"'); } catch {} const im = await caricaImg(file); u.th = ridimensiona(im, 180, .6); render(); const big = ridimensiona(im, 1400, .7, [p.cantiere, itData(E.data) + "  ·  " + S.me]);
+  try { await document.fonts.load('700 40px "Barlow Condensed"'); } catch {}
+  const coda = files.map(file => { const u = { th: "" }; S.upl.push(u); return { file, u }; }); render();
+  const lavora = async ({ file, u }) => {
+    try { const im = await caricaImg(file); u.th = ridimensiona(im, 180, .6); render(); const big = ridimensiona(im, 1400, .7, [p.cantiere, itData(E.data) + "  ·  " + S.me]);
       const r = await fetch(S.el.foto_url, { method: "POST", body: JSON.stringify({ nome: S.me, pin: S.pin, cantiere: p.cantiere, data: E.data, b64: big.split(",")[1] }) });
       const j = await r.json(); if (!j.ok) throw new Error(j.err || "errore");
       (p.foto = p.foto || []).push({ id: j.id, url: j.url, cartella: j.cartella, nome: j.nome, th: u.th, timbro: true }); S.upl.splice(S.upl.indexOf(u), 1); }
     catch (e) { u.err = true; toast("Foto non inviata: " + (e.message || "controlla la connessione")); }
-    if (S.view === "form") { leggiForm(); render(); } }
+    if (S.view === "form") { leggiForm(); render(); } };
+  const pool = async () => { while (coda.length) await lavora(coda.shift()); };
+  await Promise.all([pool(), pool()]); // due foto alla volta
   if (S.upl.some(u => u.err)) setTimeout(() => { S.upl = (S.upl || []).filter(u => !u.err); if (S.view === "form") { leggiForm(); render(); } }, 4000); }
 function normMz(x){ if (x.acc) { x.accs = (x.accs || []).concat([{ acc: x.acc, ore: x.ore || "" }]); delete x.acc; } if (!Array.isArray(x.accs)) x.accs = []; return x; }
 function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" });
