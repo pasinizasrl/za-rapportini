@@ -77,6 +77,7 @@ textarea.f.grow{resize:none;overflow:hidden;min-height:0;line-height:1.3;display
 .f.req,.addMz.req{border:2px solid var(--bad) !important;background:var(--bad-soft) !important;box-shadow:0 0 0 3px rgba(176,53,45,.15)}
 .f.req::placeholder{color:var(--bad);opacity:.8}
 textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase;color:var(--blue);font-weight:700;min-height:64px}
+.mzN b{font-size:16px;color:var(--ink);letter-spacing:.04em;font-weight:800}
 .mzN{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
 .addAc{display:inline-flex;align-items:center;gap:6px;margin:0;background:none;border:1px dashed var(--line);border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);min-height:38px}
 .addAc b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#1d1606;font-size:16px;line-height:1}
@@ -249,6 +250,7 @@ function aggBenna(i){ const x = S.edit && S.edit.p.mezzi[i]; if (!x) return; con
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"]:not(.lock)`).forEach(a => a.classList.toggle("bad", over));
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"].lock`).forEach(a => { a.placeholder = first ? fmtOre(v) : "0"; first = false; }); }
 const isBenna = (a, j) => U(a.acc) === "BENNA" || (!j && !String(a.acc || "").trim());
+const mzTitolo = (x, i) => `Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}`;
 function normMz(x){ if (x.acc) { x.accs = (x.accs || []).concat([{ acc: x.acc, ore: x.ore || "" }]); delete x.acc; } if (!Array.isArray(x.accs)) x.accs = []; return x; }
 function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" });
   { const q = S.edit.p; if (q.lavorazione) { if (!q.mezzi[0].lav) q.mezzi[0].lav = q.lavorazione; delete q.lavorazione; } }
@@ -289,7 +291,7 @@ function renderForm(m){
   ${p.ferie ? `<div class="card ferieBox">Giornata di <b>ferie</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
   <div class="card"><h2>Macchine / mezzi d'opera</h2>
     ${(p.mezzi || []).map((x, i) => { normMz(x); const accs = x.accs.length ? x.accs : [{ acc: "", ore: "" }];
-      return `<div class="sub"><div class="mzN">Lavorazione ${i + 1}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
+      return `<div class="sub"><div class="mzN" id="mzN-${i}">${mzTitolo(x, i)}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore" aria-label="Ore macchina" ${dis}>
         ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli macchina">✕</button>`}</div>
       ${accs.map((a, j) => { const bn = isBenna(a, j); return `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="${j ? "Accessorio" : "BENNA (predefinita)"}" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
@@ -420,9 +422,11 @@ document.addEventListener("click", e => {
   if (t.id === "del") return elimina();
 });
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
+  if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); if (lk !== isBenna({ acc: e.target.value }, j)) { leggiForm(); render(); } return; }
   if (e.target.id === "fFerie" && S.edit) { leggiForm(); if (S.edit.p.ferie) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
-document.addEventListener("input", e => { if (e.target.classList && e.target.classList.contains("mzD")) autoH(e.target); if (e.target.classList && e.target.classList.contains("req") && String(e.target.value).trim()) e.target.classList.remove("req"); });
+document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
+  if (e.target.classList && e.target.classList.contains("mzD")) autoH(e.target); if (e.target.classList && e.target.classList.contains("req") && String(e.target.value).trim()) e.target.classList.remove("req"); });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { leggiForm(); aggBenna(+e.target.dataset.ac.split("|")[0]); return; }
   if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit && $("#oreTot")) { leggiForm(); aggBenna(+e.target.dataset.mz); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
