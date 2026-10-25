@@ -39,6 +39,15 @@ label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase
 .f:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
 textarea.f{min-height:96px;resize:vertical;text-transform:uppercase}
 .row{display:flex;gap:10px;align-items:center}
+.sug{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--panel);border:2px solid var(--accent);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.25);max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sug button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;font:inherit;font-size:16px;line-height:1.3;color:var(--ink);white-space:normal;cursor:pointer}
+.sug button:last-child{border-bottom:0}
+.sug button:active,.sug button.on{background:var(--good-soft)}
+.sug .c1{display:block;font-weight:700;font-size:15px;color:var(--accent)}
+.sug .c2{display:block;font-weight:600}
+.sug mark{background:#f3e27a;color:inherit;border-radius:2px;padding:0 1px}
+.sug .vuoto{padding:12px 14px;color:var(--muted)}
+.sugw{position:relative}
 .dataNav{display:flex;gap:8px;align-items:stretch}
 .dataNav .f{flex:1 1 auto;min-width:0;text-align:center;font-weight:600}
 .dnav{flex:0 0 54px;font-size:26px;line-height:1;padding:0;font-weight:700}
@@ -165,7 +174,7 @@ function renderForm(m){
     <div class="dataNav"><button class="btn dnav" id="dPrev" aria-label="Giorno prima" ${dis}>‹</button><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}><button class="btn dnav" id="dNext" aria-label="Giorno dopo" ${dis || E.data >= oggi() ? "disabled" : ""}>›</button></div>
     <div class="dGiorno" id="dGiorno">${esc(etichettaGiorno(E.data))}</div>
     <label class="l" for="fCan">Cantiere / commessa</label>
-    <input class="f" id="fCan" list="dlCan" value="${esc(p.cantiere)}" placeholder="Scrivi per cercare…" autocomplete="off" ${dis}>
+    <div class="sugw"><input class="f" id="fCan" data-sug="cantieri" value="${esc(p.cantiere)}" placeholder="Scrivi per cercare…" autocomplete="off" ${dis}></div>
   </div>
   <div class="card"><h2>Orario</h2>
     <div class="row"><div><label class="l" for="fIni">Inizio</label><input class="f" type="time" id="fIni" value="${esc(p.inizio)}" ${dis}></div>
@@ -175,7 +184,7 @@ function renderForm(m){
     <div class="tot"><span>ORE LAVORATE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
   <div class="card"><h2>Mezzi usati</h2>
-    ${(p.mezzi || []).map((x, i) => `<div class="sub"><div class="row"><input class="f" list="dlMez" data-mz="${i}" data-k="mezzo" value="${esc(x.mezzo)}" placeholder="Mezzo" autocomplete="off" ${dis} style="text-transform:uppercase">
+    ${(p.mezzi || []).map((x, i) => `<div class="sub"><div class="row"><div class="sugw"><input class="f" data-sug="mezzi" data-mz="${i}" data-k="mezzo" value="${esc(x.mezzo)}" placeholder="Mezzo" autocomplete="off" ${dis} style="text-transform:uppercase"></div>
       ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli mezzo">✕</button>`}</div>
       <div class="row"><input class="f" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore macchina" ${dis}></div></div>`).join("")}
     ${ro ? "" : `<button class="btn sm" id="addMz" style="margin-top:10px">+ Aggiungi mezzo</button>`}
@@ -231,6 +240,27 @@ async function elimina(){
   try { const r = await rpc("rap_elimina", { p_nome: S.me, p_pin: S.pin, p_id: E.id }); if (!r.ok) { $("#ferr").innerHTML = `<div class="err">${esc(msgErr(r.err) || "Non eliminato.")}</div>`; return; }
     await caricaMiei(); S.view = "lista"; S.edit = null; render(); toast("Rapportino eliminato."); } catch { $("#ferr").innerHTML = `<div class="err">Connessione non riuscita.</div>`; }
 }
+
+/* suggerimenti grandi al posto della tendina del telefono */
+const sugBox = document.createElement("div"); sugBox.className = "sug"; sugBox.hidden = true; let sugIn = null;
+function evid(t, ws){ let h = esc(t); ws.forEach(w => { if (w) h = h.replace(new RegExp("(" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig"), "<mark>$1</mark>"); }); return h; }
+function mostraSug(inp){
+  const ws = inp.value.trim().toUpperCase().split(/\s+/).filter(Boolean).map(esc);
+  const all = (S.el && S.el[inp.dataset.sug]) || [], hit = all.filter(x => { const u = String(x).toUpperCase(); return ws.every(w => u.includes(w.replace(/&amp;/g, "&"))); }).slice(0, 60);
+  inp.parentElement.appendChild(sugBox); sugIn = inp;
+  sugBox.innerHTML = hit.length ? hit.map(x => { const i = String(x).indexOf(" : ");
+    if (inp.dataset.sug === "cantieri" && i > 0) { const a = x.slice(0, i), b = x.slice(i + 3), j = a.indexOf(" - ");
+      return `<button type="button" data-v="${esc(x)}">${j > 0 ? `<span class="c1">${evid(a.slice(0, j), ws)}</span><span class="c2">${evid(a.slice(j + 3), ws)}</span>` : `<span class="c2">${evid(a, ws)}</span>`}${evid(b, ws)}</button>`; }
+    return `<button type="button" data-v="${esc(x)}"><span class="c2">${evid(x, ws)}</span></button>`; }).join("")
+    : `<div class="vuoto">Nessun risultato: puoi scrivere tu il testo.</div>`;
+  sugBox.hidden = false; sugBox.scrollTop = 0;
+}
+function chiudiSug(){ sugBox.hidden = true; sugIn = null; }
+document.addEventListener("focusin", e => { if (e.target.dataset && e.target.dataset.sug && !e.target.disabled) mostraSug(e.target); });
+document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.sug) mostraSug(e.target); });
+document.addEventListener("focusout", e => { if (e.target === sugIn) setTimeout(() => { if (document.activeElement !== sugIn) chiudiSug(); }, 200); });
+sugBox.addEventListener("pointerdown", e => e.preventDefault());
+sugBox.addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b || !sugIn) return; e.stopPropagation(); const inp = sugIn; inp.value = b.dataset.v; chiudiSug(); inp.blur(); inp.dispatchEvent(new Event("change", { bubbles: true })); });
 document.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
   if (t.id === "out") return esci("Sei uscito.");
