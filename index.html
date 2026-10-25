@@ -229,6 +229,10 @@ function calHTML(perData){
     <div class="leg"><span><i class="ok"></i>Compilato</span><span><i class="manca"></i>Da compilare</span><span><i class="fer"></i>Ferie</span><span><i class="perm"></i>Permesso</span><span><i class="off"></i>Sabato, domenica e festivi</span></div>
     <p class="hint" style="margin:6px 0 0">Tocca un giorno rosso per compilarlo, uno verde per aprirlo.</p></div>`;
 }
+const num = v => +String(v || "").replace(",", ".") || 0;
+function oreBenna(x){ const altri = (x.accs || []).reduce((t, a, j) => t + (isBenna(a, j) ? 0 : num(a.ore)), 0); return Math.max(0, Math.round((num(x.ore) - altri) * 100) / 100); }
+function aggBenna(i){ const x = S.edit && S.edit.p.mezzi[i]; if (!x) return; const v = oreBenna(x); let first = true;
+  document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"].lock`).forEach(a => { a.placeholder = first ? fmtOre(v) : "0"; first = false; }); }
 const isBenna = (a, j) => U(a.acc) === "BENNA" || (!j && !String(a.acc || "").trim());
 function normMz(x){ if (x.acc) { x.accs = (x.accs || []).concat([{ acc: x.acc, ore: x.ore || "" }]); delete x.acc; } if (!Array.isArray(x.accs)) x.accs = []; return x; }
 function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" });
@@ -275,7 +279,7 @@ function renderForm(m){
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore" aria-label="Ore macchina" ${dis}>
         ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli macchina">✕</button>`}</div>
       ${accs.map((a, j) => { const bn = isBenna(a, j); return `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="${j ? "Accessorio" : "BENNA (predefinita)"}" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
-        <input class="f oreI${bn ? " lock" : ""}" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(bn ? "" : a.ore || "")}" placeholder="${bn ? esc(x.ore || "—") : "Ore"}" aria-label="Ore accessorio" ${bn ? 'readonly tabindex="-1" title="Benna: stesse ore della macchina"' : ""} ${dis}>
+        <input class="f oreI${bn ? " lock" : ""}" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(bn ? "" : a.ore || "")}" placeholder="${bn ? (accs.findIndex((b, k) => isBenna(b, k)) === j ? fmtOre(oreBenna(x)) : "0") : "Ore"}" aria-label="Ore accessorio" ${bn ? 'readonly tabindex="-1" title="Benna: ore della macchina meno quelle degli altri accessori"' : ""} ${dis}>
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`; }).join("")}
       ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>${i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>` : ""}`}</div>`; }).join("")}
     ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>`}
@@ -329,9 +333,11 @@ async function salva(){
     else {
       if (!p.cantiere) { er.innerHTML = `<div class="err">Indica il cantiere (oppure segna ferie o permesso).</div>`; $("#fCan").focus(); return; }
       if (!p.ore) { er.innerHTML = `<div class="err">Indica almeno una macchina con le ore.</div>`; return; }
+      const troppe = (p.mezzi || []).find(x => { normMz(x); return x.mezzo && x.accs.reduce((t, b, j) => t + (isBenna(b, j) ? 0 : num(b.ore)), 0) > num(x.ore); });
+      if (troppe) { er.innerHTML = `<div class="err">${esc(U(troppe.mezzo))}: le ore degli accessori superano le ore della macchina.</div>`; return; }
     }
     delete p.inizio; delete p.fine; delete p.pausa;
-    p.mezzi = (p.mezzi || []).map(x => { normMz(x); if (x.mezzo) { if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); if (!x.accs[0].acc) x.accs[0].acc = "BENNA"; x.accs.forEach(a => { if (U(a.acc) === "BENNA") a.ore = x.ore || ""; }); } x.accs = x.accs.filter(a => a.acc || a.ore); if (!x.accs.length) delete x.accs; return x; }).filter(x => x.mezzo || x.ore || x.accs); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
+    p.mezzi = (p.mezzi || []).map(x => { normMz(x); if (x.mezzo) { if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); if (!x.accs[0].acc) x.accs[0].acc = "BENNA"; const ob = oreBenna(x); let first = true; x.accs.forEach(a => { if (U(a.acc) === "BENNA") { a.ore = first ? (ob ? String(ob) : "0") : "0"; first = false; } }); } x.accs = x.accs.filter(a => a.acc || a.ore); if (!x.accs.length) delete x.accs; return x; }).filter(x => x.mezzo || x.ore || x.accs); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
   }
   const b = $("#save"); b.disabled = true; b.textContent = "Salvataggio…";
   try { const r = await rpc("rap_salva", { p_nome: S.me, p_pin: S.pin, p_id: E.id, p_data: E.data, p_payload: p });
@@ -385,7 +391,7 @@ document.addEventListener("click", e => {
   if (t.id === "back") { S.view = "lista"; S.edit = null; render(); return; }
   if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); const n = S.edit.p.mezzi.length - 1; setTimeout(() => { const el = document.querySelector(`[data-mz="${n}"][data-k="mezzo"]`); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 30); return; }
   if (t.id === "addMt") { leggiForm(); S.edit.p.materiali.push({ desc: "", qta: "", um: "mc" }); render(); return; }
-  if (t.dataset.addac) { leggiForm(); const x = normMz(S.edit.p.mezzi[+t.dataset.addac]); if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); x.accs.push({ acc: "", ore: x.ore || "" }); render(); setTimeout(() => { const el = document.querySelector(`[data-ac="${t.dataset.addac}|${x.accs.length - 1}"][data-k="acc"]`); el && el.focus(); }, 30); return; }
+  if (t.dataset.addac) { leggiForm(); const x = normMz(S.edit.p.mezzi[+t.dataset.addac]); if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); x.accs.push({ acc: "", ore: "" }); render(); setTimeout(() => { const el = document.querySelector(`[data-ac="${t.dataset.addac}|${x.accs.length - 1}"][data-k="acc"]`); el && el.focus(); }, 30); return; }
   if (t.dataset.delac) { leggiForm(); const [i, j] = t.dataset.delac.split("|").map(Number), x = normMz(S.edit.p.mezzi[i]); x.accs.splice(j, 1); render(); return; }
   if (t.dataset.delmz) { leggiForm(); S.edit.p.mezzi.splice(+t.dataset.delmz, 1); render(); return; }
   if (t.dataset.delmt) { leggiForm(); S.edit.p.materiali.splice(+t.dataset.delmt, 1); render(); return; }
@@ -395,7 +401,8 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
   if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); if (lk !== isBenna({ acc: e.target.value }, j)) { leggiForm(); render(); } return; }
   if (e.target.id === "fFerie" && S.edit) { leggiForm(); if (S.edit.p.ferie) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
-document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit && $("#oreTot")) { document.querySelectorAll(`[data-ac^="${e.target.dataset.mz}|"][data-k="ore"].lock`).forEach(a => a.placeholder = e.target.value || "—"); leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
+document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { leggiForm(); aggBenna(+e.target.dataset.ac.split("|")[0]); return; }
+  if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit && $("#oreTot")) { leggiForm(); aggBenna(+e.target.dataset.mz); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
 
 (async () => {
