@@ -388,9 +388,6 @@ function renderForm(m){
     <label class="l" for="fData">Data</label>
     <div class="dataNav"><button class="btn dnav" id="dPrev" aria-label="Giorno prima" ${dis}>‹</button><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}><button class="btn dnav" id="dNext" aria-label="Giorno dopo" ${dis || E.data >= oggi() ? "disabled" : ""}>›</button></div>
     <div class="dGiorno" id="dGiorno">${esc(etichettaGiorno(E.data))}</div>
-    <div class="assenze"><label class="ferie${p.ferie ? " on" : ""}"><input type="checkbox" id="fFerie" ${p.ferie ? "checked" : ""} ${dis}><span>Ferie<small>giornata intera</small></span></label>
-      <label class="ferie mal${p.malattia ? " on" : ""}"><input type="checkbox" id="fMal" ${p.malattia ? "checked" : ""} ${dis}><span>Malattia<small>giornata intera</small></span></label>
-      <label class="perm"><span>Permesso<small>ore</small></span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fPerm" value="${esc(p.permesso || "")}" placeholder="0" ${dis || (fuori(p) ? "disabled" : "")}></label></div>
     ${fuori(p) ? "" : `<label class="l" for="fCan">Cantiere / commessa</label>
     <div class="sugw"><textarea rows="1" class="f grow" id="fCan" data-sug="cantieri"  placeholder="Scrivi per cercare…" autocomplete="off" ${dis}>${esc(p.cantiere)}</textarea></div>`}
   </div>
@@ -416,16 +413,19 @@ function renderForm(m){
   <div class="card">
     <h2>Note</h2><label class="l" for="fNote" style="position:absolute;left:-9999px">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
   </div>
-  ${fuori(p) ? "" : `<div class="card ecCard"><h2>Ore lavoratore <small>(Cassa Edile · Edilconnect)</small></h2>
-    <div class="ecG">
+  <div class="card ecCard"><h2>Cassa Edile CNCE <small>(Edilconnect)</small></h2>
+    <div class="assenze"><label class="ferie${p.ferie ? " on" : ""}"><input type="checkbox" id="fFerie" ${p.ferie ? "checked" : ""} ${dis}><span>Ferie<small>giornata intera</small></span></label>
+      <label class="ferie mal${p.malattia ? " on" : ""}"><input type="checkbox" id="fMal" ${p.malattia ? "checked" : ""} ${dis}><span>Malattia<small>giornata intera</small></span></label>
+      <label class="perm"><span>Permesso<small>ore</small></span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fPerm" value="${esc(p.permesso || "")}" placeholder="0" ${dis || (fuori(p) ? "disabled" : "")}></label></div>
+    ${fuori(p) ? "" : `<label class="l">Ore</label><div class="ecG">
       <label><span>Ordinarie</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fOrd" value="${esc(p.ord ?? 8)}" ${dis}></label>
       <label><span>Straord.</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fStra" value="${esc(p.stra || "")}" placeholder="0" ${dis}></label>
       <label><span>Trasferta</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fTrasf" value="${esc(p.trasf || "")}" placeholder="0" ${dis}></label>
     </div>
     <label class="l">Pranzo</label>
     <div class="pasto"><label class="${p.pasto === "rist" ? "on" : ""}"><input type="checkbox" id="fPastoR" ${p.pasto === "rist" ? "checked" : ""} ${dis}>🍽 Ristorante aziendale</label><label class="${p.pasto === "casa" ? "on" : ""}"><input type="checkbox" id="fPastoC" ${p.pasto === "casa" ? "checked" : ""} ${dis}>🏠 Mangiato a casa</label></div>
-    <label class="l" for="fNoteEc">Note ore</label><textarea class="f" id="fNoteEc" style="min-height:56px" placeholder="Es. trasferta a Mantova, rientro alle 20…" ${dis}>${esc(p.noteEc || "")}</textarea>
-    <p class="hint" style="margin:6px 0 0">Ferie, malattia e permessi si segnano in alto, sotto la data.</p></div>`}
+    <label class="l" for="fNoteEc">Note ore</label><textarea class="f" id="fNoteEc" style="min-height:56px" placeholder="Es. trasferta a Mantova, rientro alle 20…" ${dis}>${esc(p.noteEc || "")}</textarea>`}
+    ${fuori(p) ? `<p class="hint" style="margin:8px 0 0">Con ferie o malattia non servono cantiere, macchine e ore: scrivi eventuali note sopra e salva.</p>` : ""}</div>
   ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
   ${E.id && !ro ? `<button class="btn danger big" id="del" style="margin-top:10px;background:transparent">Elimina rapportino</button>` : ""}
   <div id="ferr"></div>`;
