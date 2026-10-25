@@ -115,6 +115,14 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .ceB{margin-left:auto;background:#1f6f43;color:#fff;font:700 11px/1 Inter,system-ui,sans-serif;letter-spacing:.04em;padding:4px 6px;border-radius:6px}
 .rap .h .ceB+.o{margin-left:8px}
 .rap .h .o,.rap .h .chip,.rap .h .ceB{white-space:nowrap;flex-shrink:0}
+.giorno{scroll-margin-top:90px;border:2px solid var(--accent,#d4950f);border-radius:12px;padding:10px;margin:0 0 14px;background:var(--panel2,#f6f3ea)}
+.giornoH{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.giornoH b{display:block;font-size:17px}.giornoH span{font-size:13px;color:var(--muted,#667)}
+.giorno .rap{margin-bottom:8px}.giornoN{width:100%}
+.sfoglia{display:flex;align-items:center;gap:10px;background:#263a3e;color:#fff;border-radius:10px;padding:8px;margin:0 0 12px}
+.sfoglia>div{flex:1;text-align:center}.sfoglia b{display:block;font-size:15px}
+.sfoglia span{display:flex;gap:5px;justify-content:center;margin-top:4px}.sfoglia i{width:8px;height:8px;border-radius:50%;background:#ffffff55}.sfoglia i.on{background:#e8e22a}
+.sfoglia .btn{font-size:22px;min-width:48px;padding:6px 0}
 .cnceAltrove{border-style:dashed;background:var(--panel2)}
 .ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
 .ecG label{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
@@ -367,16 +375,8 @@ const fuori = p => !!(p && (p.ferie || p.malattia));
 function normMz(x){ if (x.acc) { x.accs = (x.accs || []).concat([{ acc: x.acc, ore: x.ore || "" }]); delete x.acc; } if (!Array.isArray(x.accs)) x.accs = []; return x; }
 function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" });
   { const q = S.edit.p; if (q.lavorazione) { if (!q.mezzi[0].lav) q.mezzi[0].lav = q.lavorazione; delete q.lavorazione; } }
-  S.view = "form"; render(); window.scrollTo(0, 0); }
-function renderLista(m){
-  const L = S.list, perData = {}; L.forEach(r => (perData[r.data] = perData[r.data] || []).push(r)); S.perData = perData;
-  const nM = mancanti(perData);
-  const gm = giorniMancanti(perData), gg = s => GIORNI[new Date(s + "T12:00:00").getDay()].slice(0, 3) + " " + s.slice(8) + "/" + s.slice(5, 7);
-  m.innerHTML = `<div class="listaH"><h1>I miei rapportini</h1><button class="btn pri fab" id="fab">+ Nuovo rapportino</button></div>
-    ${(S.avvisi || []).map(a => `<div class="avv"><div class="avvT">📢 Messaggio di servizio <span>${esc(a.creato)}</span></div><div class="avvB">${esc(a.testo)}</div><button class="btn sm" data-letto="${esc(a.id)}">✓ Ho letto</button></div>`).join("")}
-    ${gm.length ? `<div class="manc"><div class="mancT">⚠️ ${gm.length === 1 ? "Ti manca 1 rapportino" : `Ti mancano ${gm.length} rapportini`}</div><div class="mancB">${gm.map(s => `<button data-cal="${s}">${esc(gg(s))}</button>`).join("")}</div><div class="hint" style="margin-top:4px">Tocca un giorno per compilarlo.</div></div>` : ""}
-    <button class="calTog${S.calOpen ? " on" : ""}" id="calTog"><span>📅 Calendario del mese</span>${nM ? `<span class="chip bad">${nM} da compilare</span>` : `<span class="chip ok">Tutto compilato</span>`}<span class="car">${S.calOpen ? "▲" : "▼"}</span></button>
-    ${S.calOpen ? calHTML(perData) : ""}` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
+  S.view = "form"; render(); leggiForm(); S.edit.snap = JSON.stringify(S.edit.p); window.scrollTo(0, 0); }
+function cardRap(r){ const p = r.payload || {}, c = parseCant(p.cantiere);
     if (fuori(p)) return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">—</span></div>
       <div class="c"><div class="cm" style="color:${p.malattia ? "#7a3d8f" : "var(--blue)"}">${p.malattia ? "Malattia" : "Ferie"}</div>${p.note ? `<div class="hint">${esc(p.note)}</div>` : ""}</div></button>`;
     const det = (S.det || {})[r.id], ms = (p.mezzi || []).filter(x => x.mezzo || x.ore), accs = x => x.accs || (x.acc ? [{ acc: x.acc, ore: x.ore }] : []);
@@ -387,7 +387,20 @@ function renderLista(m){
         <div class="detR"><b>${esc(U(x.mezzo))}</b><span>${fmtOre(x.ore)} h</span></div>
         ${accs(x).map(a => `<div class="detR acc"><span>${esc(U(a.acc))}</span><span>${a.ore !== "" && a.ore != null ? fmtOre(String(a.ore).replace(",", ".")) + " h" : ""}</span></div>`).join("")}
         ${x.desc ? `<div class="ds">${esc(x.desc)}</div>` : ""}</div>`).join("")}
-        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${p.ord != null ? `<div class="detN"><b>Ore:</b> ordinarie ${fmtOre(p.ord)}${p.stra ? " · straordinarie " + fmtOre(p.stra) : ""}${p.trasf ? " · trasferta " + fmtOre(p.trasf) : ""}${p.permesso ? " · permesso " + fmtOre(p.permesso) : ""}${p.pasto ? " · " + (p.pasto === "rist" ? "🍽 ristorante" : "🏠 a casa") : ""}${p.noteEc ? `<br><span class="hint">${esc(p.noteEc)}</span>` : ""}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><button class="fotoV" data-vedi="${esc(f.th || "")}" aria-label="Ingrandisci">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</button></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }).join("")
+        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${p.ord != null ? `<div class="detN"><b>Ore:</b> ordinarie ${fmtOre(p.ord)}${p.stra ? " · straordinarie " + fmtOre(p.stra) : ""}${p.trasf ? " · trasferta " + fmtOre(p.trasf) : ""}${p.permesso ? " · permesso " + fmtOre(p.permesso) : ""}${p.pasto ? " · " + (p.pasto === "rist" ? "🍽 ristorante" : "🏠 a casa") : ""}${p.noteEc ? `<br><span class="hint">${esc(p.noteEc)}</span>` : ""}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><button class="fotoV" data-vedi="${esc(f.th || "")}" aria-label="Ingrandisci">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</button></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }
+function giornoHTML(perData){ const d = S.giorno, rs = d && perData[d]; if (!rs || rs.length < 2) return "";
+  const tot = rs.reduce((t, r) => t + (+(r.payload || {}).ore || 0), 0);
+  return `<div class="giorno" id="giornoBox"><div class="giornoH"><div><b>${esc(giorno(d))} ${esc(itData(d))}</b><span>${rs.length} rapportini · ${fmtOre(tot)} h macchine</span></div><button class="btn sm" id="giornoX">✕ Chiudi</button></div>
+    ${rs.map(cardRap).join("")}<button class="btn sm giornoN" data-nuovo="${d}">+ Altro rapportino per questo giorno</button></div>`; }
+function renderLista(m){
+  const L = S.list, perData = {}; L.forEach(r => (perData[r.data] = perData[r.data] || []).push(r)); S.perData = perData;
+  const nM = mancanti(perData);
+  const gm = giorniMancanti(perData), gg = s => GIORNI[new Date(s + "T12:00:00").getDay()].slice(0, 3) + " " + s.slice(8) + "/" + s.slice(5, 7);
+  m.innerHTML = `<div class="listaH"><h1>I miei rapportini</h1><button class="btn pri fab" id="fab">+ Nuovo rapportino</button></div>
+    ${(S.avvisi || []).map(a => `<div class="avv"><div class="avvT">📢 Messaggio di servizio <span>${esc(a.creato)}</span></div><div class="avvB">${esc(a.testo)}</div><button class="btn sm" data-letto="${esc(a.id)}">✓ Ho letto</button></div>`).join("")}
+    ${gm.length ? `<div class="manc"><div class="mancT">⚠️ ${gm.length === 1 ? "Ti manca 1 rapportino" : `Ti mancano ${gm.length} rapportini`}</div><div class="mancB">${gm.map(s => `<button data-cal="${s}">${esc(gg(s))}</button>`).join("")}</div><div class="hint" style="margin-top:4px">Tocca un giorno per compilarlo.</div></div>` : ""}
+    <button class="calTog${S.calOpen ? " on" : ""}" id="calTog"><span>📅 Calendario del mese</span>${nM ? `<span class="chip bad">${nM} da compilare</span>` : `<span class="chip ok">Tutto compilato</span>`}<span class="car">${S.calOpen ? "▲" : "▼"}</span></button>
+    ${S.calOpen ? calHTML(perData) : ""}${giornoHTML(perData)}` + (L.length ? L.map(cardRap).join("")
     : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
 }
 const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
@@ -395,11 +408,16 @@ function minuti(t){ if (!t) return null; const [h, mm] = t.split(":").map(Number
 function calcOre(p){ return Math.round((p.mezzi || []).reduce((t, x) => t + (+String(x.ore || "").replace(",", ".") || 0), 0) * 100) / 100; }
 function nuovo(d){
   return { id: null, data: d || oggi(), p: { cantiere: "", mezzi: [{ mezzo: "", ore: "" }], materiali: [], lavori: "", note: "" } }; }
+function sfogliaHTML(E){ if (!E.id) return ""; const o = (S.list || []).find(x => x.id === E.id); if (!o) return ""; const rs = (S.list || []).filter(x => x.data === o.data); if (rs.length < 2) return "";
+  const i = rs.findIndex(x => x.id === E.id), pr = rs[i - 1], nx = rs[i + 1];
+  return `<div class="sfoglia"><button class="btn sm" ${pr ? `data-sfoglia="${esc(pr.id)}"` : "disabled"} aria-label="Precedente">‹</button>
+    <div><b>Rapportino ${i + 1} di ${rs.length}</b><span>${rs.map((x, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</span></div>
+    <button class="btn sm" ${nx ? `data-sfoglia="${esc(nx.id)}"` : "disabled"} aria-label="Successivo">›</button></div>`; }
 function renderForm(m){
   const E = S.edit, p = E.p, ro = !!p.approvato; p.ore = calcOre(p);
   const dis = ro ? "disabled" : "";
   m.innerHTML = `<div class="row" style="margin-bottom:4px"><button class="btn ghost sm" id="back" style="flex:0 0 auto">‹ Indietro</button></div>
-  <h1>${E.id ? (ro ? "Rapportino approvato" : "Modifica rapportino") : "Nuovo rapportino"}</h1>
+  <h1>${E.id ? (ro ? "Rapportino approvato" : "Modifica rapportino") : "Nuovo rapportino"}</h1>${sfogliaHTML(E)}
   ${ro ? `<div class="err ok" style="margin:0 0 12px">Approvato dall'ufficio: non si può più modificare.</div>` : ""}
   <div class="card">
     <label class="l" for="fData">Data</label>
@@ -581,7 +599,12 @@ document.addEventListener("click", e => {
   if (t.dataset.det) { S.det = S.det || {}; S.det[t.dataset.det] = !S.det[t.dataset.det]; render(); return; }
   if (t.id === "calTog") { S.calOpen = !S.calOpen; try { localStorage.setItem("za-rap-cal", S.calOpen ? "1" : ""); } catch {} render(); return; }
   if (t.dataset.calm) { const [y, mo] = S.calM.split("-").map(Number), d = new Date(y, mo - 1 + +t.dataset.calm, 1, 12); S.calM = iso(d).slice(0, 7); render(); return; }
-  if (t.dataset.cal) { const rs = (S.perData || {})[t.dataset.cal] || []; if (rs.length) { apri(rs[0]); return; } S.edit = nuovo(t.dataset.cal); S.view = "form"; render(); window.scrollTo(0, 0); return; }
+  if (t.id === "giornoX") { S.giorno = null; render(); return; }
+  if (t.dataset.nuovo) { S.edit = nuovo(t.dataset.nuovo); S.view = "form"; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.sfoglia) { leggiForm(); const E = S.edit, mod = !E.p.approvato && E.snap && E.snap !== JSON.stringify(E.p);
+    if (mod && !confirm("Hai modifiche non salvate in questo rapportino. Passare all'altro senza salvare?")) return; const r = (S.list || []).find(x => x.id === t.dataset.sfoglia); if (r) apri(r); return; }
+  if (t.dataset.cal) { const rs = (S.perData || {})[t.dataset.cal] || []; if (rs.length === 1) { apri(rs[0]); return; }
+    if (rs.length > 1) { S.giorno = t.dataset.cal; render(); setTimeout(() => { const g = $("#giornoBox"); g && g.scrollIntoView({ block: "start", behavior: "smooth" }); }, 30); return; } S.edit = nuovo(t.dataset.cal); S.view = "form"; render(); window.scrollTo(0, 0); return; }
   if (t.id === "fab") { S.edit = nuovo(); S.view = "form"; render(); window.scrollTo(0, 0); return; }
   if (t.dataset.id) { const r = S.list.find(x => x.id === t.dataset.id); if (r) apri(r); return; }
   if (t.id === "dPrev" || t.id === "dNext") { aggData(spostaGiorno($("#fData").value || oggi(), t.id === "dPrev" ? -1 : 1)); return; }
