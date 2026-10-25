@@ -433,7 +433,10 @@ function campiMancanti(p){
   if (!(p.mezzi || []).length) seg($("#addMz"));
   return out; }
 async function salva(){
-  if ((S.upl || []).some(u => !u.err)) { toast("Attendi: foto in invio…"); return; }
+  if ((S.upl || []).some(u => !u.err)) { // aspetta che finisca l'invio delle foto, poi salva da solo
+    if (S.attesaFoto) return; S.attesaFoto = true; const b0 = $("#save"); if (b0) { b0.disabled = true; b0.textContent = "Invio foto in corso… poi salvo"; }
+    while ((S.upl || []).some(u => !u.err)) { await new Promise(r => setTimeout(r, 300)); const b1 = $("#save"); if (b1) { b1.disabled = true; b1.textContent = `Invio foto (${S.upl.filter(u => !u.err).length})… poi salvo`; } }
+    S.attesaFoto = false; if (S.view !== "form") return; }
   leggiForm(); const E = S.edit, p = E.p, er = $("#ferr");
   if (!E.data) { er.innerHTML = `<div class="err">Indica la data.</div>`; return; }
   if (p.ferie) { p.cantiere = ""; delete p.lavorazione; p.mezzi = []; p.materiali = []; p.lavori = ""; p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; }
