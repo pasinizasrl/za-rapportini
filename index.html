@@ -274,8 +274,8 @@ function renderForm(m){
       ${accs.map((a, j) => `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="${j ? "Accessorio" : "BENNA (predefinita)"}" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(a.ore || "")}" placeholder="${j ? "Ore" : esc(x.ore || "Ore")}" aria-label="Ore accessorio" ${dis}>
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`).join("")}
-      ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>${i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo</button>` : ""}`}</div>`; }).join("")}
-    ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo</button>`}
+      ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>${i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>` : ""}`}</div>`; }).join("")}
+    ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>`}
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
   <div class="card"><h2>Materiali</h2>
