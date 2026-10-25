@@ -161,6 +161,14 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .chip.ok{background:var(--good-soft);color:var(--good)}
 .chip.wait{background:var(--accent-soft);color:var(--accent-ink)}
 .code{font-family:var(--font-mono);font-size:12.5px;font-weight:500;background:var(--accent);color:#1c2320;border-radius:4px;padding:1px 6px;margin-right:6px}
+.fotoG{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-bottom:10px}
+.fotoT{position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center}
+.fotoT img{width:100%;height:100%;object-fit:cover;display:block}
+.fotoT a{display:block;width:100%;height:100%}
+.fotoT small{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:11px;text-align:center;padding:2px}
+.fotoT.up img{opacity:.5}.fotoT.ko small{background:var(--bad)}
+.fotoT .fx{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:13px}
+.fotoBtn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700}
 .avv{background:#fff4d6;border:2px solid var(--accent);border-radius:12px;padding:10px 12px;margin-bottom:10px;color:#3b2a00}
 .avvT{font-weight:800;font-size:14px;display:flex;justify-content:space-between;gap:8px}.avvT span{font-weight:500;color:#7a5a12;font-size:12px}
 .avvB{margin:6px 0 8px;font-size:16px;white-space:pre-wrap}
@@ -287,6 +295,25 @@ function aggBenna(i){ const x = S.edit && S.edit.p.mezzi[i]; if (!x) return; con
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"].lock`).forEach(a => { a.placeholder = first ? fmtOre(v) : "0"; first = false; }); }
 const isBenna = (a, j) => U(a.acc) === "BENNA";
 const mzTitolo = (x, i) => `Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}`;
+/* foto cantiere → Google Drive (tramite script dell'ufficio) */
+function fotoCardHTML(p, ro){ const L = p.foto || [], U2 = S.upl || [];
+  return `<div class="card"><h2>📷 Foto cantiere</h2>
+    ${L.length || U2.length ? `<div class="fotoG">${L.map((f, i) => `<div class="fotoT"><a href="${esc(f.url || "#")}" target="_blank" rel="noopener">${f.th ? `<img src="${esc(f.th)}" alt="Foto ${i + 1}">` : `<span>📷</span>`}</a>${ro ? "" : `<button class="fx" data-delfoto="${i}" aria-label="Togli foto">✕</button>`}</div>`).join("")}
+      ${U2.map(u => `<div class="fotoT up${u.err ? " ko" : ""}">${u.th ? `<img src="${esc(u.th)}" alt="">` : ""}<small>${u.err ? "Non inviata" : "Invio…"}</small></div>`).join("")}</div>` : `<p class="hint" style="margin:0 0 8px">Nessuna foto.</p>`}
+    ${ro ? "" : `<label class="btn fotoBtn">📷 Aggiungi foto<input type="file" accept="image/*" multiple id="fFoto" hidden></label>`}
+    <div class="hint" style="margin-top:6px">Le foto vanno nella cartella Google Drive del cantiere, divise per giorno.</div></div>`; }
+function caricaImg(file){ return new Promise((ok, ko) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { ok(im); setTimeout(() => URL.revokeObjectURL(u), 1000); }; im.onerror = ko; im.src = u; }); }
+function ridimensiona(im, max, q){ const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); return c.toDataURL("image/jpeg", q); }
+async function aggiungiFoto(files){ leggiForm(); const E = S.edit, p = E.p; if (!p.cantiere) { toast("Scegli prima il cantiere, poi aggiungi le foto."); return; }
+  S.upl = S.upl || [];
+  for (const file of files) { const u = { th: "" }; S.upl.push(u); render();
+    try { const im = await caricaImg(file); u.th = ridimensiona(im, 180, .6); render(); const big = ridimensiona(im, 1600, .72);
+      const r = await fetch(S.el.foto_url, { method: "POST", body: JSON.stringify({ nome: S.me, pin: S.pin, cantiere: p.cantiere, data: E.data, b64: big.split(",")[1] }) });
+      const j = await r.json(); if (!j.ok) throw new Error(j.err || "errore");
+      (p.foto = p.foto || []).push({ id: j.id, url: j.url, cartella: j.cartella, nome: j.nome, th: u.th }); S.upl.splice(S.upl.indexOf(u), 1); }
+    catch (e) { u.err = true; toast("Foto non inviata: " + (e.message || "controlla la connessione")); }
+    if (S.view === "form") { leggiForm(); render(); } }
+  if (S.upl.some(u => u.err)) setTimeout(() => { S.upl = (S.upl || []).filter(u => !u.err); if (S.view === "form") { leggiForm(); render(); } }, 4000); }
 function normMz(x){ if (x.acc) { x.accs = (x.accs || []).concat([{ acc: x.acc, ore: x.ore || "" }]); delete x.acc; } if (!Array.isArray(x.accs)) x.accs = []; return x; }
 function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" });
   { const q = S.edit.p; if (q.lavorazione) { if (!q.mezzi[0].lav) q.mezzi[0].lav = q.lavorazione; delete q.lavorazione; } }
@@ -305,12 +332,12 @@ function renderLista(m){
     const det = (S.det || {})[r.id], ms = (p.mezzi || []).filter(x => x.mezzo || x.ore), accs = x => x.accs || (x.acc ? [{ acc: x.acc, ore: x.ore }] : []);
     return `<div class="rap"><button class="rapApri" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
       <div class="c">${p.cantiere ? `<div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>` : ""}${p.permesso > 0 ? `<div class="permR">Permesso ${fmtOre(p.permesso)} h</div>` : ""}</div></button>
-      ${ms.length || p.note || p.lavori ? `<button class="detTog" data-det="${esc(r.id)}" aria-expanded="${det ? "true" : "false"}"><b>${det ? "−" : "+"}</b> ${det ? "Nascondi dettagli" : "Dettagli"}${det ? "" : ` <span class="hint">${ms.length} ${ms.length === 1 ? "lavorazione" : "lavorazioni"}</span>`}</button>` : ""}
+      ${ms.length || p.note || p.lavori || (p.foto || []).length ? `<button class="detTog" data-det="${esc(r.id)}" aria-expanded="${det ? "true" : "false"}"><b>${det ? "−" : "+"}</b> ${det ? "Nascondi dettagli" : "Dettagli"}${det ? "" : ` <span class="hint">${ms.length} ${ms.length === 1 ? "lavorazione" : "lavorazioni"}${(p.foto || []).length ? " · 📷 " + p.foto.length : ""}</span>`}</button>` : ""}
       ${det ? `<div class="det">${ms.map((x, i) => `<div class="detL"><div class="detT">Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}</div>
         <div class="detR"><b>${esc(U(x.mezzo))}</b><span>${fmtOre(x.ore)} h</span></div>
         ${accs(x).map(a => `<div class="detR acc"><span>${esc(U(a.acc))}</span><span>${a.ore !== "" && a.ore != null ? fmtOre(String(a.ore).replace(",", ".")) + " h" : ""}</span></div>`).join("")}
         ${x.desc ? `<div class="ds">${esc(x.desc)}</div>` : ""}</div>`).join("")}
-        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}</div>` : ""}</div>`; }).join("")
+        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><a href="${esc(f.url || "#")}" target="_blank" rel="noopener">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</a></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }).join("")
     : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
 }
 const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
@@ -351,6 +378,7 @@ function renderForm(m){
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
   </div>`}
+  ${S.el.foto_url && !p.ferie ? fotoCardHTML(p, ro) : ""}
   <div class="card">
     <h2>Note</h2><label class="l" for="fNote" style="position:absolute;left:-9999px">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
   </div>
@@ -391,6 +419,7 @@ function campiMancanti(p){
   if (!(p.mezzi || []).length) seg($("#addMz"));
   return out; }
 async function salva(){
+  if ((S.upl || []).some(u => !u.err)) { toast("Attendi: foto in invio…"); return; }
   leggiForm(); const E = S.edit, p = E.p, er = $("#ferr");
   if (!E.data) { er.innerHTML = `<div class="err">Indica la data.</div>`; return; }
   if (p.ferie) { p.cantiere = ""; delete p.lavorazione; p.mezzi = []; p.materiali = []; p.lavori = ""; p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; }
@@ -410,7 +439,7 @@ async function salva(){
   const b = $("#save"); b.disabled = true; b.textContent = "Salvataggio…";
   try { const r = await rpc("rap_salva", { p_nome: S.me, p_pin: S.pin, p_id: E.id, p_data: E.data, p_payload: p });
     if (!r.ok) { b.disabled = false; b.textContent = "Salva rapportino"; if (r.err === "PIN_ERRATO" || String(r.err).startsWith("BLOCCATO")) return esci(msgErr(r.err)); er.innerHTML = `<div class="err">${esc(msgErr(r.err))}</div>`; return; }
-    await caricaMiei(); S.view = "lista"; S.edit = null; render(); window.scrollTo(0, 0); toast("Rapportino salvato.");
+    await caricaMiei(); S.view = "lista"; S.edit = null; S.upl = []; render(); window.scrollTo(0, 0); toast("Rapportino salvato.");
   } catch (e) { b.disabled = false; b.textContent = "Salva rapportino"; er.innerHTML = `<div class="err">Non salvato: connessione non riuscita. Riprova tra poco, i dati restano qui.</div>`; }
 }
 async function elimina(){
@@ -418,7 +447,7 @@ async function elimina(){
   if (!S.confDel) { S.confDel = true; $("#del").textContent = "Tocca di nuovo per confermare l'eliminazione"; setTimeout(() => { S.confDel = false; const d = $("#del"); if (d) d.textContent = "Elimina rapportino"; }, 4000); return; }
   S.confDel = false;
   try { const r = await rpc("rap_elimina", { p_nome: S.me, p_pin: S.pin, p_id: E.id }); if (!r.ok) { $("#ferr").innerHTML = `<div class="err">${esc(msgErr(r.err) || "Non eliminato.")}</div>`; return; }
-    await caricaMiei(); S.view = "lista"; S.edit = null; render(); toast("Rapportino eliminato."); } catch { $("#ferr").innerHTML = `<div class="err">Connessione non riuscita.</div>`; }
+    await caricaMiei(); S.view = "lista"; S.edit = null; S.upl = []; render(); toast("Rapportino eliminato."); } catch { $("#ferr").innerHTML = `<div class="err">Connessione non riuscita.</div>`; }
 }
 
 /* suggerimenti grandi al posto della tendina del telefono */
@@ -450,6 +479,7 @@ document.addEventListener("click", e => {
   if (t.id === "out") return esci("Sei uscito.");
   if (t.dataset.k) { const k = t.dataset.k; if (k === "del") S.pinIn = S.pinIn.slice(0, -1); else if (k === "ok") return login(); else if (S.pinIn.length < 6) S.pinIn += k;
     const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
+  if (t.dataset.delfoto != null && S.edit) { leggiForm(); S.edit.p.foto.splice(+t.dataset.delfoto, 1); render(); return; }
   if (t.dataset.letto) { const id = t.dataset.letto; S.avvisi = (S.avvisi || []).filter(a => a.id !== id); render(); rpc("rap_avviso_letto", { p_nome: S.me, p_pin: S.pin, p_id: id }).catch(() => {}); return; }
   if (t.dataset.det) { S.det = S.det || {}; S.det[t.dataset.det] = !S.det[t.dataset.det]; render(); return; }
   if (t.id === "calTog") { S.calOpen = !S.calOpen; try { localStorage.setItem("za-rap-cal", S.calOpen ? "1" : ""); } catch {} render(); return; }
@@ -458,7 +488,7 @@ document.addEventListener("click", e => {
   if (t.id === "fab") { S.edit = nuovo(); S.view = "form"; render(); window.scrollTo(0, 0); return; }
   if (t.dataset.id) { const r = S.list.find(x => x.id === t.dataset.id); if (r) apri(r); return; }
   if (t.id === "dPrev" || t.id === "dNext") { aggData(spostaGiorno($("#fData").value || oggi(), t.id === "dPrev" ? -1 : 1)); return; }
-  if (t.id === "back") { S.view = "lista"; S.edit = null; render(); return; }
+  if (t.id === "back") { S.upl = []; S.view = "lista"; S.edit = null; render(); return; }
   if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); const n = S.edit.p.mezzi.length - 1; setTimeout(() => { const el = document.querySelector(`[data-mz="${n}"][data-k="mezzo"]`); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 30); return; }
   if (t.id === "addMt") { leggiForm(); S.edit.p.materiali.push({ desc: "", qta: "", um: "mc" }); render(); return; }
   if (t.dataset.addac) { leggiForm(); const x = normMz(S.edit.p.mezzi[+t.dataset.addac]); if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); x.accs.push({ acc: "", ore: "" }); render(); setTimeout(() => { const el = document.querySelector(`[data-ac="${t.dataset.addac}|${x.accs.length - 1}"][data-k="acc"]`); el && el.focus(); }, 30); return; }
@@ -469,6 +499,7 @@ document.addEventListener("click", e => {
   if (t.id === "del") return elimina();
 });
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
+  if (e.target.id === "fFoto" && S.edit) { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) aggiungiFoto(fs); return; }
   if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); if (lk !== isBenna({ acc: e.target.value }, j)) { leggiForm(); render(); } return; }
   if (e.target.id === "fFerie" && S.edit) { leggiForm(); if (S.edit.p.ferie) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
