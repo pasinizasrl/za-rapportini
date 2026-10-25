@@ -209,8 +209,8 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .lb .top{display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:max(10px, env(safe-area-inset-top))}
 .lb .top{flex-wrap:nowrap}.lb .top .i{flex:1 1 120px;min-width:0;font-size:13px;line-height:1.3}
 .lb .top button,.lb .top a{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;text-decoration:none}
-.lb .img{flex:1;display:grid;place-items:center;overflow:hidden;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
-.lb .img img{width:100%;height:100%;object-fit:contain;transform-origin:center center;will-change:transform;touch-action:none}
+.lb .img{flex:1 1 auto;min-height:0;overflow:hidden;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
+.lb .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:center center;will-change:transform;touch-action:none}
 .lb .top{gap:6px}.lb .top button,.lb .top a{min-width:40px;height:40px;font-size:18px;padding:0 10px;display:inline-grid;place-items:center}
 .lb .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:0;color:#fff;width:48px;height:64px;font-size:30px;border-radius:8px}
 .lb .nav.p{left:8px}.lb .nav.n{right:8px}
@@ -287,7 +287,9 @@ function mostraGrande(f){ if (S.lb == null || S.lista[S.lb] !== f) return; const
 function precarica(){ [S.lb, S.lb + 1, S.lb - 1, S.lb + 2].forEach(i => { const f = S.lista[i]; if (f) caricaGrande(f); }); }
 /* zoom e spostamento: rotella, doppio tocco, pizzico con due dita, trascinamento */
 const Z = { s: 1, x: 0, y: 0 }, PT = new Map(); let pinch = null, pan = null, lastTap = 0;
-function applicaZ(){ const im = $("#lbImg"); if (!im) return; if (Z.s <= 1) { Z.x = 0; Z.y = 0; } const zb = $("#zPct"); if (zb) zb.textContent = Math.round(Z.s * 100) + "%"; im.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.s})`; im.style.cursor = Z.s > 1 ? "grab" : "zoom-in"; }
+function limiti(){ const im = $("#lbImg"), box = $("#lb .img"); if (!im || !box) return; const bw = box.clientWidth, bh = box.clientHeight, nw = im.naturalWidth || bw, nh = im.naturalHeight || bh, k = Math.min(bw / nw, bh / nh), dw = nw * k * Z.s, dh = nh * k * Z.s;
+  const mx = Math.max(0, (dw - bw) / 2), my = Math.max(0, (dh - bh) / 2); Z.x = Math.max(-mx, Math.min(mx, Z.x)); Z.y = Math.max(-my, Math.min(my, Z.y)); }
+function applicaZ(){ const im = $("#lbImg"); if (!im) return; if (Z.s <= 1) { Z.x = 0; Z.y = 0; } else limiti(); const zb = $("#zPct"); if (zb) zb.textContent = Math.round(Z.s * 100) + "%"; im.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.s})`; im.style.cursor = Z.s > 1 ? "grab" : "zoom-in"; }
 function zoomA(ns, cx, cy){ const box = $("#lb .img"); if (!box) return; const r = box.getBoundingClientRect(), px = (cx ?? r.left + r.width / 2) - (r.left + r.width / 2), py = (cy ?? r.top + r.height / 2) - (r.top + r.height / 2);
   ns = Math.max(.4, Math.min(8, ns)); if (Math.abs(ns - 1) < .06) ns = 1; const k = ns / Z.s; Z.x = px - (px - Z.x) * k; Z.y = py - (py - Z.y) * k; Z.s = ns; applicaZ(); }
 function resetZ(){ Z.s = 1; Z.x = 0; Z.y = 0; }
@@ -301,7 +303,7 @@ document.addEventListener("pointermove", e => { if (!PT.has(e.pointerId)) return
   if (pinch && PT.size === 2) { const [a, b] = [...PT.values()]; zoomA(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, pinch.cx, pinch.cy); }
   else if (pan && Z.s > 1) { Z.x = pan.zx + e.clientX - pan.x; Z.y = pan.zy + e.clientY - pan.y; applicaZ(); } });
 const fineP = e => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; if (!PT.size) pan = null; };
-document.addEventListener("pointerup", fineP); document.addEventListener("pointercancel", fineP);
+document.addEventListener("pointerup", fineP); addEventListener("resize", () => { if (S.lb != null) applicaZ(); }); document.addEventListener("pointercancel", fineP);
 function schermoIntero(){ const d = document, el = d.documentElement;
   if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
   else if (el.requestFullscreen) el.requestFullscreen().catch(() => toast("Schermo intero non disponibile su questo telefono: usa il pizzico per ingrandire."));
@@ -311,7 +313,7 @@ function renderLb(){ let el = $("#lb"); if (S.lb == null) { if (el) el.remove();
   el.innerHTML = `<div class="top"><div class="i"><b>${esc(f.op)}</b><br>${esc(giorno(f.data))} ${esc(itData(f.data))}</div><a id="lbDl" ${S.big[fileId(f)] ? `href="${S.big[fileId(f)]}" download="${esc(f.nome || "foto.jpg")}"` : 'hidden'}title="Scarica" aria-label="Scarica">⬇</a><button data-zoom="-1" aria-label="Riduci">−</button><button data-fit="1" aria-label="Adatta allo schermo" title="Adatta allo schermo" id="zPct" style="font-size:13px;min-width:56px">${Math.round(Z.s * 100)}%</button><button data-zoom="1" aria-label="Ingrandisci">+</button><button data-fs="1" aria-label="Schermo intero">⛶</button><button data-lbx="1" aria-label="Chiudi">✕</button></div>
     <div class="img"><img src="${esc(S.big[fileId(f)] || f.th || "")}" alt="" id="lbImg" draggable="false">${S.big[fileId(f)] ? "" : `<div id="lbLoad" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:13px;opacity:.8">Caricamento alta qualità…</div>`}${S.lb > 0 ? `<button class="nav p" data-lbm="-1" aria-label="Precedente">‹</button>` : ""}${S.lb < S.lista.length - 1 ? `<button class="nav n" data-lbm="1" aria-label="Successiva">›</button>` : ""}</div>
     <div class="cnt">${S.lb + 1} / ${S.lista.length} · tocca la % per adattare allo schermo</div>`;
-  applicaZ(); precarica();
+  const im0 = $("#lbImg"); if (im0) im0.onload = applicaZ; applicaZ(); precarica();
 }
 function renderLogin(m){
   m.innerHTML = `<h1>Foto cantieri</h1><div class="card">
