@@ -72,6 +72,8 @@ textarea.f.grow{resize:none;overflow:hidden;min-height:0;line-height:1.3;display
 .addMz{display:flex !important;width:calc(100% - 12px);justify-content:center;margin:10px 0 0 12px !important;min-height:46px !important;font-size:15px !important}
 .addAc.mz{border-style:solid;border-color:var(--steel);font-weight:700}
 .addAc.mz b{background:var(--steel);color:#e8e22a}
+.mzDl{margin:10px 0 4px 12px}
+textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase;color:var(--blue);font-weight:700;min-height:64px}
 .mzN{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
 .addAc{display:inline-flex;align-items:center;gap:6px;margin:0;background:none;border:1px dashed var(--line);border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);min-height:38px}
 .addAc b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#1d1606;font-size:16px;line-height:1}
@@ -281,14 +283,16 @@ function renderForm(m){
   ${p.ferie ? `<div class="card ferieBox">Giornata di <b>ferie</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
   <div class="card"><h2>Macchine / mezzi d'opera</h2>
     ${(p.mezzi || []).map((x, i) => { normMz(x); const accs = x.accs.length ? x.accs : [{ acc: "", ore: "" }];
-      return `<div class="sub">${p.mezzi.length > 1 ? `<div class="mzN">Macchina ${i + 1}</div>` : ""}<div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
+      return `<div class="sub"><div class="mzN">Macchina ${i + 1}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore" aria-label="Ore macchina" ${dis}>
         ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli macchina">✕</button>`}</div>
       ${accs.map((a, j) => { const bn = isBenna(a, j); return `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="${j ? "Accessorio" : "BENNA (predefinita)"}" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
         <input class="f oreI${bn ? " lock" : ""}" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(bn ? "" : a.ore || "")}" placeholder="${bn ? (accs.findIndex((b, k) => isBenna(b, k)) === j ? fmtOre(oreBenna(x)) : "0") : "Ore"}" aria-label="Ore accessorio" ${bn ? 'readonly tabindex="-1" title="Benna: ore della macchina meno quelle degli altri accessori"' : ""} ${dis}>
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`; }).join("")}
       <div class="err accErr" id="accErr-${i}" ${oreAltri(x) > num(x.ore) ? "" : "hidden"}>${oreAltri(x) > num(x.ore) ? esc(msgAcc(x)) : ""}</div>
-      ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>${i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>` : ""}`}</div>`; }).join("")}
+      ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>`}
+      <label class="l mzDl">Descrizione lavori macchina ${i + 1}</label><textarea class="f mzD grow" data-mz="${i}" data-k="desc" rows="2" placeholder="Cosa è stato fatto con questa macchina" ${dis}>${esc(x.desc || "")}</textarea>
+      ${!ro && i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>` : ""}</div>`; }).join("")}
     ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>`}
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
@@ -314,7 +318,7 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !p.ferie) p.permesso = pm; else delete p.permesso;
   if ($("#fCan")) { p.cantiere = $("#fCan").value.trim(); p.lavorazione = U($("#fLavz").value); if (!p.lavorazione) delete p.lavorazione; p.lavori = U($("#fLav").value); }
   p.note = $("#fNote").value.trim();
-  document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (x) x[e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
+  document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (!x) return; const k = e.dataset.k, v = k === "ore" ? e.value : U(e.value); if (k === "desc" && !v) delete x.desc; else x[k] = v; });
   document.querySelectorAll("[data-ac]").forEach(e => { const [i, j] = e.dataset.ac.split("|").map(Number), x = p.mezzi[i]; if (!x) return; normMz(x); while (x.accs.length <= j) x.accs.push({ acc: "", ore: "" }); x.accs[j][e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
   p.ore = p.ferie ? 0 : calcOre(p);
   document.querySelectorAll("[data-mt]").forEach(e => { const x = p.materiali[+e.dataset.mt]; if (x) x[e.dataset.k] = e.dataset.k === "desc" ? U(e.value) : e.value; }); }
@@ -344,7 +348,7 @@ async function salva(){
       if (troppe) { er.innerHTML = `<div class="err">${esc(U(troppe.mezzo))}: le ore degli accessori superano le ore della macchina. Non salvato.</div>`; const k = p.mezzi.indexOf(troppe), b = document.getElementById("accErr-" + k); (b || er).scrollIntoView({ block: "center", behavior: "smooth" }); return; }
     }
     delete p.inizio; delete p.fine; delete p.pausa;
-    p.mezzi = (p.mezzi || []).map(x => { normMz(x); if (x.mezzo) { if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); if (!x.accs[0].acc) x.accs[0].acc = "BENNA"; const ob = oreBenna(x); let first = true; x.accs.forEach(a => { if (U(a.acc) === "BENNA") { a.ore = first ? (ob ? String(ob) : "0") : "0"; first = false; } }); } x.accs = x.accs.filter(a => a.acc || a.ore); if (!x.accs.length) delete x.accs; return x; }).filter(x => x.mezzo || x.ore || x.accs); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
+    p.mezzi = (p.mezzi || []).map(x => { normMz(x); if (x.mezzo) { if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); if (!x.accs[0].acc) x.accs[0].acc = "BENNA"; const ob = oreBenna(x); let first = true; x.accs.forEach(a => { if (U(a.acc) === "BENNA") { a.ore = first ? (ob ? String(ob) : "0") : "0"; first = false; } }); } x.accs = x.accs.filter(a => a.acc || a.ore); if (!x.accs.length) delete x.accs; return x; }).filter(x => x.mezzo || x.ore || x.accs || x.desc); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
   }
   const b = $("#save"); b.disabled = true; b.textContent = "Salvataggio…";
   try { const r = await rpc("rap_salva", { p_nome: S.me, p_pin: S.pin, p_id: E.id, p_data: E.data, p_payload: p });
@@ -408,6 +412,7 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
   if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); if (lk !== isBenna({ acc: e.target.value }, j)) { leggiForm(); render(); } return; }
   if (e.target.id === "fFerie" && S.edit) { leggiForm(); if (S.edit.p.ferie) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
+document.addEventListener("input", e => { if (e.target.classList && e.target.classList.contains("mzD")) autoH(e.target); });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { leggiForm(); aggBenna(+e.target.dataset.ac.split("|")[0]); return; }
   if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit && $("#oreTot")) { leggiForm(); aggBenna(+e.target.dataset.mz); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
