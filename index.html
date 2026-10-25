@@ -104,6 +104,12 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .cg.fer{background:var(--blue);border-color:var(--blue);color:#fff}
 .cg.perm{background:var(--warn);border-color:var(--warn);color:#fff}
 .cg.ok.perm{background:var(--good);box-shadow:inset 0 -5px 0 var(--warn)}
+.cg.fest{background:#efe3f7;border-color:#8a4fb3;color:#6a2d93}
+.cg.chius{background:#dfe8f7;border-color:var(--blue);color:var(--blue);border-style:dashed}
+.leg i.fest{background:#efe3f7;border:1px solid #8a4fb3}.leg i.chius{background:#dfe8f7;border:1px dashed var(--blue)}
+.evM{margin-top:8px;font-size:13px;display:grid;gap:3px}
+.evM i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+.evM i.fest{background:#8a4fb3}.evM i.chius{background:var(--blue)}
 .cg.off{background:transparent;color:var(--muted);border-style:dashed;opacity:.7}
 .cg.fut{color:var(--muted);opacity:.45}
 .cg.old{color:var(--muted)}
@@ -236,20 +242,23 @@ const PRIMO = () => { const lim = spostaGiorno(oggi(), -60), d = S.list.reduce((
 function statoGiorno(s, perData){ const d = new Date(s + "T12:00:00"), wd = d.getDay(), rs = perData[s] || [];
   if (rs.length) { const f = rs.some(r => r.payload && r.payload.ferie), lav = rs.some(r => r.payload && !r.payload.ferie && r.payload.cantiere), pm = rs.some(r => r.payload && r.payload.permesso > 0);
     return f ? "fer" : lav ? (pm ? "ok perm" : "ok") : pm ? "perm" : "ok"; }
-  if (wd === 0 || wd === 6 || festa(s)) return "off";
+  if (festa(s)) return "fest"; if (chiusura(s)) return "chius"; if (wd === 0 || wd === 6) return "off";
   if (s > oggi()) return "fut"; if (s < PRIMO()) return "old"; return "manca"; }
+function chiusura(s){ const c = ((S.el && S.el.chiusure) || []).find(x => x && x.dal && s >= x.dal && s <= (x.al || x.dal)); return c ? (c.nome || "Chiusura aziendale") : ""; }
 function mancanti(perData){ let n = 0; for (let s = PRIMO(); s <= oggi(); s = spostaGiorno(s, 1)) if (statoGiorno(s, perData) === "manca") n++; return n; }
 function calHTML(perData){
   const t = oggi(); if (!S.calM) S.calM = t.slice(0, 7);
   const [y, mo] = S.calM.split("-").map(Number), first = new Date(y, mo - 1, 1, 12), nd = new Date(y, mo, 0).getDate(), off = (first.getDay() + 6) % 7;
-  const minM = PRIMO().slice(0, 7), maxM = t.slice(0, 7);
+  const minM = PRIMO().slice(0, 7), maxM = spostaGiorno(t, 62).slice(0, 7);
   let cells = ""; for (let i = 0; i < off; i++) cells += `<span></span>`;
-  for (let g = 1; g <= nd; g++) { const s = `${y}-${String(mo).padStart(2, "0")}-${String(g).padStart(2, "0")}`, st = statoGiorno(s, perData), fe = festa(s);
+  for (let g = 1; g <= nd; g++) { const s = `${y}-${String(mo).padStart(2, "0")}-${String(g).padStart(2, "0")}`, st = statoGiorno(s, perData), fe = festa(s) || chiusura(s);
     const tap = s <= t && s >= spostaGiorno(t, -60);
-    cells += `<button class="cg ${st}${s === t ? " oggi" : ""}" ${tap ? `data-cal="${s}"` : "disabled"} title="${esc(fe)}">${g}${st.includes("fer") ? "<i>F</i>" : st.includes("perm") ? "<i>P</i>" : ""}</button>`; }
+    cells += `<button class="cg ${st}${s === t ? " oggi" : ""}" ${tap ? `data-cal="${s}"` : "disabled"} title="${esc(fe)}">${g}${st.includes("fer") ? "<i>F</i>" : st.includes("perm") ? "<i>P</i>" : st === "fest" || st === "chius" ? "<i>★</i>" : ""}</button>`; }
+  const evM = []; for (let g = 1; g <= nd; g++) { const s = `${y}-${String(mo).padStart(2, "0")}-${String(g).padStart(2, "0")}`, n = festa(s) || chiusura(s); if (n) { const l = evM[evM.length - 1]; if (l && l.n === n && l.a === spostaGiorno(s, -1)) l.a = s; else evM.push({ d: s, a: s, n, f: !!festa(s) }); } }
   return `<div class="cal"><div class="calh"><button class="btn dnav sm" data-calm="-1" ${S.calM <= minM ? "disabled" : ""} aria-label="Mese prima">‹</button><b>${MESI[mo - 1]} ${y}</b><button class="btn dnav sm" data-calm="1" ${S.calM >= maxM ? "disabled" : ""} aria-label="Mese dopo">›</button></div>
     <div class="cgr">${["L","M","M","G","V","S","D"].map(x => `<span class="wd">${x}</span>`).join("")}${cells}</div>
-    <div class="leg"><span><i class="ok"></i>Compilato</span><span><i class="manca"></i>Da compilare</span><span><i class="fer"></i>Ferie</span><span><i class="perm"></i>Permesso</span><span><i class="off"></i>Sabato, domenica e festivi</span></div>
+    <div class="leg"><span><i class="ok"></i>Compilato</span><span><i class="manca"></i>Da compilare</span><span><i class="fer"></i>Ferie</span><span><i class="perm"></i>Permesso</span><span><i class="fest"></i>Festività</span><span><i class="chius"></i>Chiusura aziendale</span><span><i class="off"></i>Sabato e domenica</span></div>
+    ${evM.length ? `<div class="evM">${evM.map(e => `<div><i class="${e.f ? "fest" : "chius"}"></i><b>${+e.d.slice(8)}${e.a !== e.d ? "–" + +e.a.slice(8) : ""} ${MESI[mo - 1]}</b> ${esc(e.n)}</div>`).join("")}</div>` : ""}
     <p class="hint" style="margin:6px 0 0">Tocca un giorno rosso per compilarlo, uno verde per aprirlo.</p></div>`;
 }
 const num = v => +String(v || "").replace(",", ".") || 0;
