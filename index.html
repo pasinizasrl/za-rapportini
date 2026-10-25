@@ -65,6 +65,7 @@ textarea.f.grow{resize:none;overflow:hidden;min-height:0;line-height:1.3;display
 .mzR .oreI,.accR .oreI{flex:0 0 58px;width:58px;text-align:center;padding-left:6px;padding-right:6px}
 .accR{align-items:center}
 .addRow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 12px}
+.addMz{display:flex !important;width:100%;justify-content:center;margin-top:10px !important;min-height:46px !important;font-size:15px !important}
 .addAc.mz{border-style:solid;border-color:var(--steel);font-weight:700}
 .addAc.mz b{background:var(--steel);color:#e8e22a}
 .mzN{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
@@ -273,8 +274,8 @@ function renderForm(m){
       ${accs.map((a, j) => `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="Accessorio" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(a.ore || "")}" placeholder="Ore" aria-label="Ore accessorio" ${dis}>
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`).join("")}
-      ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button>${i === p.mezzi.length - 1 ? `<button class="addAc mz" id="addMz"><b>+</b> Macchina / mezzo d'opera</button>` : ""}</div>`}</div>`; }).join("")}
-    ${ro || p.mezzi.length ? "" : `<div class="addRow"><button class="addAc mz" id="addMz"><b>+</b> Macchina / mezzo d'opera</button></div>`}
+      ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>`}</div>`; }).join("")}
+    ${ro ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo</button>`}
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
   <div class="card"><h2>Materiali</h2>
