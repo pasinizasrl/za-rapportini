@@ -75,6 +75,7 @@ textarea.f.grow{resize:none;overflow:hidden;min-height:0;line-height:1.3;display
 .addAc.mz{border-style:solid;border-color:var(--steel);font-weight:700}
 .addAc.mz b{background:var(--steel);color:#e8e22a}
 .mzDl{margin:10px 0 4px 12px}
+.lCan{color:var(--ink) !important;font-size:16px !important;font-weight:800 !important;letter-spacing:.04em}
 .mzCat{font-weight:800;color:var(--ink);font-size:13px}
 .mzL{margin-left:12px}
 .f.req,.addMz.req{border:2px solid var(--bad) !important;background:var(--bad-soft) !important;box-shadow:0 0 0 3px rgba(176,53,45,.15)}
@@ -388,7 +389,7 @@ function renderForm(m){
     <label class="l" for="fData">Data</label>
     <div class="dataNav"><button class="btn dnav" id="dPrev" aria-label="Giorno prima" ${dis}>‹</button><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}><button class="btn dnav" id="dNext" aria-label="Giorno dopo" ${dis || E.data >= oggi() ? "disabled" : ""}>›</button></div>
     <div class="dGiorno" id="dGiorno">${esc(etichettaGiorno(E.data))}</div>
-    ${fuori(p) ? "" : `<label class="l" for="fCan">Cantiere / commessa</label>
+    ${fuori(p) ? "" : `<label class="l lCan" for="fCan">Cantiere / commessa</label>
     <div class="sugw"><textarea rows="1" class="f grow" id="fCan" data-sug="cantieri"  placeholder="Scrivi per cercare…" autocomplete="off" ${dis}>${esc(p.cantiere)}</textarea></div>`}
   </div>
   ${fuori(p) ? `<div class="card ferieBox">Giornata di <b>${p.malattia ? "malattia" : "ferie"}</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
