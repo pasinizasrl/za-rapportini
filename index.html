@@ -226,7 +226,7 @@ function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; c
 function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{3,4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
   let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
   return { code, rest }; }
-const MSG = { PIN_ERRATO: "PIN errato.", DATA_NON_VALIDA: "Data non valida: puoi inserire rapportini degli ultimi 60 giorni.", NON_MODIFICABILE: "Questo rapportino è già stato approvato e non si può modificare." };
+const MSG = { PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato.", DATA_NON_VALIDA: "Data non valida: puoi inserire rapportini degli ultimi 60 giorni.", NON_MODIFICABILE: "Questo rapportino è già stato approvato e non si può modificare." };
 const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + e.toLowerCase().replace("bloccato", "bloccato") + "." : (MSG[e] || e || "Errore");
 
 const S = { el: { operatori: [], cantieri: [], mezzi: [] }, me: null, pin: "", list: [], view: "login", edit: null, pinIn: "" };
@@ -244,6 +244,7 @@ function render(){
   const m = $("#main");
   $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="guida.html">Guida</a><button id="out">Esci</button>`;
   if (!S.me || S.view === "login") return renderLogin(m);
+  if (S.view === "cambia") return renderCambia(m);
   if (S.view === "form") return renderForm(m);
   renderLista(m);
 }
@@ -417,6 +418,22 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   p.ore = p.ferie ? 0 : calcOre(p);
  }
 
+/* primo accesso con PIN provvisorio: l'operaio sceglie il suo PIN personale */
+function renderCambia(m){ const c = S.cp || (S.cp = { step: 1, a: "", b: "" }), cur = c.step === 1 ? c.a : c.b;
+  m.innerHTML = `<h1>Scegli il tuo PIN</h1><div class="card">
+    <p style="margin-top:0">Ciao <b>${esc(S.me)}</b>, sei entrato con il <b>PIN provvisorio</b>. Scegli ora un PIN personale di 6 cifre, facile da ricordare per te.</p>
+    <label class="l">${c.step === 1 ? "Nuovo PIN" : "Ripeti il nuovo PIN"}</label>
+    <div class="pindots">${[0,1,2,3,4,5].map(i => `<i class="${i < cur.length ? "on" : ""}"></i>`).join("")}</div>
+    <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-kc="${n}">${n}</button>`).join("")}<button data-kc="del" aria-label="Cancella">⌫</button><button data-kc="0">0</button><button data-kc="ok" style="background:var(--accent);border-color:var(--accent);color:#1d1606">OK</button></div>
+    <div id="cerr">${c.err ? `<div class="err">${esc(c.err)}</div>` : ""}</div>
+    <p class="hint">Non usare PIN troppo semplici come 111111 o 123456. Il PIN è personale: non darlo ai colleghi.</p></div>`; }
+async function salvaPinNuovo(){ const c = S.cp;
+  if (c.a !== c.b) { S.cp = { step: 1, a: "", b: "", err: "I due PIN non sono uguali: riprova." }; render(); return; }
+  try { const r = await rpc("rap_cambia_pin", { p_nome: S.me, p_pin: S.pin, p_nuovo: c.a });
+    if (!r.ok) { S.cp = { step: 1, a: "", b: "", err: r.err === "PIN_FACILE" ? "PIN troppo facile: scegline uno diverso." : msgErr(r.err) }; render(); return; }
+    S.pin = c.a; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome: S.me, pin: S.pin })); } catch {}
+    S.cp = null; await caricaMiei(); S.view = "lista"; render(); toast("PIN personale salvato. Da ora usa questo PIN."); }
+  catch { S.cp.err = "Connessione non riuscita: riprova."; render(); } }
 async function login(){
   const nome = $("#op") && $("#op").value; S.loginNome = nome;
   if (!nome) { $("#lerr").innerHTML = `<div class="err">Scegli il tuo nome.</div>`; return; }
@@ -425,6 +442,7 @@ async function login(){
   try { const r = await rpc("rap_login", { p_nome: nome, p_pin: S.pinIn });
     if (!r.ok) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">${esc(msgErr(r.err))}</div>`; return; }
     S.me = nome; S.pin = S.pinIn; S.pinIn = ""; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome, pin: S.pin })); } catch {}
+    if (r.cambia) { S.view = "cambia"; S.cp = { step: 1, a: "", b: "" }; render(); return; }
     await caricaMiei(); S.view = "lista"; render(); toast("Ciao " + nome + "!");
   } catch (e) { $("#lerr").innerHTML = `<div class="err">Connessione non riuscita. Controlla internet e riprova.</div>`; }
 }
@@ -500,6 +518,10 @@ sugBox.addEventListener("click", e => { const b = e.target.closest("button[data-
 document.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
   if (t.id === "out") return esci("Sei uscito.");
+  if (t.dataset.kc && S.cp) { const k = t.dataset.kc, c = S.cp; c.err = ""; const key = c.step === 1 ? "a" : "b";
+    if (k === "del") c[key] = c[key].slice(0, -1); else if (k !== "ok" && c[key].length < 6) c[key] += k;
+    if (c[key].length === 6 || k === "ok") { if (c[key].length < 6) { c.err = "Il PIN ha 6 cifre."; } else if (c.step === 1) { c.step = 2; } else { render(); salvaPinNuovo(); return; } }
+    render(); return; }
   if (t.dataset.k) { const k = t.dataset.k; if (k === "del") S.pinIn = S.pinIn.slice(0, -1); else if (k === "ok") return login(); else if (S.pinIn.length < 6) S.pinIn += k;
     const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
   if (t.dataset.delfoto != null && S.edit) { leggiForm(); S.edit.p.foto.splice(+t.dataset.delfoto, 1); render(); return; }
@@ -535,7 +557,8 @@ document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { i
 
 (async () => {
   try { await caricaElenchi(); } catch (e) { $("#main").innerHTML = `<div class="card err">Impossibile collegarsi al server. Controlla la connessione e ricarica la pagina.</div>`; return; }
-  if (S.me) { S.view = "lista"; try { if (!(await caricaMiei())) return; } catch { toast("Connessione lenta: riprova."); } }
+  if (S.me) { S.view = "lista"; try { const lg = await rpc("rap_login", { p_nome: S.me, p_pin: S.pin }); if (lg && lg.ok && lg.cambia) { S.view = "cambia"; S.cp = { step: 1, a: "", b: "" }; render(); return; }
+      if (!(await caricaMiei())) return; } catch { toast("Connessione lenta: riprova."); } }
   render();
 })();
 </script>
