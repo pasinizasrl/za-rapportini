@@ -112,6 +112,7 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .pasto label{flex:1 1 140px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;min-height:50px}
 .pasto input{width:22px;height:22px;accent-color:var(--good)}
 .pasto label.on{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.cnceAltrove{border-style:dashed;background:var(--panel2)}
 .ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
 .ecG label{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .ecG .f{text-align:center;font-size:20px;font-weight:700;margin:0}
@@ -233,7 +234,19 @@ const itData = s => { const [y, m, d] = s.split("-"); return d + "." + m + "." +
 const giorno = s => GIORNI[new Date(s + "T12:00:00").getDay()];
 const spostaGiorno = (s, n) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + n); return iso(d); };
 const etichettaGiorno = s => { if (!s) return ""; const g = giorno(s), t = oggi(); return (s === t ? "Oggi · " : s === spostaGiorno(t, -1) ? "Ieri · " : "") + g.charAt(0).toUpperCase() + g.slice(1) + " " + itData(s); };
-function aggData(v){ const t = oggi(); if (!v) v = t; if (v > t) v = t; const f = $("#fData"); f.value = v; S.edit.data = v; $("#dGiorno").textContent = etichettaGiorno(v); $("#dNext").disabled = v >= t; }
+/* sezione Cassa Edile: una sola volta al giorno, sul rapportino del cantiere con più ore */
+const CNCE_K = ["ord", "stra", "trasf", "pasto", "noteEc", "permesso"];
+const haCnce = p => p && (p.ord != null || p.permesso > 0) && !fuori(p);
+function altriGiorno(E){ return (S.list || []).filter(r => r.data === E.data && r.id !== E.id && r.payload && !fuori(r.payload)); }
+function cnceAltro(E){ if (E.cnceQui) return null; return altriGiorno(E).find(r => haCnce(r.payload)) || null; }
+function cnceAltroHTML(E, ro){ const r = cnceAltro(E), q = r.payload, c = parseCant(q.cantiere), oreQui = E.p.ore || 0, oreLa = q.ore || 0;
+  return `<div class="card ecCard cnceAltrove"><h2>Cassa Edile CNCE <small>(Edilconnect)</small></h2>
+    <p style="margin:0 0 6px">Le ore Cassa Edile di questo giorno sono già nel rapportino del cantiere:</p>
+    <p style="margin:0 0 6px;font-weight:700">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || q.cantiere || "")} <span class="hint">· ${fmtOre(oreLa)} h macchine</span></p>
+    <p class="hint" style="margin:0 0 8px">Ordinarie ${fmtOre(q.ord || 0)}${q.stra ? " · straord. " + fmtOre(q.stra) : ""}${q.trasf ? " · trasferta " + fmtOre(q.trasf) : ""}${q.permesso ? " · permesso " + fmtOre(q.permesso) : ""}${q.pasto ? " · " + (q.pasto === "rist" ? "ristorante" : "a casa") : ""}</p>
+    <p class="hint" style="margin:0 0 8px">Si compilano <b>una sola volta al giorno</b>, sul cantiere dove hai lavorato più ore.</p>
+    ${ro ? "" : `<button class="btn sm" id="cnceQui">${oreQui > oreLa ? "⚠️ Qui hai più ore: sposta qui le ore Cassa Edile" : "Sposta qui le ore Cassa Edile"}</button>`}</div>`; }
+function aggData(v){ const t = oggi(); if (!v) v = t; if (v > t) v = t; const f = $("#fData"); f.value = v; S.edit.data = v; $("#dGiorno").textContent = etichettaGiorno(v); $("#dNext").disabled = v >= t; leggiForm(); render(); }
 function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 3200); }
 function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{3,4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
   let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
@@ -414,7 +427,7 @@ function renderForm(m){
   <div class="card">
     <h2>Note</h2><label class="l" for="fNote" style="position:absolute;left:-9999px">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
   </div>
-  <div class="card ecCard"><h2>Cassa Edile CNCE <small>(Edilconnect)</small></h2>
+  ${cnceAltro(E) ? cnceAltroHTML(E, ro) : `<div class="card ecCard"><h2>Cassa Edile CNCE <small>(Edilconnect)</small></h2>
     <div class="assenze"><label class="ferie${p.ferie ? " on" : ""}"><input type="checkbox" id="fFerie" ${p.ferie ? "checked" : ""} ${dis}><span>Ferie<small>giornata intera</small></span></label>
       <label class="ferie mal${p.malattia ? " on" : ""}"><input type="checkbox" id="fMal" ${p.malattia ? "checked" : ""} ${dis}><span>Malattia<small>giornata intera</small></span></label>
       <label class="perm"><span>Permesso<small>ore</small></span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fPerm" value="${esc(p.permesso || "")}" placeholder="0" ${dis || (fuori(p) ? "disabled" : "")}></label></div>
@@ -426,7 +439,8 @@ function renderForm(m){
     <label class="l">Pranzo</label>
     <div class="pasto"><label class="${p.pasto === "rist" ? "on" : ""}"><input type="checkbox" id="fPastoR" ${p.pasto === "rist" ? "checked" : ""} ${dis}>🍽 Ristorante aziendale</label><label class="${p.pasto === "casa" ? "on" : ""}"><input type="checkbox" id="fPastoC" ${p.pasto === "casa" ? "checked" : ""} ${dis}>🏠 Mangiato a casa</label></div>
     <label class="l" for="fNoteEc">Note ore</label><textarea class="f" id="fNoteEc" style="min-height:56px" placeholder="Es. trasferta a Mantova, rientro alle 20…" ${dis}>${esc(p.noteEc || "")}</textarea>`}
-    ${fuori(p) ? `<p class="hint" style="margin:8px 0 0">Con ferie o malattia non servono cantiere, macchine e ore: scrivi eventuali note sopra e salva.</p>` : ""}</div>
+    ${fuori(p) ? `<p class="hint" style="margin:8px 0 0">Con ferie o malattia non servono cantiere, macchine e ore: scrivi eventuali note sopra e salva.</p>` : ""}
+    ${altriGiorno(E).length && !fuori(p) ? `<p class="hint" style="margin:8px 0 0">Oggi hai anche altri rapportini: le ore Cassa Edile si compilano <b>una sola volta</b>, qui.</p>` : ""}</div>`}
   ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
   ${E.id && !ro ? `<button class="btn danger big" id="del" style="margin-top:10px;background:transparent">Elimina rapportino</button>` : ""}
   <div id="ferr"></div>`;
@@ -445,6 +459,7 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (!x) return; const k = e.dataset.k, v = k === "ore" ? e.value : U(e.value); if ((k === "desc" || k === "lav") && !v) delete x[k]; else x[k] = v; });
   document.querySelectorAll("[data-ac]").forEach(e => { const [i, j] = e.dataset.ac.split("|").map(Number), x = p.mezzi[i]; if (!x) return; normMz(x); while (x.accs.length <= j) x.accs.push({ acc: "", ore: "" }); x.accs[j][e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
   p.ore = fuori(p) ? 0 : calcOre(p);
+  if (!$("#fOrd") && !fuori(p) && cnceAltro(E)) CNCE_K.forEach(k => delete p[k]);
  }
 
 /* primo accesso con PIN provvisorio: l'operaio sceglie il suo PIN personale */
@@ -509,6 +524,8 @@ async function salva(){
   const b = $("#save"); b.disabled = true; b.textContent = "Salvataggio…";
   try { const r = await rpc("rap_salva", { p_nome: S.me, p_pin: S.pin, p_id: E.id, p_data: E.data, p_payload: p });
     if (!r.ok) { b.disabled = false; b.textContent = "Salva rapportino"; if (r.err === "PIN_ERRATO" || String(r.err).startsWith("BLOCCATO")) return esci(msgErr(r.err)); er.innerHTML = `<div class="err">${esc(msgErr(r.err))}</div>`; return; }
+    if (E.svuota) { const o = (S.list || []).find(x => x.id === E.svuota); if (o && !o.payload.approvato) { const q = JSON.parse(JSON.stringify(o.payload)); CNCE_K.forEach(k => delete q[k]);
+        try { await rpc("rap_salva", { p_nome: S.me, p_pin: S.pin, p_id: o.id, p_data: o.data, p_payload: q }); } catch {} } }
     await caricaMiei(); S.view = "lista"; S.edit = null; S.upl = []; render(); window.scrollTo(0, 0); toast("Rapportino salvato.");
   } catch (e) { b.disabled = false; b.textContent = "Salva rapportino"; er.innerHTML = `<div class="err">Non salvato: connessione non riuscita. Riprova tra poco, i dati restano qui.</div>`; }
 }
@@ -556,6 +573,8 @@ document.addEventListener("click", e => {
   if (t.dataset.delfoto != null && S.edit) { leggiForm(); S.edit.p.foto.splice(+t.dataset.delfoto, 1); render(); return; }
   if (t.dataset.vedi != null) { if (!t.dataset.vedi) return; const o = document.createElement("div"); o.className = "vediOv"; o.innerHTML = `<img src="${t.dataset.vedi}" alt=""><span>Tocca per chiudere</span>`; o.onclick = () => o.remove(); document.body.appendChild(o); return; }
   if (t.dataset.letto) { const id = t.dataset.letto; S.avvisi = (S.avvisi || []).filter(a => a.id !== id); render(); rpc("rap_avviso_letto", { p_nome: S.me, p_pin: S.pin, p_id: id }).catch(() => {}); return; }
+  if (t.id === "cnceQui" && S.edit) { leggiForm(); const r = cnceAltro(S.edit); if (!r) return; CNCE_K.forEach(k => { if (r.payload[k] != null) S.edit.p[k] = r.payload[k]; }); if (S.edit.p.ord == null) S.edit.p.ord = 8;
+    S.edit.cnceQui = true; S.edit.svuota = r.id; S.edit.ordToccato = true; render(); setTimeout(() => { const c = document.querySelector(".ecCard"); c && c.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50); toast("Ore spostate qui: al salvataggio vengono tolte dall'altro rapportino."); return; }
   if (t.dataset.det) { S.det = S.det || {}; S.det[t.dataset.det] = !S.det[t.dataset.det]; render(); return; }
   if (t.id === "calTog") { S.calOpen = !S.calOpen; try { localStorage.setItem("za-rap-cal", S.calOpen ? "1" : ""); } catch {} render(); return; }
   if (t.dataset.calm) { const [y, mo] = S.calM.split("-").map(Number), d = new Date(y, mo - 1 + +t.dataset.calm, 1, 12); S.calM = iso(d).slice(0, 7); render(); return; }
