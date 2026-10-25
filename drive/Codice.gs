@@ -5,10 +5,12 @@
  */
 const SB_URL = 'https://mzyvermpfusbbufhjwbu.supabase.co';
 const SB_KEY = 'sb_publishable_P_r6pi6oRahzgvfwU-PgeQ_lGecNqwo';
-const CARTELLA_PRINCIPALE = 'FOTO CANTIERI ZA';
+// ⬇⬇ INCOLLA QUI tra gli apici il codice della tua cartella FOTO (la parte finale del link dopo /folders/)
+const ID_CARTELLA = '';
+const CARTELLA_PRINCIPALE = 'FOTO CANTIERI ZA'; // usata solo se ID_CARTELLA è vuoto
 
 function doGet() {
-  const root = cartella_(DriveApp.getRootFolder(), CARTELLA_PRINCIPALE);
+  const root = principale_();
   return risposta_({ ok: true, servizio: 'Foto cantieri ZA', cartella: root.getUrl() });
 }
 
@@ -26,7 +28,7 @@ function doPost(e) {
     const lock = LockService.getScriptLock(); lock.waitLock(20000);
     let giorno, cantiere, root;
     try {
-      root = cartella_(DriveApp.getRootFolder(), CARTELLA_PRINCIPALE);
+      root = principale_();
       cantiere = cartella_(root, pulisci_(d.cantiere || 'SENZA CANTIERE'));
       giorno = cartella_(cantiere, /^\d{4}-\d{2}-\d{2}$/.test(d.data || '') ? d.data : Utilities.formatDate(new Date(), 'Europe/Rome', 'yyyy-MM-dd'));
     } finally { lock.releaseLock(); }
@@ -42,6 +44,9 @@ function doPost(e) {
   }
 }
 
+function principale_() {
+  return ID_CARTELLA ? DriveApp.getFolderById(ID_CARTELLA.trim()) : cartella_(DriveApp.getRootFolder(), CARTELLA_PRINCIPALE);
+}
 function cartella_(padre, nome) {
   const it = padre.getFoldersByName(nome);
   return it.hasNext() ? it.next() : padre.createFolder(nome);
@@ -51,7 +56,7 @@ function risposta_(o) { return ContentService.createTextOutput(JSON.stringify(o)
 
 /** Esegui questa funzione UNA volta dall'editor per dare i permessi (Drive + connessione esterna). */
 function autorizza() {
-  const root = cartella_(DriveApp.getRootFolder(), CARTELLA_PRINCIPALE);
+  const root = principale_();
   UrlFetchApp.fetch(SB_URL + '/rest/v1/', { headers: { apikey: SB_KEY }, muteHttpExceptions: true });
   Logger.log('OK – cartella: ' + root.getUrl());
 }
