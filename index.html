@@ -64,7 +64,11 @@ textarea.f.grow{resize:none;overflow:hidden;min-height:0;line-height:1.3;display
 .accR{margin-left:12px;padding-left:10px;border-left:3px solid var(--accent)}
 .mzR .oreI,.accR .oreI{flex:0 0 58px;width:58px;text-align:center;padding-left:6px;padding-right:6px}
 .accR{align-items:center}
-.addAc{display:inline-flex;align-items:center;gap:6px;margin:8px 0 0 14px;background:none;border:1px dashed var(--line);border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);min-height:38px}
+.addRow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 12px}
+.addAc.mz{border-style:solid;border-color:var(--steel);font-weight:700}
+.addAc.mz b{background:var(--steel);color:#e8e22a}
+.mzN{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.addAc{display:inline-flex;align-items:center;gap:6px;margin:0;background:none;border:1px dashed var(--line);border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);min-height:38px}
 .addAc b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#1d1606;font-size:16px;line-height:1}
 .accR .accL{flex:0 0 46px;align-self:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-left:14px;position:relative}
 .accR .accL::before{content:"";position:absolute;left:2px;top:-10px;width:8px;height:16px;border-left:2px solid var(--line);border-bottom:2px solid var(--line);border-bottom-left-radius:4px}
@@ -263,15 +267,15 @@ function renderForm(m){
   ${p.ferie ? `<div class="card ferieBox">Giornata di <b>ferie</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
   <div class="card"><h2>Macchine / mezzi d'opera</h2>
     ${(p.mezzi || []).map((x, i) => { normMz(x); const accs = x.accs.length ? x.accs : [{ acc: "", ore: "" }];
-      return `<div class="sub"><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
+      return `<div class="sub">${p.mezzi.length > 1 ? `<div class="mzN">Macchina ${i + 1}</div>` : ""}<div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore" aria-label="Ore macchina" ${dis}>
         ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli macchina">✕</button>`}</div>
       ${accs.map((a, j) => `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="Accessorio" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(a.ore || "")}" placeholder="Ore" aria-label="Ore accessorio" ${dis}>
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`).join("")}
-      ${ro ? "" : `<button class="addAc" data-addac="${i}"><b>+</b> accessorio</button>`}</div>`; }).join("")}
+      ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button>${i === p.mezzi.length - 1 ? `<button class="addAc mz" id="addMz"><b>+</b> Macchina / mezzo d'opera</button>` : ""}</div>`}</div>`; }).join("")}
+    ${ro || p.mezzi.length ? "" : `<div class="addRow"><button class="addAc mz" id="addMz"><b>+</b> Macchina / mezzo d'opera</button></div>`}
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
-    ${ro ? "" : `<button class="btn sm" id="addMz" style="margin-top:10px">+ Aggiungi macchina</button>`}
   </div>
   <div class="card"><h2>Materiali</h2>
     ${(p.materiali || []).map((x, i) => `<div class="sub"><div class="row"><input class="f" data-mt="${i}" data-k="desc" value="${esc(x.desc)}" placeholder="Materiale" ${dis} style="text-transform:uppercase">
@@ -294,9 +298,10 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   E.data = $("#fData").value; p.ferie = !!($("#fFerie") && $("#fFerie").checked); if (!p.ferie) delete p.ferie;
   const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !p.ferie) p.permesso = pm; else delete p.permesso;
   if ($("#fCan")) { p.cantiere = $("#fCan").value.trim(); p.lavorazione = U($("#fLavz").value); if (!p.lavorazione) delete p.lavorazione; p.lavori = U($("#fLav").value); }
-  p.note = $("#fNote").value.trim(); p.ore = p.ferie ? 0 : calcOre(p);
+  p.note = $("#fNote").value.trim();
   document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (x) x[e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
   document.querySelectorAll("[data-ac]").forEach(e => { const [i, j] = e.dataset.ac.split("|").map(Number), x = p.mezzi[i]; if (!x) return; normMz(x); while (x.accs.length <= j) x.accs.push({ acc: "", ore: "" }); x.accs[j][e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
+  p.ore = p.ferie ? 0 : calcOre(p);
   document.querySelectorAll("[data-mt]").forEach(e => { const x = p.materiali[+e.dataset.mt]; if (x) x[e.dataset.k] = e.dataset.k === "desc" ? U(e.value) : e.value; }); }
 
 async function login(){
@@ -374,7 +379,7 @@ document.addEventListener("click", e => {
   if (t.dataset.id) { const r = S.list.find(x => x.id === t.dataset.id); if (r) apri(r); return; }
   if (t.id === "dPrev" || t.id === "dNext") { aggData(spostaGiorno($("#fData").value || oggi(), t.id === "dPrev" ? -1 : 1)); return; }
   if (t.id === "back") { S.view = "lista"; S.edit = null; render(); return; }
-  if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); return; }
+  if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); const n = S.edit.p.mezzi.length - 1; setTimeout(() => { const el = document.querySelector(`[data-mz="${n}"][data-k="mezzo"]`); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 30); return; }
   if (t.id === "addMt") { leggiForm(); S.edit.p.materiali.push({ desc: "", qta: "", um: "mc" }); render(); return; }
   if (t.dataset.addac) { leggiForm(); const x = normMz(S.edit.p.mezzi[+t.dataset.addac]); if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); x.accs.push({ acc: "", ore: x.ore || "" }); render(); setTimeout(() => { const el = document.querySelector(`[data-ac="${t.dataset.addac}|${x.accs.length - 1}"][data-k="acc"]`); el && el.focus(); }, 30); return; }
   if (t.dataset.delac) { leggiForm(); const [i, j] = t.dataset.delac.split("|").map(Number), x = normMz(S.edit.p.mezzi[i]); x.accs.splice(j, 1); render(); return; }
