@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#26393d">
+<title>ZA srl Guida rapportini</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f2f3f0; --panel:#ffffff; --panel2:#f7f8f5; --ink:#1c2320; --muted:#5b665f; --line:#d8dcd6;
+  --steel:#26393d; --steel-2:#304a4f; --on-steel:#eef3f1; --on-steel-muted:#a9bcb8;
+  --accent:#d4950f; --accent-ink:#7a5000; --accent-soft:#f6e7c4; --band:#f4f08a;
+  --good:#2c7a4b; --good-soft:#dcefe2; --warn:#a96300; --warn-soft:#f7e6cc; --bad:#b0352d; --bad-soft:#f6dcd9; --blue:#1d3a6e;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121614; --panel:#1b201e; --panel2:#171c1a; --ink:#e4eae6; --muted:#97a39c; --line:#2d3532;
+  --steel:#1d2e31; --steel-2:#253b3f; --on-steel:#e4eeeb; --on-steel-muted:#8fa6a1;
+  --accent:#e2a92e; --accent-ink:#f0c46a; --accent-soft:#3a2f17; --good:#5cc08a; --good-soft:#1f3a2a; --warn:#e0a24a; --warn-soft:#3a2c17; --bad:#ef7d72; --bad-soft:#3a1f1d; --blue:#9dbcf0;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font-body);-webkit-text-size-adjust:100%}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:3px solid var(--accent);padding:10px 16px calc(10px) 16px;padding-top:max(10px, env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
+header .b{font-weight:700;font-size:21px;color:#e8e22a;letter-spacing:.01em}
+header .s{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-steel-muted)}
+header .me{margin-left:auto;text-align:right;font-size:13px;line-height:1.2}
+header .me b{display:block;font-size:14px;color:#fff;text-transform:uppercase}
+header .me button{background:none;border:0;color:var(--on-steel-muted);padding:0;font-size:12px;text-decoration:underline}
+main{max-width:720px;margin:0 auto;padding:16px 16px 110px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+h1{font-family:var(--font-display);font-weight:700;font-size:28px;text-transform:uppercase;letter-spacing:.02em;margin:4px 0 12px}
+h2{font-family:var(--font-display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px;color:var(--accent-ink)}
+label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 4px}
+.f{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:11px 12px;min-height:46px}
+.f:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+textarea.f{min-height:96px;resize:vertical;text-transform:uppercase}
+.row{display:flex;gap:10px;align-items:center}
+.sug{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--panel);border:2px solid var(--accent);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.25);max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sug button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;font:inherit;font-size:16px;line-height:1.3;color:var(--ink);white-space:normal;cursor:pointer}
+.sug button:last-child{border-bottom:0}
+.sug button:active,.sug button.on{background:var(--good-soft)}
+.sug .c1{display:block;font-weight:700;font-size:15px;color:var(--accent)}
+.sug .c2{display:block;font-weight:600}
+.sug mark{background:#f3e27a;color:inherit;border-radius:2px;padding:0 1px}
+.sug .vuoto{padding:12px 14px;color:var(--muted)}
+.sugw{position:relative}
+textarea.f.grow{resize:none;overflow:hidden;min-height:0;line-height:1.3;display:block}
+.dataNav{display:flex;gap:8px;align-items:stretch}
+.assenze{display:flex;gap:10px;margin:10px 0 4px}
+.assenze > label{flex:1 1 0;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:56px;font-weight:700;cursor:pointer}
+.assenze small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.assenze input[type=checkbox]{width:26px;height:26px;accent-color:var(--blue);flex:0 0 auto}
+.assenze .ferie.on{background:#dfe8f7;border-color:var(--blue);color:var(--blue)}
+.assenze .perm .f{flex:0 0 80px;width:80px;text-align:center;margin:0;padding:8px}
+.assenze .perm span{flex:1 1 auto}
+.ferieBox{color:var(--blue);background:#dfe8f7;border-color:var(--blue);text-align:center;font-size:16px}
+.mzR,.accR{align-items:flex-start !important}
+.mzR,.accR{gap:6px !important}
+.accErr{margin:8px 0 0 12px;font-size:14px}
+.oreI.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);font-weight:700}
+.oreI.lock{background:var(--bg);color:var(--muted);border-style:dashed;pointer-events:none}
+.oreI.lock::placeholder{color:var(--ink);opacity:.75;font-weight:700}
+.mzR .x,.accR .x{width:34px !important}
+.accR{margin-left:12px;padding-left:10px;border-left:3px solid var(--accent)}
+.mzR .oreI,.accR .oreI{flex:0 0 58px;width:58px;text-align:center;padding-left:6px;padding-right:6px}
+.accR{align-items:center}
+.addRow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 12px}
+.addMz{display:flex !important;width:calc(100% - 12px);justify-content:center;margin:10px 0 0 12px !important;min-height:46px !important;font-size:15px !important}
+.addAc.mz{border-style:solid;border-color:var(--steel);font-weight:700}
+.addAc.mz b{background:var(--steel);color:#e8e22a}
+.mzDl{margin:10px 0 4px 12px}
+.mzCat{font-weight:800;color:var(--ink);font-size:13px}
+.mzL{margin-left:12px}
+.f.req,.addMz.req{border:2px solid var(--bad) !important;background:var(--bad-soft) !important;box-shadow:0 0 0 3px rgba(176,53,45,.15)}
+.f.req::placeholder{color:var(--bad);opacity:.8}
+textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase;color:var(--blue);font-weight:700;min-height:64px}
+.mzN b{font-size:16px;color:var(--ink);letter-spacing:.04em;font-weight:800}
+.mzN{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.addAc{display:inline-flex;align-items:center;gap:6px;margin:0;background:none;border:1px dashed var(--line);border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);min-height:38px}
+.addAc b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#1d1606;font-size:16px;line-height:1}
+.accR .accL{flex:0 0 46px;align-self:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-left:14px;position:relative}
+.accR .accL::before{content:"";position:absolute;left:2px;top:-10px;width:8px;height:16px;border-left:2px solid var(--line);border-bottom:2px solid var(--line);border-bottom-left-radius:4px}
+.accR .sugw{flex:1 1 auto}
+.lavz{display:inline-block;margin-top:5px;background:var(--steel);color:var(--on-steel);border-radius:5px;padding:2px 8px;font-size:13px;font-weight:700;letter-spacing:.03em}
+.permR{color:var(--warn);font-weight:700;margin-top:4px}
+.calTog{display:flex;align-items:center;gap:10px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-weight:700;color:var(--ink);margin-bottom:10px;text-align:left}
+.calTog .car{margin-left:auto;color:var(--muted)}
+.calTog.on{border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.cal{background:var(--panel);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;padding:10px 12px 12px;margin-bottom:14px}
+.calh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.calh b{flex:1;text-align:center;text-transform:capitalize;font-size:18px}
+.calh .dnav{flex:0 0 46px;min-height:40px;font-size:22px}
+.cgr{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cgr .wd{text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+.cg{position:relative;aspect-ratio:1/1;min-height:38px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font:inherit;font-weight:700;font-size:16px;color:var(--ink);padding:0}
+.cg i{position:absolute;right:3px;bottom:1px;font-style:normal;font-size:10px}
+.cg.ok{background:var(--good);border-color:var(--good);color:#fff}
+.cg.manca{background:var(--bad);border-color:var(--bad);color:#fff}
+.cg.fer{background:var(--blue);border-color:var(--blue);color:#fff}
+.cg.perm{background:var(--warn);border-color:var(--warn);color:#fff}
+.cg.ok.perm{background:var(--good);box-shadow:inset 0 -5px 0 var(--warn)}
+.cg.fest{background:#efe3f7;border-color:#8a4fb3;color:#6a2d93}
+.cg.chius{background:#dfe8f7;border-color:var(--blue);color:var(--blue);border-style:dashed}
+.leg i.fest{background:#efe3f7;border:1px solid #8a4fb3}.leg i.chius{background:#dfe8f7;border:1px dashed var(--blue)}
+.evM{margin-top:8px;font-size:13px;display:grid;gap:3px}
+.evM i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+.evM i.fest{background:#8a4fb3}.evM i.chius{background:var(--blue)}
+.cg.off{background:transparent;color:var(--muted);border-style:dashed;opacity:.7}
+.cg.fut{color:var(--muted);opacity:.45}
+.cg.old{color:var(--muted)}
+.cg.oggi{outline:3px solid var(--accent);outline-offset:1px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+.leg i.ok{background:var(--good)}.leg i.manca{background:var(--bad)}.leg i.fer{background:var(--blue)}.leg i.perm{background:var(--warn)}.leg i.off{border:1px dashed var(--muted)}
+.dataNav .f{flex:1 1 auto;min-width:0;text-align:center;font-weight:600}
+.dnav{flex:0 0 54px;font-size:26px;line-height:1;padding:0;font-weight:700}
+.dnav:disabled{opacity:.35}
+.dGiorno{text-align:center;font-weight:600;color:var(--muted);margin:6px 0 4px;font-size:14px}
+.row > *{flex:1 1 0;min-width:0}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:11px 16px;font-weight:600;min-height:46px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#1d1606}
+.btn.big{width:100%;font-size:18px;min-height:54px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.danger{color:var(--bad)}
+.btn.sm{min-height:38px;padding:7px 12px;font-size:14px}
+.hint{color:var(--muted);font-size:13px}
+.err{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:10px 12px;font-weight:600;margin-top:12px}
+.ok{background:var(--good-soft);color:var(--good)}
+.tot{display:flex;justify-content:space-between;align-items:baseline;background:var(--band);color:#1c2320;border-radius:8px;padding:10px 14px;margin-top:12px;font-weight:700}
+.tot b{font-family:var(--font-display);font-size:28px}
+.sub{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;background:var(--panel2)}
+.sub .row{margin-top:6px}
+.x{flex:0 0 auto !important;width:44px;min-height:44px;border:0;background:none;color:var(--bad);font-size:20px}
+.rap{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:10px;overflow:hidden;color:var(--ink)}
+.rap{cursor:default}
+.rapApri{display:block;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
+.detTog{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:9px 12px;font:inherit;font-weight:700;color:var(--ink);text-align:left;cursor:pointer}
+.detTog b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#1d1606;font-size:17px;line-height:1}
+.det{padding:4px 12px 12px;border-top:1px dashed var(--line)}
+.detL{padding:8px 0;border-bottom:1px solid var(--line)}
+.detL:last-child{border-bottom:0}
+.detT{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.detT b{color:var(--ink);font-size:14px}
+.detR{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.detR span:last-child{font-weight:700;white-space:nowrap}
+.detR.acc{padding-left:12px;border-left:3px solid var(--accent);margin-left:2px;font-size:14px}
+.detN{margin-top:8px;font-size:14px}
+.det .ds{color:var(--blue);font-weight:700;text-transform:uppercase;margin-top:4px}
+.rap .h{background:var(--steel);color:var(--on-steel);padding:9px 12px;display:flex;gap:8px;align-items:center;border-bottom:3px solid var(--accent)}
+.rap .h .d{font-weight:700;text-transform:capitalize}
+.rap .h .o{margin-left:auto;font-family:var(--font-display);font-size:20px;font-weight:700;color:#e8e22a}
+.rap .c{padding:10px 12px}
+.rap .c .cm{font-weight:700;text-transform:uppercase}
+.rap .c .ds{color:var(--blue);font-weight:700;text-transform:uppercase;margin-top:4px}
+.chip{display:inline-block;border-radius:5px;padding:2px 8px;font-weight:700;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.chip.ok{background:var(--good-soft);color:var(--good)}
+.chip.wait{background:var(--accent-soft);color:var(--accent-ink)}
+.code{font-family:var(--font-mono);font-size:12.5px;font-weight:500;background:var(--accent);color:#1c2320;border-radius:4px;padding:1px 6px;margin-right:6px}
+.fotoG{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:10px}
+.fotoG .fotoT{width:96px;flex:0 0 96px}
+.fotoT{position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center}
+.fotoT img{width:100%;height:100%;object-fit:cover;display:block}
+.fotoT a{display:block;width:100%;height:100%}
+.fotoT small{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);color:#fff;font-size:11px;text-align:center;padding:2px}
+.fotoT.up img{opacity:.5}.fotoT.ko small{background:var(--bad)}
+.fotoT .fx{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:13px}
+.fotoBtn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700}
+.avv{background:#fff4d6;border:2px solid var(--accent);border-radius:12px;padding:10px 12px;margin-bottom:10px;color:#3b2a00}
+.avvT{font-weight:800;font-size:14px;display:flex;justify-content:space-between;gap:8px}.avvT span{font-weight:500;color:#7a5a12;font-size:12px}
+.avvB{margin:6px 0 8px;font-size:16px;white-space:pre-wrap}
+.manc{background:var(--bad-soft);border:2px solid var(--bad);border-radius:12px;padding:10px 12px;margin-bottom:10px;color:var(--bad)}
+.mancT{font-weight:800}
+.mancB{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mancB button{background:var(--bad);color:#fff;border:0;border-radius:8px;padding:8px 10px;font:inherit;font-weight:700;font-size:14px;text-transform:capitalize}
+.listaH{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.listaH h1{margin:0;flex:1 1 auto}
+.fab{flex:0 0 auto;min-height:44px;padding:8px 14px;font-size:15px;font-weight:700;white-space:nowrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--steel);color:var(--on-steel);padding:10px 16px;border-radius:8px;z-index:9;max-width:90vw;text-align:center}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pinpad button{min-height:58px;font-size:24px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:10px;color:var(--ink)}
+.pindots{display:flex;gap:12px;justify-content:center;margin:14px 0 4px}
+.pindots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted)}
+.pindots i.on{background:var(--accent);border-color:var(--accent)}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+[hidden]{display:none !important}
+
+main{max-width:760px}
+.gtoc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.gtoc a{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:600;font-size:14px;color:var(--ink);text-decoration:none}
+.sez{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px;scroll-margin-top:80px}
+.sez h2{display:flex;align-items:center;gap:10px}
+.sez h2 .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#1d1606;font-size:17px;flex:0 0 auto}
+.sez p{margin:6px 0}
+ol.pas{margin:6px 0 4px;padding-left:0;list-style:none;counter-reset:p}
+ol.pas>li{counter-increment:p;position:relative;padding:7px 0 7px 38px;border-bottom:1px dashed var(--line)}
+ol.pas>li:last-child{border-bottom:0}
+ol.pas>li::before{content:counter(p);position:absolute;left:0;top:7px;width:26px;height:26px;border-radius:50%;background:var(--steel);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+ul.pt{margin:6px 0;padding-left:20px}ul.pt li{margin:4px 0}
+.k{display:inline-block;border:1px solid var(--line);background:var(--panel2);border-radius:6px;padding:0 7px;font-weight:700;white-space:nowrap}
+.kp{display:inline-block;background:var(--accent);color:#1d1606;border-radius:6px;padding:0 7px;font-weight:700;white-space:nowrap}
+.box{border-radius:10px;padding:10px 12px;margin:10px 0;font-size:15px}
+.box.ok{background:var(--good-soft);color:var(--good)}.box.att{background:#fff4d6;color:#5a4200;border:1px solid var(--accent)}.box.no{background:var(--bad-soft);color:var(--bad)}
+.leg{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;margin:8px 0}
+.leg i{width:22px;height:22px;border-radius:6px;display:inline-block}
+.es{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px}
+.es .r{display:flex;justify-content:space-between;gap:8px;padding:3px 0}.es .r.a{padding-left:14px;border-left:3px solid var(--accent);margin-left:2px}
+.es .t{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.top{position:fixed;right:14px;bottom:14px;background:var(--steel);color:#fff;border-radius:50%;width:46px;height:46px;display:grid;place-items:center;text-decoration:none;font-size:20px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+@media print{header,.gtoc,.top,.noprint{display:none!important}.sez{break-inside:avoid;border:1px solid #bbb}body{background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="b">ZA srl</div><div class="s">Guida rapportini</div></div>
+  <div class="me"><a href="./" style="color:#fff;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:6px 10px">‹ Torna ai rapportini</a></div>
+</header>
+<main id="su">
+<h1>Come compilare il rapportino</h1>
+<p class="hint" style="margin-top:-6px">Guida per gli operai ZA srl · si usa dal telefono, basta una connessione internet.</p>
+<nav class="gtoc">
+  <a href="#apri">1. Aprire</a><a href="#accesso">2. Accesso</a><a href="#home">3. I miei rapportini</a><a href="#nuovo">4. Nuovo rapportino</a><a href="#macchine">5. Macchine e accessori</a><a href="#foto">6. Foto</a><a href="#salva">7. Salvare</a><a href="#modifica">8. Modificare</a><a href="#problemi">9. Problemi</a>
+</nav>
+
+<section class="sez" id="apri"><h2><span class="n">1</span>Aprire la pagina</h2>
+<p>Apri questo indirizzo dal telefono:</p>
+<p style="font-size:18px;font-weight:700;word-break:break-all"><a href="https://pasinizasrl.github.io/za-rapportini/">pasinizasrl.github.io/za-rapportini</a></p>
+<p><b>Consiglio:</b> mettila sulla schermata del telefono come un'app, così la trovi subito.</p>
+<ul class="pt">
+  <li><b>iPhone (Safari):</b> tocca <span class="k">Condividi ⬆</span> → <span class="k">Aggiungi alla schermata Home</span> → <span class="k">Aggiungi</span>.</li>
+  <li><b>Android (Chrome):</b> tocca <span class="k">⋮</span> in alto a destra → <span class="k">Aggiungi a schermata Home</span> → <span class="k">Aggiungi</span>.</li>
+</ul>
+</section>
+
+<section class="sez" id="accesso"><h2><span class="n">2</span>Entrare con nome e PIN</h2>
+<ol class="pas">
+  <li>Scegli <b>il tuo nome</b> dall'elenco.</li>
+  <li>Scrivi il <b>PIN di 6 cifre</b> che ti ha dato l'ufficio con i tasti numerici. Al sesto numero entra da solo.</li>
+  <li>Il telefono si ricorda di te: le volte dopo entri subito senza PIN.</li>
+</ol>
+<div class="box att">🔐 Il PIN è personale: non darlo ai colleghi. Tutti i rapportini fatti con il tuo PIN risultano tuoi.</div>
+<p>Per uscire tocca <span class="k">Esci</span> sotto il tuo nome in alto a destra (serve solo se presti il telefono).</p>
+</section>
+
+<section class="sez" id="home"><h2><span class="n">3</span>La pagina "I miei rapportini"</h2>
+<p>Dall'alto in basso trovi:</p>
+<ul class="pt">
+  <li><span class="kp">+ Nuovo rapportino</span> in alto a destra: per compilare un rapportino.</li>
+  <li><b>📢 Messaggio di servizio</b> (riquadro giallo): comunicazioni dall'ufficio. Leggilo e tocca <span class="k">✓ Ho letto</span>.</li>
+  <li><b>⚠️ Ti mancano N rapportini</b> (riquadro rosso): i giorni lavorativi senza rapportino. Tocca un giorno per compilarlo subito.</li>
+  <li><b>📅 Calendario del mese</b>: tocca per aprirlo. Tocca un giorno rosso per compilarlo, uno verde per vederlo.</li>
+  <li>L'elenco dei tuoi rapportini: tocca <span class="k">+ Dettagli</span> per vedere macchine, ore e foto.</li>
+</ul>
+<p><b>Colori del calendario:</b></p>
+<div class="leg">
+  <i style="background:#2c7a4b"></i><span>Rapportino inserito</span>
+  <i style="background:#b0352d"></i><span>Giorno lavorativo da compilare</span>
+  <i style="background:#1d3a6e"></i><span>Ferie (F)</span>
+  <i style="background:#a96300"></i><span>Permesso (P)</span>
+  <i style="background:#efe3f7;border:1px solid #8a4fb3"></i><span>Festività ★</span>
+  <i style="background:#dfe8f7;border:1px dashed #1d3a6e"></i><span>Chiusura aziendale ★</span>
+  <i style="border:1px dashed #999"></i><span>Sabato e domenica</span>
+</div>
+<p>Sul rapportino vedi anche lo stato: <b>Da approvare</b> (l'ufficio deve ancora controllarlo) o <b>Approvato</b>.</p>
+</section>
+
+<section class="sez" id="nuovo"><h2><span class="n">4</span>Compilare un nuovo rapportino</h2>
+<ol class="pas">
+  <li>Tocca <span class="kp">+ Nuovo rapportino</span>.</li>
+  <li><b>Data</b>: è già oggi. Per un altro giorno usa le frecce <span class="k">‹</span> <span class="k">›</span> oppure tocca la data per aprire il calendario. Sotto vedi il giorno scritto per esteso (es. "Ieri · Venerdì 24.10.2026").</li>
+  <li><b>Ferie o permesso</b>:
+    <ul class="pt"><li>giornata di <b>ferie</b>: spunta <span class="k">Ferie</span>, scrivi una nota se serve e salva. Non serve altro.</li>
+    <li><b>permesso</b> di qualche ora: scrivi le ore in <span class="k">Permesso</span> e compila il resto normalmente. Se è un permesso di tutto il giorno, lascia vuoto il cantiere.</li></ul></li>
+  <li><b>Cantiere / commessa</b>: scrivi un pezzo del nome (es. <i>"edil demol"</i> oppure il numero <i>"0383"</i>) e tocca il cantiere giusto nell'elenco.</li>
+</ol>
+</section>
+
+<section class="sez" id="macchine"><h2><span class="n">5</span>Macchine, accessori e lavorazioni</h2>
+<p>Ogni <b>LAVORAZIONE</b> è un blocco con: la macchina usata, gli accessori, la categoria di lavoro e la descrizione.</p>
+<ol class="pas">
+  <li><b>Macchina / mezzo d'opera</b>: scrivi e scegli dall'elenco (es. <i>"323"</i>). A destra scrivi le <b>ore</b> della macchina.</li>
+  <li><b>Accessorio</b> (se l'hai usato): scegli dall'elenco e scrivi le sue ore. Per un altro accessorio tocca <span class="k">⊕ Accessorio</span>.</li>
+  <li><b>Cat. di lavoro</b>: scegli il tipo di lavoro (es. DEMOLIZIONE, SCAVO…). Comparirà nel titolo del blocco.</li>
+  <li><b>Descrizione lavori</b>: scrivi cosa hai fatto con quella macchina.</li>
+  <li>Hai usato un'altra macchina o fatto un altro lavoro? Tocca <span class="k">⊕ Nuova lavorazione</span> e ripeti.</li>
+</ol>
+<div class="box att"><b>Regola delle ore:</b> la somma delle ore degli accessori deve essere <b>uguale</b> alle ore della macchina. Se non torna, compare un riquadro rosso e non si può salvare.</div>
+<p><b>La BENNA si calcola da sola:</b> se scegli BENNA, le sue ore sono bloccate e diventano la differenza tra le ore della macchina e gli altri accessori.</p>
+<div class="es"><div class="t">Esempio</div>
+  <div class="r"><b>ESC. CING. CAT 323</b><b>9 h</b></div>
+  <div class="r a"><span>MARTELLONE V32</span><span>2 h</span></div>
+  <div class="r a"><span>BENNA <i class="hint">(automatica)</i></span><span>7 h</span></div>
+</div>
+<p>In fondo vedi le <b>ORE TOTALI MACCHINE</b>, che si aggiornano mentre scrivi.</p>
+</section>
+
+<section class="sez" id="foto"><h2><span class="n">6</span>Foto del cantiere</h2>
+<ol class="pas">
+  <li>Scegli <b>prima il cantiere</b>.</li>
+  <li>Nel riquadro <b>📷 Foto cantiere</b> tocca <span class="k">📷 Aggiungi foto</span>: puoi scattare o scegliere dalla galleria, anche più foto insieme.</li>
+  <li>Le foto partono subito: aspetta che compaiano le miniature. Per toglierne una tocca la <span class="k">✕</span>.</li>
+</ol>
+<p>Sulla foto viene scritto da solo il <b>cantiere</b>, la <b>data</b> e il <b>tuo nome</b>. Le foto vanno nella cartella del cantiere dell'ufficio: non serve mandarle anche su WhatsApp.</p>
+</section>
+
+<section class="sez" id="salva"><h2><span class="n">7</span>Salvare</h2>
+<ol class="pas">
+  <li>Se vuoi, scrivi nelle <b>Note</b> problemi, richieste o segnalazioni.</li>
+  <li>Tocca <span class="kp">Salva rapportino</span>.</li>
+  <li>Se manca qualcosa, i campi da compilare diventano <b style="color:var(--bad)">rossi</b> e la pagina ti porta al primo: compilali e salva di nuovo.</li>
+  <li>Se le foto stanno ancora partendo, il pulsante dice <i>"Invio foto… poi salvo"</i>: aspetta, salva da solo.</li>
+</ol>
+<div class="box ok">✓ Salvato: torni a "I miei rapportini" e il giorno diventa verde nel calendario.</div>
+<p><b>Obbligatori:</b> cantiere, e per ogni lavorazione macchina, ore, cat. di lavoro e descrizione.</p>
+</section>
+
+<section class="sez" id="modifica"><h2><span class="n">8</span>Correggere o eliminare</h2>
+<ul class="pt">
+  <li>Tocca il rapportino nell'elenco (o il giorno verde nel calendario), correggi e tocca <span class="kp">Salva rapportino</span>.</li>
+  <li>Per eliminarlo: in fondo <span class="k">Elimina rapportino</span> e tocca di nuovo per confermare.</li>
+  <li>Quando l'ufficio lo ha <b>approvato</b> non si può più cambiare: per correzioni chiama l'ufficio.</li>
+  <li>Puoi inserire rapportini fino a <b>60 giorni</b> indietro.</li>
+</ul>
+</section>
+
+<section class="sez" id="problemi"><h2><span class="n">9</span>Se qualcosa non va</h2>
+<ul class="pt">
+  <li><b>"PIN errato"</b>: ricontrolla il nome e il PIN. Dopo 5 tentativi sbagliati l'accesso si blocca per 15 minuti.</li>
+  <li><b>PIN dimenticato</b>: chiedi in ufficio un nuovo PIN.</li>
+  <li><b>"Connessione non riuscita"</b>: controlla di avere internet e riprova. I dati scritti restano sulla pagina.</li>
+  <li><b>"Foto non inviata"</b>: di solito manca il segnale. Riapri il rapportino più tardi e aggiungi la foto.</li>
+  <li><b>Non trovi il cantiere o la macchina</b> nell'elenco: scrivilo a mano e avvisa l'ufficio.</li>
+  <li><b>La pagina sembra vecchia</b>: chiudila e riaprila, oppure trascina verso il basso per ricaricare.</li>
+</ul>
+<div class="box att">📞 Per qualsiasi dubbio chiama l'ufficio ZA srl.</div>
+</section>
+<p class="noprint" style="text-align:center"><button class="btn" onclick="window.print()">🖨 Stampa o salva in PDF</button></p>
+</main>
+<a class="top noprint" href="#su" aria-label="Torna su">↑</a>
+</body>
+</html>

@@ -27,7 +27,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 header{position:sticky;top:0;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:3px solid var(--accent);padding:10px 16px calc(10px) 16px;padding-top:max(10px, env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
 header .b{font-weight:700;font-size:21px;color:#e8e22a;letter-spacing:.01em}
 header .s{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-steel-muted)}
-header .me{margin-left:auto;text-align:right;font-size:13px;line-height:1.2}
+.guidaL{margin-left:auto;color:var(--on-steel);font-size:13px;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 9px;white-space:nowrap}
+header .me{margin-left:12px;text-align:right;font-size:13px;line-height:1.2}
 header .me b{display:block;font-size:14px;color:#fff;text-transform:uppercase}
 header .me button{background:none;border:0;color:var(--on-steel-muted);padding:0;font-size:12px;text-decoration:underline}
 main{max-width:720px;margin:0 auto;padding:16px 16px 110px}
@@ -193,6 +194,7 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 <body>
 <header>
   <div><div class="b">ZA srl</div><div class="s">Rapportini</div></div>
+  <a class="guidaL" href="guida.html" title="Guida">❓ Guida</a>
   <div class="me" id="me" hidden></div>
 </header>
 <main id="main"><div class="empty">Caricamento…</div></main>
