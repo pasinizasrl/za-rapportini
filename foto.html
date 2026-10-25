@@ -242,7 +242,6 @@ const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi te
 const S = { ops: [], me: null, pin: "", pinIn: "", righe: null, per: 30, q: "", can: null, lb: null };
 try { const m = JSON.parse(localStorage.getItem("za-foto-me") || "null"); if (m && m.nome && m.pin) { S.me = m.nome; S.pin = m.pin; } } catch {}
 const fileId = f => f.id || ((String(f.url || "").match(/\/d\/([^/?]+)/) || [])[1] || "");
-const grande = f => fileId(f) ? "https://drive.google.com/thumbnail?id=" + encodeURIComponent(fileId(f)) + "&sz=w2000" : f.th;
 function render(){
   const m = $("#main"); $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><button id="out">Esci</button>`;
   if (!S.me) return renderLogin(m);
@@ -268,12 +267,19 @@ function renderCan(m, k, L){
       return `<div class="giorno"><b>${esc(giorno(d))} ${esc(itData(d))}</b><span class="hint">${esc([...new Set(perG[d].map(r => r.nome))].join(", "))} · ${ff.length} foto</span>${ff[0] && ff[0].cartella ? `<a class="hint" href="${esc(ff[0].cartella)}" target="_blank" rel="noopener">📂 Drive</a>` : ""}</div>
         <div class="gal">${ff.map(f => { const i = S.lista.push(f) - 1; return `<button data-foto="${i}" aria-label="Apri foto">${f.th ? `<img src="${esc(f.th)}" alt="" loading="lazy">` : "📷"}</button>`; }).join("")}</div>`; }).join("")}`;
 }
+S.big = {};
+async function caricaGrande(f){ const id = fileId(f); if (!id || S.big[id] || !S.fotoUrl) return;
+  try { const r = await fetch(S.fotoUrl, { method: "POST", body: JSON.stringify({ azione: "leggi", nome: S.me, pin: S.pin, id }) }); const j = await r.json();
+    if (!j.ok) throw new Error(j.err || "errore"); S.big[id] = "data:" + (j.mime || "image/jpeg") + ";base64," + j.b64; }
+  catch (e) { const l = $("#lbLoad"); if (l && S.lista[S.lb] === f) l.textContent = "Foto grande non disponibile" + (String(e.message).includes("NON_ABILITATO") ? ": non sei abilitato" : ""); return; }
+  if (S.lb != null && S.lista[S.lb] === f) renderLb();
+  const nx = S.lista[S.lb + 1]; if (nx && !S.big[fileId(nx)]) caricaGrande(nx); }
 function renderLb(){ let el = $("#lb"); if (S.lb == null) { if (el) el.remove(); document.body.style.overflow = ""; return; }
   const f = S.lista[S.lb]; if (!el) { el = document.createElement("div"); el.id = "lb"; el.className = "lb"; document.body.appendChild(el); document.body.style.overflow = "hidden"; }
-  el.innerHTML = `<div class="top"><div class="i"><b>${esc(f.op)}</b><br>${esc(giorno(f.data))} ${esc(itData(f.data))}</div>${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">Apri su Drive</a>` : ""}<button data-lbx="1" aria-label="Chiudi">✕</button></div>
-    <div class="img"><img src="${esc(f.th || "")}" alt="" id="lbImg">${S.lb > 0 ? `<button class="nav p" data-lbm="-1" aria-label="Precedente">‹</button>` : ""}${S.lb < S.lista.length - 1 ? `<button class="nav n" data-lbm="1" aria-label="Successiva">›</button>` : ""}</div>
+  el.innerHTML = `<div class="top"><div class="i"><b>${esc(f.op)}</b><br>${esc(giorno(f.data))} ${esc(itData(f.data))}</div><a id="lbDl" ${S.big[fileId(f)] ? `href="${S.big[fileId(f)]}" download="${esc(f.nome || "foto.jpg")}"` : 'hidden'}>⬇ Scarica</a><button data-lbx="1" aria-label="Chiudi">✕</button></div>
+    <div class="img"><img src="${esc(S.big[fileId(f)] || f.th || "")}" alt="" id="lbImg">${S.big[fileId(f)] ? "" : `<div id="lbLoad" style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:13px;opacity:.8">Caricamento foto…</div>`}${S.lb > 0 ? `<button class="nav p" data-lbm="-1" aria-label="Precedente">‹</button>` : ""}${S.lb < S.lista.length - 1 ? `<button class="nav n" data-lbm="1" aria-label="Successiva">›</button>` : ""}</div>
     <div class="cnt">${S.lb + 1} / ${S.lista.length}</div>`;
-  const g = grande(f); if (g && g !== f.th) { const im = new Image(); im.onload = () => { const x = $("#lbImg"); if (x && S.lista[S.lb] === f) x.src = g; }; im.src = g; }
+  caricaGrande(f);
 }
 function renderLogin(m){
   m.innerHTML = `<h1>Foto cantieri</h1><div class="card">
@@ -309,7 +315,7 @@ document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome
 document.addEventListener("keydown", e => { if (S.lb == null) return; if (e.key === "Escape") { S.lb = null; renderLb(); } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + (e.key === "ArrowLeft" ? -1 : 1))); renderLb(); } });
 let tx = null; document.addEventListener("touchstart", e => { if (S.lb != null) tx = e.touches[0].clientX; }, { passive: true });
 document.addEventListener("touchend", e => { if (S.lb == null || tx == null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 50) { S.lb = Math.max(0, Math.min(S.lista.length - 1, S.lb + (dx < 0 ? 1 : -1))); renderLb(); } }, { passive: true });
-(async () => { try { const el = await rpc("rap_elenchi"); S.ops = el.operatori || []; } catch {} render(); if (S.me) carica(); })();
+(async () => { try { const el = await rpc("rap_elenchi"); S.ops = el.operatori || []; S.fotoUrl = el.foto_url || ""; } catch {} render(); if (S.me) carica(); })();
 </script>
 </body>
 </html>

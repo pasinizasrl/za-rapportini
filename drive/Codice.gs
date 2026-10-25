@@ -17,6 +17,7 @@ function doGet() {
 function doPost(e) {
   try {
     const d = JSON.parse(e.postData.contents);
+    if (d.azione === 'leggi') return leggi_(d);
     if (!d.nome || !d.pin || !d.b64) return risposta_({ ok: false, err: 'DATI_MANCANTI' });
     // controllo nome + PIN sullo stesso database dei rapportini
     const r = UrlFetchApp.fetch(SB_URL + '/rest/v1/rpc/rap_login', {
@@ -44,6 +45,28 @@ function doPost(e) {
   }
 }
 
+/** Galleria online: restituisce la foto (solo a chi è abilitato e solo file dentro la cartella FOTO) */
+function leggi_(d) {
+  if (!d.nome || !d.pin || !d.id) return risposta_({ ok: false, err: 'DATI_MANCANTI' });
+  const r = UrlFetchApp.fetch(SB_URL + '/rest/v1/rpc/rap_galleria_ok', {
+    method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY },
+    payload: JSON.stringify({ p_nome: d.nome, p_pin: d.pin }), muteHttpExceptions: true });
+  const j = JSON.parse(r.getContentText() || '{}');
+  if (!j.ok) return risposta_({ ok: false, err: j.err || 'NON_ABILITATO' });
+  const f = DriveApp.getFileById(d.id), rootId = principale_().getId();
+  if (!dentro_(f, rootId)) return risposta_({ ok: false, err: 'NON_CONSENTITO' });
+  const b = f.getBlob();
+  return risposta_({ ok: true, mime: b.getContentType(), nome: f.getName(), b64: Utilities.base64Encode(b.getBytes()) });
+}
+function dentro_(f, rootId) {
+  let liv = [f.getParents()];
+  for (let n = 0; n < 4 && liv.length; n++) {
+    const prossimi = [];
+    for (const it of liv) while (it.hasNext()) { const p = it.next(); if (p.getId() === rootId) return true; prossimi.push(p.getParents()); }
+    liv = prossimi;
+  }
+  return false;
+}
 function principale_() {
   return ID_CARTELLA ? DriveApp.getFolderById(ID_CARTELLA.trim()) : cartella_(DriveApp.getRootFolder(), CARTELLA_PRINCIPALE);
 }
