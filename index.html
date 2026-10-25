@@ -300,18 +300,18 @@ const mzTitolo = (x, i) => `Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))
 function fotoCardHTML(p, ro){ const L = p.foto || [], U2 = S.upl || [];
   return `<div class="card"><h2>📷 Foto cantiere</h2>
     ${L.length || U2.length ? `<div class="fotoG">${L.map((f, i) => `<div class="fotoT"><a href="${esc(f.url || "#")}" target="_blank" rel="noopener">${f.th ? `<img src="${esc(f.th)}" alt="Foto ${i + 1}">` : `<span>📷</span>`}</a>${ro ? "" : `<button class="fx" data-delfoto="${i}" aria-label="Togli foto">✕</button>`}</div>`).join("")}
-      ${U2.map(u => `<div class="fotoT up${u.err ? " ko" : ""}">${u.th ? `<img src="${esc(u.th)}" alt="">` : ""}<small>${u.err ? "Non inviata" : "Invio…"}</small></div>`).join("")}</div>` : `<p class="hint" style="margin:0 0 8px">Nessuna foto.</p>`}
-    ${ro ? "" : `<label class="btn fotoBtn">📷 Aggiungi foto<input type="file" accept="image/*" multiple id="fFoto" hidden></label>`}
-    <div class="hint" style="margin-top:6px">Le foto vanno nella cartella Google Drive del cantiere, divise per giorno.</div></div>`; }
+      ${U2.map(u => `<div class="fotoT up${u.err ? " ko" : ""}">${u.th ? `<img src="${esc(u.th)}" alt="">` : ""}<small>${u.err ? "Non inviata" : "Invio…"}</small></div>`).join("")}</div>` : `<p class="hint" style="margin:0 0 8px;text-align:center">Nessuna foto.</p>`}
+    ${ro ? "" : `<div style="text-align:center"><label class="btn fotoBtn">📷 Aggiungi foto<input type="file" accept="image/*" multiple id="fFoto" hidden></label></div>`}
+    <div class="hint" style="margin-top:6px;text-align:center">Le foto vanno nella cartella Google Drive del cantiere, divise per giorno.</div></div>`; }
 function caricaImg(file){ return new Promise((ok, ko) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { ok(im); setTimeout(() => URL.revokeObjectURL(u), 1000); }; im.onerror = ko; im.src = u; }); }
 function ridimensiona(im, max, q, timbro){ const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); const g = c.getContext("2d"); g.drawImage(im, 0, 0, c.width, c.height); if (timbro) timbra(g, c.width, c.height, timbro); return c.toDataURL("image/jpeg", q); }
 /* timbro in basso sulla foto: cantiere, data e ora, operatore */
-function timbra(g, w, h, righe){ const fs = Math.max(16, Math.round(w * .034)), pad = Math.round(fs * .55), lh = Math.round(fs * 1.12), maxW = w - pad * 2, out = [];
+function timbra(g, w, h, righe){ const fs = Math.max(16, Math.round(Math.min(w, h) * .034)), pad = Math.round(fs * .55), lh = Math.round(fs * 1.12), maxW = w - pad * 2, out = [];
   g.font = `700 ${fs}px "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif-condensed, sans-serif`;
   const spezza = t => { const parole = String(t || "").split(" "), r = []; let cur = "";
     parole.forEach(p => { const prova = cur ? cur + " " + p : p; if (g.measureText(prova).width <= maxW || !cur) cur = prova; else { r.push(cur); cur = p; } }); if (cur) r.push(cur);
     return r.map(x => { while (g.measureText(x).width > maxW && x.length > 4) x = x.slice(0, -2) + "…"; return x; }); };
-  righe.forEach((t, i) => { let L = spezza(t); if (i === 0 && L.length > 2) { L = L.slice(0, 2); L[1] = L[1].replace(/…?$/, "…"); } L.forEach(x => out.push([x, i])); });
+  righe.forEach((t, i) => { let L = spezza(t); if (i === 0 && L.length > 3) { L = L.slice(0, 3); L[2] = L[2].replace(/…?$/, "…"); } L.forEach(x => out.push([x, i])); });
   const bh = out.length * lh + pad * 1.2; g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(0, h - bh, w, bh);
   g.textBaseline = "top"; out.forEach(([r, i], n) => { g.fillStyle = i === 0 ? "#e8e22a" : "#ffffff"; g.fillText(r, pad, h - bh + pad * .6 + n * lh); }); }
 async function aggiungiFoto(files){ leggiForm(); const E = S.edit, p = E.p; if (!p.cantiere) { toast("Scegli prima il cantiere, poi aggiungi le foto."); return; }
