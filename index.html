@@ -103,6 +103,13 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .cg i{position:absolute;right:3px;bottom:1px;font-style:normal;font-size:10px}
 .cg.ok{background:var(--good);border-color:var(--good);color:#fff}
 .cg.manca{background:var(--bad);border-color:var(--bad);color:#fff}
+.cg.mal{background:#7a3d8f;border-color:#7a3d8f;color:#fff}
+.leg i.mal{background:#7a3d8f}
+.assenze{flex-wrap:wrap}.assenze > label.perm{flex-basis:100%}.assenze .ferie.mal.on{background:#f1e4f6;border-color:#7a3d8f;color:#7a3d8f}
+.ecCard h2 small{font-size:13px;color:var(--muted);text-transform:none;letter-spacing:0;font-family:var(--font-body);font-weight:600}
+.ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.ecG label{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ecG .f{text-align:center;font-size:20px;font-weight:700;margin:0}
 .cg.fer{background:var(--blue);border-color:var(--blue);color:#fff}
 .cg.perm{background:var(--warn);border-color:var(--warn);color:#fff}
 .cg.ok.perm{background:var(--good);box-shadow:inset 0 -5px 0 var(--warn)}
@@ -267,8 +274,8 @@ function festa(s){ if (FESTE[s.slice(5)]) return FESTE[s.slice(5)]; const p = pa
 const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const PRIMO = () => { const lim = spostaGiorno(oggi(), -60), d = S.list.reduce((m, r) => r.data < m ? r.data : m, oggi()); return d > lim ? d : lim; }; // rosso solo dal primo rapportino dell'operaio (max 60 giorni)
 function statoGiorno(s, perData){ const d = new Date(s + "T12:00:00"), wd = d.getDay(), rs = perData[s] || [];
-  if (rs.length) { const f = rs.some(r => r.payload && r.payload.ferie), lav = rs.some(r => r.payload && !r.payload.ferie && r.payload.cantiere), pm = rs.some(r => r.payload && r.payload.permesso > 0);
-    return f ? "fer" : lav ? (pm ? "ok perm" : "ok") : pm ? "perm" : "ok"; }
+  if (rs.length) { const f = rs.some(r => r.payload && r.payload.ferie), ml = rs.some(r => r.payload && r.payload.malattia), lav = rs.some(r => r.payload && !fuori(r.payload) && r.payload.cantiere), pm = rs.some(r => r.payload && r.payload.permesso > 0);
+    return f ? "fer" : ml ? "mal" : lav ? (pm ? "ok perm" : "ok") : pm ? "perm" : "ok"; }
   if (festa(s)) return "fest"; if (chiusura(s)) return "chius"; if (wd === 0 || wd === 6) return "off";
   if (s > oggi()) return "fut"; if (s < PRIMO()) return "old"; return "manca"; }
 function chiusura(s){ const c = ((S.el && S.el.chiusure) || []).find(x => x && x.dal && s >= x.dal && s <= (x.al || x.dal)); return c ? (c.nome || "Chiusura aziendale") : ""; }
@@ -280,11 +287,11 @@ function calHTML(perData){
   let cells = ""; for (let i = 0; i < off; i++) cells += `<span></span>`;
   for (let g = 1; g <= nd; g++) { const s = `${y}-${String(mo).padStart(2, "0")}-${String(g).padStart(2, "0")}`, st = statoGiorno(s, perData), fe = festa(s) || chiusura(s);
     const tap = s <= t && s >= spostaGiorno(t, -60);
-    cells += `<button class="cg ${st}${s === t ? " oggi" : ""}" ${tap ? `data-cal="${s}"` : "disabled"} title="${esc(fe)}">${g}${st.includes("fer") ? "<i>F</i>" : st.includes("perm") ? "<i>P</i>" : st === "fest" || st === "chius" ? "<i>★</i>" : ""}</button>`; }
+    cells += `<button class="cg ${st}${s === t ? " oggi" : ""}" ${tap ? `data-cal="${s}"` : "disabled"} title="${esc(fe)}">${g}${st.includes("fer") ? "<i>F</i>" : st === "mal" ? "<i>M</i>" : st.includes("perm") ? "<i>P</i>" : st === "fest" || st === "chius" ? "<i>★</i>" : ""}</button>`; }
   const evM = []; for (let g = 1; g <= nd; g++) { const s = `${y}-${String(mo).padStart(2, "0")}-${String(g).padStart(2, "0")}`, n = festa(s) || chiusura(s); if (n) { const l = evM[evM.length - 1]; if (l && l.n === n && l.a === spostaGiorno(s, -1)) l.a = s; else evM.push({ d: s, a: s, n, f: !!festa(s) }); } }
   return `<div class="cal"><div class="calh"><button class="btn dnav sm" data-calm="-1" ${S.calM <= minM ? "disabled" : ""} aria-label="Mese prima">‹</button><b>${MESI[mo - 1]} ${y}</b><button class="btn dnav sm" data-calm="1" ${S.calM >= maxM ? "disabled" : ""} aria-label="Mese dopo">›</button></div>
     <div class="cgr">${["L","M","M","G","V","S","D"].map(x => `<span class="wd">${x}</span>`).join("")}${cells}</div>
-    <div class="leg"><span><i class="ok"></i>Compilato</span><span><i class="manca"></i>Da compilare</span><span><i class="fer"></i>Ferie</span><span><i class="perm"></i>Permesso</span><span><i class="fest"></i>Festività</span><span><i class="chius"></i>Chiusura aziendale</span><span><i class="off"></i>Sabato e domenica</span></div>
+    <div class="leg"><span><i class="ok"></i>Compilato</span><span><i class="manca"></i>Da compilare</span><span><i class="fer"></i>Ferie</span><span><i class="mal"></i>Malattia</span><span><i class="perm"></i>Permesso</span><span><i class="fest"></i>Festività</span><span><i class="chius"></i>Chiusura aziendale</span><span><i class="off"></i>Sabato e domenica</span></div>
     ${evM.length ? `<div class="evM">${evM.map(e => `<div><i class="${e.f ? "fest" : "chius"}"></i><b>${+e.d.slice(8)}${e.a !== e.d ? "–" + +e.a.slice(8) : ""} ${MESI[mo - 1]}</b> ${esc(e.n)}</div>`).join("")}</div>` : ""}
     <p class="hint" style="margin:6px 0 0">Tocca un giorno rosso per compilarlo, uno verde per aprirlo.</p></div>`;
 }
@@ -335,6 +342,7 @@ async function aggiungiFoto(files){ leggiForm(); const E = S.edit, p = E.p; if (
   const pool = async () => { while (coda.length) await lavora(coda.shift()); };
   await Promise.all([pool(), pool()]); // due foto alla volta
   if (S.upl.some(u => u.err)) setTimeout(() => { S.upl = (S.upl || []).filter(u => !u.err); if (S.view === "form") { leggiForm(); render(); } }, 4000); }
+const fuori = p => !!(p && (p.ferie || p.malattia));
 function normMz(x){ if (x.acc) { x.accs = (x.accs || []).concat([{ acc: x.acc, ore: x.ore || "" }]); delete x.acc; } if (!Array.isArray(x.accs)) x.accs = []; return x; }
 function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" });
   { const q = S.edit.p; if (q.lavorazione) { if (!q.mezzi[0].lav) q.mezzi[0].lav = q.lavorazione; delete q.lavorazione; } }
@@ -348,17 +356,17 @@ function renderLista(m){
     ${gm.length ? `<div class="manc"><div class="mancT">⚠️ ${gm.length === 1 ? "Ti manca 1 rapportino" : `Ti mancano ${gm.length} rapportini`}</div><div class="mancB">${gm.map(s => `<button data-cal="${s}">${esc(gg(s))}</button>`).join("")}</div><div class="hint" style="margin-top:4px">Tocca un giorno per compilarlo.</div></div>` : ""}
     <button class="calTog${S.calOpen ? " on" : ""}" id="calTog"><span>📅 Calendario del mese</span>${nM ? `<span class="chip bad">${nM} da compilare</span>` : `<span class="chip ok">Tutto compilato</span>`}<span class="car">${S.calOpen ? "▲" : "▼"}</span></button>
     ${S.calOpen ? calHTML(perData) : ""}` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
-    if (p.ferie) return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">—</span></div>
-      <div class="c"><div class="cm" style="color:var(--blue)">Ferie</div>${p.note ? `<div class="hint">${esc(p.note)}</div>` : ""}</div></button>`;
+    if (fuori(p)) return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">—</span></div>
+      <div class="c"><div class="cm" style="color:${p.malattia ? "#7a3d8f" : "var(--blue)"}">${p.malattia ? "Malattia" : "Ferie"}</div>${p.note ? `<div class="hint">${esc(p.note)}</div>` : ""}</div></button>`;
     const det = (S.det || {})[r.id], ms = (p.mezzi || []).filter(x => x.mezzo || x.ore), accs = x => x.accs || (x.acc ? [{ acc: x.acc, ore: x.ore }] : []);
     return `<div class="rap"><button class="rapApri" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
       <div class="c">${p.cantiere ? `<div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>` : ""}${p.permesso > 0 ? `<div class="permR">Permesso ${fmtOre(p.permesso)} h</div>` : ""}</div></button>
-      ${ms.length || p.note || p.lavori || (p.foto || []).length ? `<button class="detTog" data-det="${esc(r.id)}" aria-expanded="${det ? "true" : "false"}"><b>${det ? "−" : "+"}</b> ${det ? "Nascondi dettagli" : "Dettagli"}${det ? "" : ` <span class="hint">${ms.length} ${ms.length === 1 ? "lavorazione" : "lavorazioni"}${(p.foto || []).length ? " · 📷 " + p.foto.length : ""}</span>`}</button>` : ""}
+      ${ms.length || p.note || p.lavori || p.ord != null || (p.foto || []).length ? `<button class="detTog" data-det="${esc(r.id)}" aria-expanded="${det ? "true" : "false"}"><b>${det ? "−" : "+"}</b> ${det ? "Nascondi dettagli" : "Dettagli"}${det ? "" : ` <span class="hint">${ms.length} ${ms.length === 1 ? "lavorazione" : "lavorazioni"}${(p.foto || []).length ? " · 📷 " + p.foto.length : ""}</span>`}</button>` : ""}
       ${det ? `<div class="det">${ms.map((x, i) => `<div class="detL"><div class="detT">Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}</div>
         <div class="detR"><b>${esc(U(x.mezzo))}</b><span>${fmtOre(x.ore)} h</span></div>
         ${accs(x).map(a => `<div class="detR acc"><span>${esc(U(a.acc))}</span><span>${a.ore !== "" && a.ore != null ? fmtOre(String(a.ore).replace(",", ".")) + " h" : ""}</span></div>`).join("")}
         ${x.desc ? `<div class="ds">${esc(x.desc)}</div>` : ""}</div>`).join("")}
-        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><button class="fotoV" data-vedi="${esc(f.th || "")}" aria-label="Ingrandisci">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</button></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }).join("")
+        ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${p.ord != null ? `<div class="detN"><b>Ore:</b> ordinarie ${fmtOre(p.ord)}${p.stra ? " · straordinarie " + fmtOre(p.stra) : ""}${p.trasf ? " · trasferta " + fmtOre(p.trasf) : ""}${p.permesso ? " · permesso " + fmtOre(p.permesso) : ""}${p.noteEc ? `<br><span class="hint">${esc(p.noteEc)}</span>` : ""}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><button class="fotoV" data-vedi="${esc(f.th || "")}" aria-label="Ingrandisci">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</button></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }).join("")
     : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
 }
 const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
@@ -377,11 +385,12 @@ function renderForm(m){
     <div class="dataNav"><button class="btn dnav" id="dPrev" aria-label="Giorno prima" ${dis}>‹</button><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}><button class="btn dnav" id="dNext" aria-label="Giorno dopo" ${dis || E.data >= oggi() ? "disabled" : ""}>›</button></div>
     <div class="dGiorno" id="dGiorno">${esc(etichettaGiorno(E.data))}</div>
     <div class="assenze"><label class="ferie${p.ferie ? " on" : ""}"><input type="checkbox" id="fFerie" ${p.ferie ? "checked" : ""} ${dis}><span>Ferie<small>giornata intera</small></span></label>
-      <label class="perm"><span>Permesso<small>ore</small></span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fPerm" value="${esc(p.permesso || "")}" placeholder="0" ${dis || (p.ferie ? "disabled" : "")}></label></div>
-    ${p.ferie ? "" : `<label class="l" for="fCan">Cantiere / commessa</label>
+      <label class="ferie mal${p.malattia ? " on" : ""}"><input type="checkbox" id="fMal" ${p.malattia ? "checked" : ""} ${dis}><span>Malattia<small>giornata intera</small></span></label>
+      <label class="perm"><span>Permesso<small>ore</small></span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fPerm" value="${esc(p.permesso || "")}" placeholder="0" ${dis || (fuori(p) ? "disabled" : "")}></label></div>
+    ${fuori(p) ? "" : `<label class="l" for="fCan">Cantiere / commessa</label>
     <div class="sugw"><textarea rows="1" class="f grow" id="fCan" data-sug="cantieri"  placeholder="Scrivi per cercare…" autocomplete="off" ${dis}>${esc(p.cantiere)}</textarea></div>`}
   </div>
-  ${p.ferie ? `<div class="card ferieBox">Giornata di <b>ferie</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
+  ${fuori(p) ? `<div class="card ferieBox">Giornata di <b>${p.malattia ? "malattia" : "ferie"}</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
   <div class="card"><h2>Macchine / mezzi d'opera</h2>
     ${(p.mezzi || []).map((x, i) => { normMz(x); const accs = x.accs.length ? x.accs : [{ acc: "", ore: "" }];
       return `<div class="sub"><div class="mzN" id="mzN-${i}">${mzTitolo(x, i)}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
@@ -399,10 +408,18 @@ function renderForm(m){
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
   </div>`}
-  ${S.el.foto_url && !p.ferie ? fotoCardHTML(p, ro) : ""}
+  ${S.el.foto_url && !fuori(p) ? fotoCardHTML(p, ro) : ""}
   <div class="card">
     <h2>Note</h2><label class="l" for="fNote" style="position:absolute;left:-9999px">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
   </div>
+  ${fuori(p) ? "" : `<div class="card ecCard"><h2>Ore lavoratore <small>(Cassa Edile · Edilconnect)</small></h2>
+    <div class="ecG">
+      <label><span>Ordinarie</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fOrd" value="${esc(p.ord ?? 8)}" ${dis}></label>
+      <label><span>Straord.</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fStra" value="${esc(p.stra || "")}" placeholder="0" ${dis}></label>
+      <label><span>Trasferta</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fTrasf" value="${esc(p.trasf || "")}" placeholder="0" ${dis}></label>
+    </div>
+    <label class="l" for="fNoteEc">Note ore</label><textarea class="f" id="fNoteEc" style="min-height:56px" placeholder="Es. trasferta a Mantova, rientro alle 20…" ${dis}>${esc(p.noteEc || "")}</textarea>
+    <p class="hint" style="margin:6px 0 0">Ferie, malattia e permessi si segnano in alto, sotto la data.</p></div>`}
   ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
   ${E.id && !ro ? `<button class="btn danger big" id="del" style="margin-top:10px;background:transparent">Elimina rapportino</button>` : ""}
   <div id="ferr"></div>`;
@@ -410,12 +427,16 @@ function renderForm(m){
 }
 function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   E.data = $("#fData").value; p.ferie = !!($("#fFerie") && $("#fFerie").checked); if (!p.ferie) delete p.ferie;
-  const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !p.ferie) p.permesso = pm; else delete p.permesso;
+  p.malattia = !p.ferie && !!($("#fMal") && $("#fMal").checked); if (!p.malattia) delete p.malattia;
+  const nn = id => { const e = $(id); if (!e) return null; const v = String(e.value).replace(",", ".").trim(); return v === "" ? null : +v; };
+  if ($("#fOrd")) { const o = nn("#fOrd"); p.ord = o == null ? 0 : o; const st = nn("#fStra"), tr = nn("#fTrasf"); if (st) p.stra = st; else delete p.stra; if (tr) p.trasf = tr; else delete p.trasf;
+    const ne = $("#fNoteEc").value.trim(); if (ne) p.noteEc = ne; else delete p.noteEc; }
+  const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !fuori(p)) p.permesso = pm; else delete p.permesso;
   if ($("#fCan")) p.cantiere = $("#fCan").value.trim();
   p.note = $("#fNote").value.trim();
   document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (!x) return; const k = e.dataset.k, v = k === "ore" ? e.value : U(e.value); if ((k === "desc" || k === "lav") && !v) delete x[k]; else x[k] = v; });
   document.querySelectorAll("[data-ac]").forEach(e => { const [i, j] = e.dataset.ac.split("|").map(Number), x = p.mezzi[i]; if (!x) return; normMz(x); while (x.accs.length <= j) x.accs.push({ acc: "", ore: "" }); x.accs[j][e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
-  p.ore = p.ferie ? 0 : calcOre(p);
+  p.ore = fuori(p) ? 0 : calcOre(p);
  }
 
 /* primo accesso con PIN provvisorio: l'operaio sceglie il suo PIN personale */
@@ -463,7 +484,7 @@ async function salva(){
     S.attesaFoto = false; if (S.view !== "form") return; }
   leggiForm(); const E = S.edit, p = E.p, er = $("#ferr");
   if (!E.data) { er.innerHTML = `<div class="err">Indica la data.</div>`; return; }
-  if (p.ferie) { p.cantiere = ""; delete p.lavorazione; p.mezzi = []; p.materiali = []; p.lavori = ""; p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; }
+  if (fuori(p)) { p.cantiere = ""; delete p.lavorazione; p.mezzi = []; p.materiali = []; p.lavori = ""; p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; p.ord = 0; delete p.stra; delete p.trasf; delete p.noteEc; }
   else {
     const soloPerm = p.permesso > 0 && !p.cantiere;
     if (soloPerm) { p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; }
@@ -548,7 +569,9 @@ document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome
   if (e.target.id === "fFoto" && S.edit) { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) aggiungiFoto(fs); return; }
   if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); if (lk !== isBenna({ acc: e.target.value }, j)) { leggiForm(); render(); } return; }
-  if (e.target.id === "fFerie" && S.edit) { leggiForm(); if (S.edit.p.ferie) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
+  if ((e.target.id === "fFerie" || e.target.id === "fMal") && S.edit) { if (e.target.checked) { const o = $(e.target.id === "fFerie" ? "#fMal" : "#fFerie"); if (o) o.checked = false; } leggiForm(); if (fuori(S.edit.p)) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
+document.addEventListener("input", e => { if (e.target.id === "fOrd" && S.edit) S.edit.ordToccato = true;
+  if (e.target.id === "fPerm" && S.edit && !S.edit.ordToccato && $("#fOrd")) { const pm = +String(e.target.value).replace(",", ".") || 0; $("#fOrd").value = Math.max(0, 8 - pm); } });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.classList && e.target.classList.contains("mzD")) autoH(e.target); if (e.target.classList && e.target.classList.contains("req") && String(e.target.value).trim()) e.target.classList.remove("req"); });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { leggiForm(); aggBenna(+e.target.dataset.ac.split("|")[0]); return; }
