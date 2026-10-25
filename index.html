@@ -49,6 +49,39 @@ textarea.f{min-height:96px;resize:vertical;text-transform:uppercase}
 .sug .vuoto{padding:12px 14px;color:var(--muted)}
 .sugw{position:relative}
 .dataNav{display:flex;gap:8px;align-items:stretch}
+.assenze{display:flex;gap:10px;margin:10px 0 4px}
+.assenze > label{flex:1 1 0;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:56px;font-weight:700;cursor:pointer}
+.assenze small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.assenze input[type=checkbox]{width:26px;height:26px;accent-color:var(--blue);flex:0 0 auto}
+.assenze .ferie.on{background:#dfe8f7;border-color:var(--blue);color:var(--blue)}
+.assenze .perm .f{flex:0 0 80px;width:80px;text-align:center;margin:0;padding:8px}
+.assenze .perm span{flex:1 1 auto}
+.ferieBox{color:var(--blue);background:#dfe8f7;border-color:var(--blue);text-align:center;font-size:16px}
+.permR{color:var(--warn);font-weight:700;margin-top:4px}
+.calTog{display:flex;align-items:center;gap:10px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-weight:700;color:var(--ink);margin-bottom:10px;text-align:left}
+.calTog .car{margin-left:auto;color:var(--muted)}
+.calTog.on{border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.cal{background:var(--panel);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;padding:10px 12px 12px;margin-bottom:14px}
+.calh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.calh b{flex:1;text-align:center;text-transform:capitalize;font-size:18px}
+.calh .dnav{flex:0 0 46px;min-height:40px;font-size:22px}
+.cgr{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cgr .wd{text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+.cg{position:relative;aspect-ratio:1/1;min-height:38px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font:inherit;font-weight:700;font-size:16px;color:var(--ink);padding:0}
+.cg i{position:absolute;right:3px;bottom:1px;font-style:normal;font-size:10px}
+.cg.ok{background:var(--good);border-color:var(--good);color:#fff}
+.cg.manca{background:var(--bad);border-color:var(--bad);color:#fff}
+.cg.fer{background:var(--blue);border-color:var(--blue);color:#fff}
+.cg.perm{background:var(--warn);border-color:var(--warn);color:#fff}
+.cg.ok.perm{background:var(--good);box-shadow:inset 0 -5px 0 var(--warn)}
+.cg.off{background:transparent;color:var(--muted);border-style:dashed;opacity:.7}
+.cg.fut{color:var(--muted);opacity:.45}
+.cg.old{color:var(--muted)}
+.cg.oggi{outline:3px solid var(--accent);outline-offset:1px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+.leg i.ok{background:var(--good)}.leg i.manca{background:var(--bad)}.leg i.fer{background:var(--blue)}.leg i.perm{background:var(--warn)}.leg i.off{border:1px dashed var(--muted)}
 .dataNav .f{flex:1 1 auto;min-width:0;text-align:center;font-weight:600}
 .dnav{flex:0 0 54px;font-size:26px;line-height:1;padding:0;font-weight:700}
 .dnav:disabled{opacity:.35}
@@ -126,6 +159,7 @@ const MSG = { PIN_ERRATO: "PIN errato.", DATA_NON_VALIDA: "Data non valida: puoi
 const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + e.toLowerCase().replace("bloccato", "bloccato") + "." : (MSG[e] || e || "Errore");
 
 const S = { el: { operatori: [], cantieri: [], mezzi: [] }, me: null, pin: "", list: [], view: "login", edit: null, pinIn: "" };
+try { S.calOpen = !!localStorage.getItem("za-rap-cal"); } catch {}
 try { const m = JSON.parse(localStorage.getItem("za-rap-me") || "null"); if (m && m.nome && m.pin) { S.me = m.nome; S.pin = m.pin; } } catch {}
 
 async function caricaElenchi(){ S.el = await rpc("rap_elenchi"); $("#dlCan").innerHTML = (S.el.cantieri || []).map(c => `<option value="${esc(c)}">`).join(""); $("#dlMez").innerHTML = (S.el.mezzi || []).map(c => `<option value="${esc(c)}">`).join(""); }
@@ -150,19 +184,51 @@ function renderLogin(m){
     <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" aria-label="Cancella">⌫</button><button data-k="0">0</button><button data-k="ok" style="background:var(--accent);border-color:var(--accent);color:#1d1606">OK</button></div>
     <div id="lerr"></div></div>`;
 }
+/* calendario del mese */
+function pasqua(y){ const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1; return new Date(y, mo - 1, da, 12); }
+const FESTE = { "01-01": "Capodanno", "01-06": "Epifania", "04-25": "Liberazione", "05-01": "Festa del lavoro", "06-02": "Festa della Repubblica", "08-15": "Ferragosto", "11-01": "Ognissanti", "12-08": "Immacolata", "12-25": "Natale", "12-26": "S. Stefano" };
+function festa(s){ if (FESTE[s.slice(5)]) return FESTE[s.slice(5)]; const p = pasqua(+s.slice(0, 4)); if (s === iso(p)) return "Pasqua"; p.setDate(p.getDate() + 1); return s === iso(p) ? "Pasquetta" : ""; }
+const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+const PRIMO = () => { const lim = spostaGiorno(oggi(), -60), d = S.list.reduce((m, r) => r.data < m ? r.data : m, oggi()); return d > lim ? d : lim; }; // rosso solo dal primo rapportino dell'operaio (max 60 giorni)
+function statoGiorno(s, perData){ const d = new Date(s + "T12:00:00"), wd = d.getDay(), rs = perData[s] || [];
+  if (rs.length) { const f = rs.some(r => r.payload && r.payload.ferie), lav = rs.some(r => r.payload && !r.payload.ferie && r.payload.cantiere), pm = rs.some(r => r.payload && r.payload.permesso > 0);
+    return f ? "fer" : lav ? (pm ? "ok perm" : "ok") : pm ? "perm" : "ok"; }
+  if (wd === 0 || wd === 6 || festa(s)) return "off";
+  if (s > oggi()) return "fut"; if (s < PRIMO()) return "old"; return "manca"; }
+function mancanti(perData){ let n = 0; for (let s = PRIMO(); s <= oggi(); s = spostaGiorno(s, 1)) if (statoGiorno(s, perData) === "manca") n++; return n; }
+function calHTML(perData){
+  const t = oggi(); if (!S.calM) S.calM = t.slice(0, 7);
+  const [y, mo] = S.calM.split("-").map(Number), first = new Date(y, mo - 1, 1, 12), nd = new Date(y, mo, 0).getDate(), off = (first.getDay() + 6) % 7;
+  const minM = PRIMO().slice(0, 7), maxM = t.slice(0, 7);
+  let cells = ""; for (let i = 0; i < off; i++) cells += `<span></span>`;
+  for (let g = 1; g <= nd; g++) { const s = `${y}-${String(mo).padStart(2, "0")}-${String(g).padStart(2, "0")}`, st = statoGiorno(s, perData), fe = festa(s);
+    const tap = s <= t && s >= spostaGiorno(t, -60);
+    cells += `<button class="cg ${st}${s === t ? " oggi" : ""}" ${tap ? `data-cal="${s}"` : "disabled"} title="${esc(fe)}">${g}${st.includes("fer") ? "<i>F</i>" : st.includes("perm") ? "<i>P</i>" : ""}</button>`; }
+  return `<div class="cal"><div class="calh"><button class="btn dnav sm" data-calm="-1" ${S.calM <= minM ? "disabled" : ""} aria-label="Mese prima">‹</button><b>${MESI[mo - 1]} ${y}</b><button class="btn dnav sm" data-calm="1" ${S.calM >= maxM ? "disabled" : ""} aria-label="Mese dopo">›</button></div>
+    <div class="cgr">${["L","M","M","G","V","S","D"].map(x => `<span class="wd">${x}</span>`).join("")}${cells}</div>
+    <div class="leg"><span><i class="ok"></i>Compilato</span><span><i class="manca"></i>Da compilare</span><span><i class="fer"></i>Ferie</span><span><i class="perm"></i>Permesso</span><span><i class="off"></i>Sabato, domenica e festivi</span></div>
+    <p class="hint" style="margin:6px 0 0">Tocca un giorno rosso per compilarlo, uno verde per aprirlo.</p></div>`;
+}
+function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" });
+  if (!S.edit.p.inizio) { const n = nuovo().p; S.edit.p.inizio = n.inizio; S.edit.p.fine = n.fine; S.edit.p.pausa = n.pausa; } S.view = "form"; render(); window.scrollTo(0, 0); }
 function renderLista(m){
-  const L = S.list;
-  m.innerHTML = `<h1>I miei rapportini</h1>` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
+  const L = S.list, perData = {}; L.forEach(r => (perData[r.data] = perData[r.data] || []).push(r)); S.perData = perData;
+  const nM = mancanti(perData);
+  m.innerHTML = `<h1>I miei rapportini</h1>
+    <button class="calTog${S.calOpen ? " on" : ""}" id="calTog"><span>📅 Calendario del mese</span>${nM ? `<span class="chip bad">${nM} da compilare</span>` : `<span class="chip ok">Tutto compilato</span>`}<span class="car">${S.calOpen ? "▲" : "▼"}</span></button>
+    ${S.calOpen ? calHTML(perData) : ""}` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
+    if (p.ferie) return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">—</span></div>
+      <div class="c"><div class="cm" style="color:var(--blue)">Ferie</div>${p.note ? `<div class="hint">${esc(p.note)}</div>` : ""}</div></button>`;
     return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
-      <div class="c"><div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}
+      <div class="c">${p.cantiere ? `<div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>` : ""}${p.permesso > 0 ? `<div class="permR">Permesso ${fmtOre(p.permesso)} h</div>` : ""}${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}
       ${(p.mezzi || []).filter(x => x.mezzo).length ? `<div class="hint" style="margin-top:4px">${(p.mezzi || []).filter(x => x.mezzo).map(x => esc(U(x.mezzo)) + (x.ore ? " · " + fmtOre(x.ore) + " h" : "")).join(" — ")}</div>` : ""}</div></button>`; }).join("")
     : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
 }
 const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
 function minuti(t){ if (!t) return null; const [h, mm] = t.split(":").map(Number); return h * 60 + mm; }
 function calcOre(p){ const a = minuti(p.inizio), b = minuti(p.fine); if (a == null || b == null) return 0; let d = b - a; if (d < 0) d += 1440; d -= (+p.pausa || 0); return Math.max(0, Math.round(d / 60 * 100) / 100); }
-function nuovo(){ const last = S.list[0] && S.list[0].payload || {};
-  return { id: null, data: oggi(), p: { cantiere: "", inizio: last.inizio || "07:30", fine: last.fine || "17:00", pausa: last.pausa ?? 60, mezzi: [{ mezzo: "", ore: "" }], materiali: [], lavori: "", note: "" } }; }
+function nuovo(d){ const last = (S.list.find(r => r.payload && r.payload.inizio) || {}).payload || {};
+  return { id: null, data: d || oggi(), p: { cantiere: "", inizio: last.inizio || "07:30", fine: last.fine || "17:00", pausa: last.pausa ?? 60, mezzi: [{ mezzo: "", ore: "" }], materiali: [], lavori: "", note: "" } }; }
 function renderForm(m){
   const E = S.edit, p = E.p, ro = !!p.approvato; p.ore = calcOre(p);
   const dis = ro ? "disabled" : "";
@@ -173,9 +239,12 @@ function renderForm(m){
     <label class="l" for="fData">Data</label>
     <div class="dataNav"><button class="btn dnav" id="dPrev" aria-label="Giorno prima" ${dis}>‹</button><input class="f" type="date" id="fData" value="${esc(E.data)}" max="${oggi()}" ${dis}><button class="btn dnav" id="dNext" aria-label="Giorno dopo" ${dis || E.data >= oggi() ? "disabled" : ""}>›</button></div>
     <div class="dGiorno" id="dGiorno">${esc(etichettaGiorno(E.data))}</div>
-    <label class="l" for="fCan">Cantiere / commessa</label>
-    <div class="sugw"><input class="f" id="fCan" data-sug="cantieri" value="${esc(p.cantiere)}" placeholder="Scrivi per cercare…" autocomplete="off" ${dis}></div>
+    <div class="assenze"><label class="ferie${p.ferie ? " on" : ""}"><input type="checkbox" id="fFerie" ${p.ferie ? "checked" : ""} ${dis}><span>Ferie<small>giornata intera</small></span></label>
+      <label class="perm"><span>Permesso<small>ore</small></span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fPerm" value="${esc(p.permesso || "")}" placeholder="0" ${dis || (p.ferie ? "disabled" : "")}></label></div>
+    ${p.ferie ? "" : `<label class="l" for="fCan">Cantiere / commessa</label>
+    <div class="sugw"><input class="f" id="fCan" data-sug="cantieri" value="${esc(p.cantiere)}" placeholder="Scrivi per cercare…" autocomplete="off" ${dis}></div>`}
   </div>
+  ${p.ferie ? `<div class="card ferieBox">Giornata di <b>ferie</b>: non servono cantiere, orario e mezzi.</div>` : `<div class="lavoro">
   <div class="card"><h2>Orario</h2>
     <div class="row"><div><label class="l" for="fIni">Inizio</label><input class="f" type="time" id="fIni" value="${esc(p.inizio)}" ${dis}></div>
       <div><label class="l" for="fFin">Fine</label><input class="f" type="time" id="fFin" value="${esc(p.fine)}" ${dis}></div></div>
@@ -197,7 +266,8 @@ function renderForm(m){
     ${ro ? "" : `<button class="btn sm" id="addMt" style="margin-top:10px">+ Aggiungi materiale</button>`}
   </div>
   <div class="card"><h2>Lavori</h2>
-    <label class="l" for="fLav">Descrizione lavori</label><textarea class="f" id="fLav" placeholder="Cosa è stato fatto oggi" ${dis}>${esc(p.lavori)}</textarea>
+    <label class="l" for="fLav">Descrizione lavori</label><textarea class="f" id="fLav" placeholder="Cosa è stato fatto oggi" ${dis}>${esc(p.lavori)}</textarea></div></div>`}
+  <div class="card">
     <label class="l" for="fNote">Note</label><textarea class="f" id="fNote" style="min-height:70px" placeholder="Problemi, richieste, segnalazioni" ${dis}>${esc(p.note)}</textarea>
   </div>
   ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
@@ -205,8 +275,10 @@ function renderForm(m){
   <div id="ferr"></div>`;
 }
 function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
-  E.data = $("#fData").value; p.cantiere = $("#fCan").value.trim(); p.inizio = $("#fIni").value; p.fine = $("#fFin").value; p.pausa = +$("#fPau").value;
-  p.lavori = U($("#fLav").value); p.note = $("#fNote").value.trim(); p.ore = calcOre(p);
+  E.data = $("#fData").value; p.ferie = !!($("#fFerie") && $("#fFerie").checked); if (!p.ferie) delete p.ferie;
+  const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !p.ferie) p.permesso = pm; else delete p.permesso;
+  if ($("#fCan")) { p.cantiere = $("#fCan").value.trim(); p.inizio = $("#fIni").value; p.fine = $("#fFin").value; p.pausa = +$("#fPau").value; p.lavori = U($("#fLav").value); }
+  p.note = $("#fNote").value.trim(); p.ore = p.ferie ? 0 : calcOre(p);
   document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (x) x[e.dataset.k] = e.dataset.k === "mezzo" ? U(e.value) : e.value; });
   document.querySelectorAll("[data-mt]").forEach(e => { const x = p.materiali[+e.dataset.mt]; if (x) x[e.dataset.k] = e.dataset.k === "desc" ? U(e.value) : e.value; }); }
 
@@ -224,9 +296,16 @@ async function login(){
 async function salva(){
   leggiForm(); const E = S.edit, p = E.p, er = $("#ferr");
   if (!E.data) { er.innerHTML = `<div class="err">Indica la data.</div>`; return; }
-  if (!p.cantiere) { er.innerHTML = `<div class="err">Indica il cantiere.</div>`; $("#fCan").focus(); return; }
-  if (!p.ore) { er.innerHTML = `<div class="err">Controlla orario di inizio e fine.</div>`; return; }
-  p.mezzi = (p.mezzi || []).filter(x => x.mezzo || x.ore); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
+  if (p.ferie) { p.cantiere = ""; p.mezzi = []; p.materiali = []; p.lavori = ""; p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; }
+  else {
+    const soloPerm = p.permesso > 0 && !p.cantiere;
+    if (soloPerm) { p.ore = 0; delete p.inizio; delete p.fine; delete p.pausa; }
+    else {
+      if (!p.cantiere) { er.innerHTML = `<div class="err">Indica il cantiere (oppure segna ferie o permesso).</div>`; $("#fCan").focus(); return; }
+      if (!p.ore) { er.innerHTML = `<div class="err">Controlla orario di inizio e fine.</div>`; return; }
+    }
+    p.mezzi = (p.mezzi || []).filter(x => x.mezzo || x.ore); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
+  }
   const b = $("#save"); b.disabled = true; b.textContent = "Salvataggio…";
   try { const r = await rpc("rap_salva", { p_nome: S.me, p_pin: S.pin, p_id: E.id, p_data: E.data, p_payload: p });
     if (!r.ok) { b.disabled = false; b.textContent = "Salva rapportino"; if (r.err === "PIN_ERRATO" || String(r.err).startsWith("BLOCCATO")) return esci(msgErr(r.err)); er.innerHTML = `<div class="err">${esc(msgErr(r.err))}</div>`; return; }
@@ -266,8 +345,11 @@ document.addEventListener("click", e => {
   if (t.id === "out") return esci("Sei uscito.");
   if (t.dataset.k) { const k = t.dataset.k; if (k === "del") S.pinIn = S.pinIn.slice(0, -1); else if (k === "ok") return login(); else if (S.pinIn.length < 6) S.pinIn += k;
     const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
+  if (t.id === "calTog") { S.calOpen = !S.calOpen; try { localStorage.setItem("za-rap-cal", S.calOpen ? "1" : ""); } catch {} render(); return; }
+  if (t.dataset.calm) { const [y, mo] = S.calM.split("-").map(Number), d = new Date(y, mo - 1 + +t.dataset.calm, 1, 12); S.calM = iso(d).slice(0, 7); render(); return; }
+  if (t.dataset.cal) { const rs = (S.perData || {})[t.dataset.cal] || []; if (rs.length) { apri(rs[0]); return; } S.edit = nuovo(t.dataset.cal); S.view = "form"; render(); window.scrollTo(0, 0); return; }
   if (t.id === "fab") { S.edit = nuovo(); S.view = "form"; render(); window.scrollTo(0, 0); return; }
-  if (t.dataset.id) { const r = S.list.find(x => x.id === t.dataset.id); if (!r) return; S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringify(Object.assign({ mezzi: [], materiali: [] }, r.payload))) }; if (!S.edit.p.mezzi.length) S.edit.p.mezzi.push({ mezzo: "", ore: "" }); S.view = "form"; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.id) { const r = S.list.find(x => x.id === t.dataset.id); if (r) apri(r); return; }
   if (t.id === "dPrev" || t.id === "dNext") { aggData(spostaGiorno($("#fData").value || oggi(), t.id === "dPrev" ? -1 : 1)); return; }
   if (t.id === "back") { S.view = "lista"; S.edit = null; render(); return; }
   if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); return; }
@@ -277,7 +359,8 @@ document.addEventListener("click", e => {
   if (t.id === "save") return salva();
   if (t.id === "del") return elimina();
 });
-document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value; if (e.target.id === "fData" && S.edit) aggData(e.target.value); if (["fIni", "fFin", "fPau"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
+document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
+  if (e.target.id === "fFerie" && S.edit) { leggiForm(); if (S.edit.p.ferie) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!q.inizio) { const n = nuovo().p; q.inizio = n.inizio; q.fine = n.fine; q.pausa = n.pausa; } if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); if (["fIni", "fFin", "fPau"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("input", e => { if (["fIni", "fFin"].includes(e.target.id) && S.edit) { leggiForm(); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
 
