@@ -429,7 +429,7 @@ function renderForm(m){
   ${fuori(p) ? `<div class="card ferieBox">Giornata di <b>${p.malattia ? "malattia" : "ferie"}</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
   <div class="card"><h2>Macchine / mezzi d'opera</h2>
     ${(p.mezzi || []).map((x, i) => { normMz(x); const accs = x.accs.length ? x.accs : [{ acc: "", ore: "" }];
-      return `<div class="sub"><div class="mzN" id="mzN-${i}">${mzTitolo(x, i)}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
+      return `<div class="sub"><div class="mzN" id="mzN-${i}">${mzTitolo(x, i)}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera · a mano: OPERAIO" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore" aria-label="Ore macchina" ${dis}>
         ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli macchina">✕</button>`}</div>
       ${accs.map((a, j) => { const bn = isBenna(a, j); return `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="${j ? "Accessorio" : "Accessorio (se usato)"}" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
