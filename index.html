@@ -60,6 +60,8 @@ textarea.f.grow{resize:none;overflow:hidden;min-height:0;line-height:1.3;display
 .ferieBox{color:var(--blue);background:#dfe8f7;border-color:var(--blue);text-align:center;font-size:16px}
 .mzR,.accR{align-items:flex-start !important}
 .mzR,.accR{gap:6px !important}
+.accErr{margin:8px 0 0 12px;font-size:14px}
+.oreI.bad{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);font-weight:700}
 .oreI.lock{background:var(--bg);color:var(--muted);border-style:dashed;pointer-events:none}
 .oreI.lock::placeholder{color:var(--ink);opacity:.75;font-weight:700}
 .mzR .x,.accR .x{width:34px !important}
@@ -231,7 +233,11 @@ function calHTML(perData){
 }
 const num = v => +String(v || "").replace(",", ".") || 0;
 function oreBenna(x){ const altri = (x.accs || []).reduce((t, a, j) => t + (isBenna(a, j) ? 0 : num(a.ore)), 0); return Math.max(0, Math.round((num(x.ore) - altri) * 100) / 100); }
+const oreAltri = x => (x.accs || []).reduce((t, a, j) => t + (isBenna(a, j) ? 0 : num(a.ore)), 0);
+const msgAcc = x => `Attenzione: gli accessori sommano ${fmtOre(oreAltri(x))} h, più delle ${fmtOre(num(x.ore))} h della macchina. Correggi le ore.`;
 function aggBenna(i){ const x = S.edit && S.edit.p.mezzi[i]; if (!x) return; const v = oreBenna(x); let first = true;
+  const er = document.getElementById("accErr-" + i), over = oreAltri(x) > num(x.ore); if (er) { er.hidden = !over; er.textContent = over ? msgAcc(x) : ""; }
+  document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"]:not(.lock)`).forEach(a => a.classList.toggle("bad", over));
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"].lock`).forEach(a => { a.placeholder = first ? fmtOre(v) : "0"; first = false; }); }
 const isBenna = (a, j) => U(a.acc) === "BENNA" || (!j && !String(a.acc || "").trim());
 function normMz(x){ if (x.acc) { x.accs = (x.accs || []).concat([{ acc: x.acc, ore: x.ore || "" }]); delete x.acc; } if (!Array.isArray(x.accs)) x.accs = []; return x; }
@@ -281,6 +287,7 @@ function renderForm(m){
       ${accs.map((a, j) => { const bn = isBenna(a, j); return `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="${j ? "Accessorio" : "BENNA (predefinita)"}" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
         <input class="f oreI${bn ? " lock" : ""}" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(bn ? "" : a.ore || "")}" placeholder="${bn ? (accs.findIndex((b, k) => isBenna(b, k)) === j ? fmtOre(oreBenna(x)) : "0") : "Ore"}" aria-label="Ore accessorio" ${bn ? 'readonly tabindex="-1" title="Benna: ore della macchina meno quelle degli altri accessori"' : ""} ${dis}>
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`; }).join("")}
+      <div class="err accErr" id="accErr-${i}" ${oreAltri(x) > num(x.ore) ? "" : "hidden"}>${oreAltri(x) > num(x.ore) ? esc(msgAcc(x)) : ""}</div>
       ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>${i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>` : ""}`}</div>`; }).join("")}
     ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>`}
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
@@ -300,7 +307,7 @@ function renderForm(m){
   ${ro ? "" : `<button class="btn pri big" id="save">Salva rapportino</button>`}
   ${E.id && !ro ? `<button class="btn danger big" id="del" style="margin-top:10px;background:transparent">Elimina rapportino</button>` : ""}
   <div id="ferr"></div>`;
-  autoHTutti(); requestAnimationFrame(autoHTutti);
+  autoHTutti(); requestAnimationFrame(autoHTutti); (p.mezzi || []).forEach((_, i) => aggBenna(i));
 }
 function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   E.data = $("#fData").value; p.ferie = !!($("#fFerie") && $("#fFerie").checked); if (!p.ferie) delete p.ferie;
@@ -334,7 +341,7 @@ async function salva(){
       if (!p.cantiere) { er.innerHTML = `<div class="err">Indica il cantiere (oppure segna ferie o permesso).</div>`; $("#fCan").focus(); return; }
       if (!p.ore) { er.innerHTML = `<div class="err">Indica almeno una macchina con le ore.</div>`; return; }
       const troppe = (p.mezzi || []).find(x => { normMz(x); return x.mezzo && x.accs.reduce((t, b, j) => t + (isBenna(b, j) ? 0 : num(b.ore)), 0) > num(x.ore); });
-      if (troppe) { er.innerHTML = `<div class="err">${esc(U(troppe.mezzo))}: le ore degli accessori superano le ore della macchina.</div>`; return; }
+      if (troppe) { er.innerHTML = `<div class="err">${esc(U(troppe.mezzo))}: le ore degli accessori superano le ore della macchina. Non salvato.</div>`; const k = p.mezzi.indexOf(troppe), b = document.getElementById("accErr-" + k); (b || er).scrollIntoView({ block: "center", behavior: "smooth" }); return; }
     }
     delete p.inizio; delete p.fine; delete p.pausa;
     p.mezzi = (p.mezzi || []).map(x => { normMz(x); if (x.mezzo) { if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); if (!x.accs[0].acc) x.accs[0].acc = "BENNA"; const ob = oreBenna(x); let first = true; x.accs.forEach(a => { if (U(a.acc) === "BENNA") { a.ore = first ? (ob ? String(ob) : "0") : "0"; first = false; } }); } x.accs = x.accs.filter(a => a.acc || a.ore); if (!x.accs.length) delete x.accs; return x; }).filter(x => x.mezzo || x.ore || x.accs); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
