@@ -161,7 +161,9 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .chip.ok{background:var(--good-soft);color:var(--good)}
 .chip.wait{background:var(--accent-soft);color:var(--accent-ink)}
 .code{font-family:var(--font-mono);font-size:12.5px;font-weight:500;background:var(--accent);color:#1c2320;border-radius:4px;padding:1px 6px;margin-right:6px}
-.fab{position:fixed;left:16px;right:16px;bottom:max(16px, env(safe-area-inset-bottom));max-width:688px;margin:0 auto;z-index:6;box-shadow:0 6px 20px rgb(0 0 0/.18)}
+.listaH{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.listaH h1{margin:0;flex:1 1 auto}
+.fab{flex:0 0 auto;min-height:44px;padding:8px 14px;font-size:15px;font-weight:700;white-space:nowrap}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--steel);color:var(--on-steel);padding:10px 16px;border-radius:8px;z-index:9;max-width:90vw;text-align:center}
 .pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .pinpad button{min-height:58px;font-size:24px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:10px;color:var(--ink)}
@@ -178,7 +180,6 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
   <div class="me" id="me" hidden></div>
 </header>
 <main id="main"><div class="empty">Caricamento…</div></main>
-<button class="btn pri big fab" id="fab" hidden>+ Nuovo rapportino</button>
 <div class="toast" id="toast" hidden></div>
 <datalist id="dlCan"></datalist><datalist id="dlMez"></datalist>
 <script>
@@ -216,7 +217,7 @@ async function caricaMiei(){ const r = await rpc("rap_miei", { p_nome: S.me, p_p
 function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; try { localStorage.removeItem("za-rap-me"); } catch {} S.view = "login"; render(); if (msg) toast(msg); }
 
 function render(){
-  const m = $("#main"); $("#fab").hidden = !(S.me && S.view === "lista");
+  const m = $("#main");
   $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><button id="out">Esci</button>`;
   if (!S.me || S.view === "login") return renderLogin(m);
   if (S.view === "form") return renderForm(m);
@@ -282,7 +283,7 @@ function apri(r){ S.edit = { id: r.id, data: r.data, p: JSON.parse(JSON.stringif
 function renderLista(m){
   const L = S.list, perData = {}; L.forEach(r => (perData[r.data] = perData[r.data] || []).push(r)); S.perData = perData;
   const nM = mancanti(perData);
-  m.innerHTML = `<h1>I miei rapportini</h1>
+  m.innerHTML = `<div class="listaH"><h1>I miei rapportini</h1><button class="btn pri fab" id="fab">+ Nuovo rapportino</button></div>
     <button class="calTog${S.calOpen ? " on" : ""}" id="calTog"><span>📅 Calendario del mese</span>${nM ? `<span class="chip bad">${nM} da compilare</span>` : `<span class="chip ok">Tutto compilato</span>`}<span class="car">${S.calOpen ? "▲" : "▼"}</span></button>
     ${S.calOpen ? calHTML(perData) : ""}` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
     if (p.ferie) return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">—</span></div>
