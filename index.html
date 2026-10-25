@@ -27,8 +27,9 @@ input,select,textarea{font:inherit;color:var(--ink)}
 header{position:sticky;top:0;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:3px solid var(--accent);padding:10px 16px calc(10px) 16px;padding-top:max(10px, env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
 header .b{font-weight:700;font-size:21px;color:#e8e22a;letter-spacing:.01em}
 header .s{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-steel-muted)}
-.guidaL{margin-left:auto;color:var(--on-steel);font-size:13px;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:5px 9px;white-space:nowrap}
-header .me{margin-left:12px;text-align:right;font-size:13px;line-height:1.2}
+.guidaL{display:block;text-align:center;margin:14px 0 4px;color:var(--muted);font-weight:600;font-size:14px}
+header .me a{color:var(--on-steel-muted);font-size:12px;margin-right:10px}
+header .me{margin-left:auto;text-align:right;font-size:13px;line-height:1.2}
 header .me b{display:block;font-size:14px;color:#fff;text-transform:uppercase}
 header .me button{background:none;border:0;color:var(--on-steel-muted);padding:0;font-size:12px;text-decoration:underline}
 main{max-width:720px;margin:0 auto;padding:16px 16px 110px}
@@ -194,7 +195,6 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 <body>
 <header>
   <div><div class="b">ZA srl</div><div class="s">Rapportini</div></div>
-  <a class="guidaL" href="guida.html" title="Guida">❓ Guida</a>
   <div class="me" id="me" hidden></div>
 </header>
 <main id="main"><div class="empty">Caricamento…</div></main>
@@ -239,7 +239,7 @@ function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; try { localStorage.re
 
 function render(){
   const m = $("#main");
-  $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><button id="out">Esci</button>`;
+  $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="guida.html">Guida</a><button id="out">Esci</button>`;
   if (!S.me || S.view === "login") return renderLogin(m);
   if (S.view === "form") return renderForm(m);
   renderLista(m);
@@ -253,7 +253,8 @@ function renderLogin(m){
     <label class="l">PIN (6 cifre)</label>
     <div class="pindots">${[0,1,2,3,4,5].map(i => `<i class="${i < S.pinIn.length ? "on" : ""}"></i>`).join("")}</div>
     <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" aria-label="Cancella">⌫</button><button data-k="0">0</button><button data-k="ok" style="background:var(--accent);border-color:var(--accent);color:#1d1606">OK</button></div>
-    <div id="lerr"></div></div>`;
+    <div id="lerr"></div></div>
+    <a class="guidaL" href="guida.html">❓ Come si compila il rapportino? Leggi la guida</a>`;
 }
 /* calendario del mese */
 function pasqua(y){ const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1; return new Date(y, mo - 1, da, 12); }
