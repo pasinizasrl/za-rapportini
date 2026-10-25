@@ -319,7 +319,7 @@ async function aggiungiFoto(files){ leggiForm(); const E = S.edit, p = E.p; if (
   try { await document.fonts.load('700 40px "Barlow Condensed"'); } catch {}
   const coda = files.map(file => { const u = { th: "" }; S.upl.push(u); return { file, u }; }); render();
   const lavora = async ({ file, u }) => {
-    try { const im = await caricaImg(file); u.th = ridimensiona(im, 180, .6); render(); const big = ridimensiona(im, 2560, .85, [p.cantiere, itData(E.data) + "  ·  " + S.me]);
+    try { const im = await caricaImg(file); u.th = ridimensiona(im, 180, .6); render(); const big = ridimensiona(im, 1600, .8, [p.cantiere, itData(E.data) + "  ·  " + S.me]);
       const r = await fetch(S.el.foto_url, { method: "POST", body: JSON.stringify({ nome: S.me, pin: S.pin, cantiere: p.cantiere, data: E.data, b64: big.split(",")[1] }) });
       const j = await r.json(); if (!j.ok) throw new Error(j.err || "errore");
       (p.foto = p.foto || []).push({ id: j.id, url: j.url, cartella: j.cartella, nome: j.nome, th: u.th, timbro: true }); S.upl.splice(S.upl.indexOf(u), 1); }
