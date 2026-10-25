@@ -239,9 +239,13 @@ function calHTML(perData){
 const num = v => +String(v || "").replace(",", ".") || 0;
 function oreBenna(x){ const altri = (x.accs || []).reduce((t, a, j) => t + (isBenna(a, j) ? 0 : num(a.ore)), 0); return Math.max(0, Math.round((num(x.ore) - altri) * 100) / 100); }
 const oreAltri = x => (x.accs || []).reduce((t, a, j) => t + (isBenna(a, j) ? 0 : num(a.ore)), 0);
-const msgAcc = x => `Attenzione: gli accessori sommano ${fmtOre(oreAltri(x))} h, più delle ${fmtOre(num(x.ore))} h della macchina. Correggi le ore.`;
+// somma ore accessori (benna compresa) e controllo che sia uguale alle ore macchina
+const haBenna = x => { const a = x.accs && x.accs.length ? x.accs : [{ acc: "" }]; return a.some((b, j) => isBenna(b, j)); };
+const oreAccTot = x => oreAltri(x) + (haBenna(x) ? oreBenna(x) : 0);
+const accDiverse = x => !!(num(x.ore) || oreAltri(x)) && Math.abs(oreAccTot(x) - num(x.ore)) > 0.001;
+const msgAcc = x => `Attenzione: gli accessori sommano ${fmtOre(oreAccTot(x))} h ma la macchina ha ${fmtOre(num(x.ore))} h. La somma degli accessori deve essere uguale alle ore della macchina${haBenna(x) ? "" : " (puoi aggiungere la BENNA per le ore restanti)"}.`;
 function aggBenna(i){ const x = S.edit && S.edit.p.mezzi[i]; if (!x) return; const v = oreBenna(x); let first = true;
-  const er = document.getElementById("accErr-" + i), over = oreAltri(x) > num(x.ore); if (er) { er.hidden = !over; er.textContent = over ? msgAcc(x) : ""; }
+  const er = document.getElementById("accErr-" + i), over = accDiverse(x); if (er) { er.hidden = !over; er.textContent = over ? msgAcc(x) : ""; }
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"]:not(.lock)`).forEach(a => a.classList.toggle("bad", over));
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"].lock`).forEach(a => { a.placeholder = first ? fmtOre(v) : "0"; first = false; }); }
 const isBenna = (a, j) => U(a.acc) === "BENNA" || (!j && !String(a.acc || "").trim());
@@ -285,18 +289,18 @@ function renderForm(m){
   ${p.ferie ? `<div class="card ferieBox">Giornata di <b>ferie</b>: non servono cantiere e macchine.</div>` : `<div class="lavoro">
   <div class="card"><h2>Macchine / mezzi d'opera</h2>
     ${(p.mezzi || []).map((x, i) => { normMz(x); const accs = x.accs.length ? x.accs : [{ acc: "", ore: "" }];
-      return `<div class="sub"><div class="mzN">Macchina ${i + 1}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
+      return `<div class="sub"><div class="mzN">Lavorazione ${i + 1}</div><div class="row mzR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="mezzi" data-mz="${i}" data-k="mezzo"  placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.mezzo)}</textarea></div>
         <input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore" aria-label="Ore macchina" ${dis}>
         ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli macchina">✕</button>`}</div>
       ${accs.map((a, j) => { const bn = isBenna(a, j); return `<div class="row accR"><div class="sugw"><textarea rows="1" class="f grow" data-sug="accessori" data-ac="${i}|${j}" data-k="acc"  placeholder="${j ? "Accessorio" : "BENNA (predefinita)"}" autocomplete="off" ${dis} style="text-transform:uppercase">${esc(a.acc || "")}</textarea></div>
         <input class="f oreI${bn ? " lock" : ""}" type="number" inputmode="decimal" step="0.5" min="0" data-ac="${i}|${j}" data-k="ore" value="${esc(bn ? "" : a.ore || "")}" placeholder="${bn ? (accs.findIndex((b, k) => isBenna(b, k)) === j ? fmtOre(oreBenna(x)) : "0") : "Ore"}" aria-label="Ore accessorio" ${bn ? 'readonly tabindex="-1" title="Benna: ore della macchina meno quelle degli altri accessori"' : ""} ${dis}>
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`; }).join("")}
-      <div class="err accErr" id="accErr-${i}" ${oreAltri(x) > num(x.ore) ? "" : "hidden"}>${oreAltri(x) > num(x.ore) ? esc(msgAcc(x)) : ""}</div>
+      <div class="err accErr" id="accErr-${i}" ${accDiverse(x) ? "" : "hidden"}>${accDiverse(x) ? esc(msgAcc(x)) : ""}</div>
       ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>`}
-      <label class="l mzDl">Lavorazione macchina ${i + 1}</label><div class="sugw mzL"><textarea rows="1" class="f grow" data-sug="lavorazioni" data-mz="${i}" data-k="lav" placeholder="Scrivi per cercare…" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.lav || "")}</textarea></div>
-      <label class="l mzDl">Descrizione lavori macchina ${i + 1}</label><textarea class="f mzD grow" data-mz="${i}" data-k="desc" rows="2" placeholder="Cosa è stato fatto con questa macchina" ${dis}>${esc(x.desc || "")}</textarea>
-      ${!ro && i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>` : ""}</div>`; }).join("")}
-    ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Aggiungi mezzo / nuova lavorazione</button>`}
+      <label class="l mzDl">Lavorazione</label><div class="sugw mzL"><textarea rows="1" class="f grow" data-sug="lavorazioni" data-mz="${i}" data-k="lav" placeholder="Scrivi per cercare…" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.lav || "")}</textarea></div>
+      <label class="l mzDl">Descrizione lavori</label><textarea class="f mzD grow" data-mz="${i}" data-k="desc" rows="2" placeholder="Cosa è stato fatto con questa macchina" ${dis}>${esc(x.desc || "")}</textarea>
+      ${!ro && i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Nuova lavorazione</button>` : ""}</div>`; }).join("")}
+    ${ro || p.mezzi.length ? "" : `<button class="addAc mz addMz" id="addMz"><b>+</b> Nuova lavorazione</button>`}
     <div class="tot"><span>ORE TOTALI MACCHINE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
   </div>`}
@@ -350,8 +354,8 @@ async function salva(){
       const manca = campiMancanti(p);
       E.reqOn = !!manca.length;
       if (manca.length) { er.innerHTML = `<div class="err">Compila i campi evidenziati in rosso${p.cantiere ? "" : " (oppure segna ferie o permesso)"}. Non salvato.</div>`; manca[0].scrollIntoView({ block: "center", behavior: "smooth" }); return; }
-      const troppe = (p.mezzi || []).find(x => { normMz(x); return x.mezzo && x.accs.reduce((t, b, j) => t + (isBenna(b, j) ? 0 : num(b.ore)), 0) > num(x.ore); });
-      if (troppe) { er.innerHTML = `<div class="err">${esc(U(troppe.mezzo))}: le ore degli accessori superano le ore della macchina. Non salvato.</div>`; const k = p.mezzi.indexOf(troppe), b = document.getElementById("accErr-" + k); (b || er).scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+      const troppe = (p.mezzi || []).find(x => { normMz(x); return x.mezzo && accDiverse(x); });
+      if (troppe) { er.innerHTML = `<div class="err">${esc(U(troppe.mezzo))}: la somma delle ore degli accessori deve essere uguale alle ore della macchina. Non salvato.</div>`; const k = p.mezzi.indexOf(troppe), b = document.getElementById("accErr-" + k); (b || er).scrollIntoView({ block: "center", behavior: "smooth" }); return; }
     }
     delete p.inizio; delete p.fine; delete p.pausa;
     p.mezzi = (p.mezzi || []).map(x => { normMz(x); if (x.mezzo) { if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); if (!x.accs[0].acc) x.accs[0].acc = "BENNA"; const ob = oreBenna(x); let first = true; x.accs.forEach(a => { if (U(a.acc) === "BENNA") { a.ore = first ? (ob ? String(ob) : "0") : "0"; first = false; } }); } x.accs = x.accs.filter(a => a.acc || a.ore); if (!x.accs.length) delete x.accs; return x; }).filter(x => x.mezzo || x.ore || x.accs || x.desc); p.materiali = (p.materiali || []).filter(x => x.desc || x.qta);
