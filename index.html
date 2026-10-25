@@ -296,7 +296,7 @@ function renderLista(m){
   const nM = mancanti(perData);
   const gm = giorniMancanti(perData), gg = s => GIORNI[new Date(s + "T12:00:00").getDay()].slice(0, 3) + " " + s.slice(8) + "/" + s.slice(5, 7);
   m.innerHTML = `<div class="listaH"><h1>I miei rapportini</h1><button class="btn pri fab" id="fab">+ Nuovo rapportino</button></div>
-    ${(S.avvisi || []).map(a => `<div class="avv"><div class="avvT">📢 Messaggio dall'ufficio <span>${esc(a.creato)}</span></div><div class="avvB">${esc(a.testo)}</div><button class="btn sm" data-letto="${esc(a.id)}">✓ Ho letto</button></div>`).join("")}
+    ${(S.avvisi || []).map(a => `<div class="avv"><div class="avvT">📢 Messaggio di servizio <span>${esc(a.creato)}</span></div><div class="avvB">${esc(a.testo)}</div><button class="btn sm" data-letto="${esc(a.id)}">✓ Ho letto</button></div>`).join("")}
     ${gm.length ? `<div class="manc"><div class="mancT">⚠️ ${gm.length === 1 ? "Ti manca 1 rapportino" : `Ti mancano ${gm.length} rapportini`}</div><div class="mancB">${gm.map(s => `<button data-cal="${s}">${esc(gg(s))}</button>`).join("")}</div><div class="hint" style="margin-top:4px">Tocca un giorno per compilarlo.</div></div>` : ""}
     <button class="calTog${S.calOpen ? " on" : ""}" id="calTog"><span>📅 Calendario del mese</span>${nM ? `<span class="chip bad">${nM} da compilare</span>` : `<span class="chip ok">Tutto compilato</span>`}<span class="car">${S.calOpen ? "▲" : "▼"}</span></button>
     ${S.calOpen ? calHTML(perData) : ""}` + (L.length ? L.map(r => { const p = r.payload || {}, c = parseCant(p.cantiere);
