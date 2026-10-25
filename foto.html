@@ -306,7 +306,7 @@ function render(){
     : `<div class="vuoto">📷<b>Nessuna foto</b><span>${q ? "Nessun cantiere corrisponde alla ricerca." : "Nel periodo scelto non sono state inviate foto."}</span></div>`);
 }
 function barraHTML(nFoto, nCan){
-  return `<div class="gtop"><div><h1>Foto cantieri</h1><div class="gsub">${S.righe == null ? "Caricamento…" : `<b>${nFoto}</b> foto · <b>${nCan}</b> ${nCan === 1 ? "cantiere" : "cantieri"}`}</div></div></div>
+  return `<div class="gtop"><div><h1>Foto cantieri</h1><div class="gsub">${S.righe == null ? "Caricamento…" : `<b>${nFoto}</b> foto · <b>${nCan}</b> ${nCan === 1 ? "cantiere" : "cantieri"}<span id="bgSt" style="font-size:12px">${S.bg && S.bg.tot ? ` · ⬇ preparo le foto ${S.bg.n}/${S.bg.tot}` : ""}</span>`}</div></div></div>
     <div class="tbar"><div class="srch"><span>🔍</span><input id="q" value="${esc(S.q)}" placeholder="Cerca cantiere, cliente o operatore" autocomplete="off">${S.q ? `<button data-clr="1" aria-label="Cancella ricerca">✕</button>` : ""}</div>
       <div class="seg">${[[7, "7 gg"], [30, "30 gg"], [90, "3 mesi"], [365, "1 anno"]].map(([v, l]) => `<button data-per="${v}" class="${S.per === v ? "on" : ""}">${l}</button>`).join("")}</div>
       <div class="seg vis"><button data-vista="can" class="${S.vista !== "giorni" ? "on" : ""}">▦ Cantieri</button><button data-vista="giorni" class="${S.vista === "giorni" ? "on" : ""}">☰ Per giorno</button></div></div>`;
@@ -359,6 +359,18 @@ async function carica_(fs, dim){
 S.nomi = {};
 function mostraGrande(f){ if (S.lb == null || S.lista[S.lb] !== f) return; const v = bestOf(f), im = $("#lbImg"), l = $("#lbLoad");
   if (im && v && im.getAttribute("src") !== v) im.src = v; if (l && v) l.remove(); }
+/* in background: prepara tutte le foto del periodo, dalla più recente, così quando le apri sono già pronte */
+let bgTok = 0;
+async function precaricaTutto(){ const tok = ++bgTok; await new Promise(r => setTimeout(r, 800));
+  const tutte = (S.righe || []).slice().sort((a, b) => b.data.localeCompare(a.data)).flatMap(r => (r.foto || []).map(f => Object.assign({ data: r.data }, f))).filter(f => fileId(f));
+  let fatte = 0; S.bg = { n: 0, tot: tutte.length }; segnaBg();
+  for (let i = 0; i < tutte.length; i += 6) {
+    if (tok !== bgTok || !S.me) return;
+    while (S.lb != null && Object.keys(inCorso).length) await new Promise(r => setTimeout(r, 300)); // precedenza alla foto aperta
+    try { await carica_(tutte.slice(i, i + 6), "m"); } catch {}
+    fatte = Math.min(tutte.length, i + 6); S.bg = { n: fatte, tot: tutte.length }; segnaBg(); }
+  S.bg = null; segnaBg(); }
+function segnaBg(){ const e = $("#bgSt"); if (!e) return; e.textContent = S.bg && S.bg.tot ? ` · ⬇ preparo le foto ${S.bg.n}/${S.bg.tot}` : (S.righe && S.righe.length ? " · ✓ foto pronte" : ""); }
 function precarica(){ const L = [S.lb, S.lb + 1, S.lb + 2, S.lb - 1, S.lb + 3, S.lb + 4].map(i => S.lista[i]).filter(Boolean); carica_(L, "m"); }
 async function scarica(f){ const id = fileId(f); if (!S.big[chiave(id, "o")]) { toast("Preparo l'originale…"); await carica_([f], "o"); }
   const v = S.big[chiave(id, "o")] || bestOf(f); if (!v) { toast("Download non riuscito."); return; }
@@ -406,7 +418,7 @@ function renderLogin(m){
 async function carica(){ const al = iso(new Date()), d = new Date(); d.setDate(d.getDate() - S.per);
   try { const r = await rpc("rap_foto", { p_nome: S.me, p_pin: S.pin, p_dal: iso(d), p_al: al });
     if (!r.ok) { const msg = msgErr(r.err); S.me = null; S.pin = ""; try { localStorage.removeItem("za-foto-me"); } catch {} render(); $("#lerr") && ($("#lerr").innerHTML = `<div class="err">${esc(msg)}</div>`); return false; }
-    S.righe = r.righe || []; render(); if (S.fotoUrl) fetch(S.fotoUrl).catch(() => {}); return true; }
+    S.righe = r.righe || []; render(); if (S.fotoUrl) { fetch(S.fotoUrl).catch(() => {}); precaricaTutto(); } return true; }
   catch (e) { $("#main").innerHTML = `<div class="card err">Connessione non riuscita. Riprova tra poco.</div>`; return false; } }
 async function login(){ const nome = $("#op") && $("#op").value; S.loginNome = nome;
   if (!nome) { $("#lerr").innerHTML = `<div class="err">Scegli il tuo nome.</div>`; return; }
