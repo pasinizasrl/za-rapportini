@@ -57,6 +57,10 @@ textarea.f{min-height:96px;resize:vertical;text-transform:uppercase}
 .assenze .perm .f{flex:0 0 80px;width:80px;text-align:center;margin:0;padding:8px}
 .assenze .perm span{flex:1 1 auto}
 .ferieBox{color:var(--blue);background:#dfe8f7;border-color:var(--blue);text-align:center;font-size:16px}
+.accR{align-items:center}
+.accR .accL{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-left:14px;position:relative}
+.accR .accL::before{content:"";position:absolute;left:2px;top:-10px;width:8px;height:16px;border-left:2px solid var(--line);border-bottom:2px solid var(--line);border-bottom-left-radius:4px}
+.accR .sugw{flex:1 1 auto}
 .lavz{display:inline-block;margin-top:5px;background:var(--steel);color:var(--on-steel);border-radius:5px;padding:2px 8px;font-size:13px;font-weight:700;letter-spacing:.03em}
 .permR{color:var(--warn);font-weight:700;margin-top:4px}
 .calTog{display:flex;align-items:center;gap:10px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-weight:700;color:var(--ink);margin-bottom:10px;text-align:left}
@@ -222,7 +226,7 @@ function renderLista(m){
       <div class="c"><div class="cm" style="color:var(--blue)">Ferie</div>${p.note ? `<div class="hint">${esc(p.note)}</div>` : ""}</div></button>`;
     return `<button class="rap" data-id="${esc(r.id)}"><div class="h"><span class="d">${esc(giorno(r.data))} ${esc(itData(r.data))}</span>${p.approvato ? `<span class="chip ok">Approvato</span>` : `<span class="chip wait">Da approvare</span>`}<span class="o">${fmtOre(p.ore)} h</span></div>
       <div class="c">${p.cantiere ? `<div class="cm">${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}${esc(c.rest || "—")}</div>` : ""}${p.lavorazione ? `<div class="lavz">${esc(p.lavorazione)}</div>` : ""}${p.permesso > 0 ? `<div class="permR">Permesso ${fmtOre(p.permesso)} h</div>` : ""}${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}
-      ${(p.mezzi || []).filter(x => x.mezzo).length ? `<div class="hint" style="margin-top:4px">${(p.mezzi || []).filter(x => x.mezzo).map(x => esc(U(x.mezzo)) + (x.ore ? " · " + fmtOre(x.ore) + " h" : "")).join(" — ")}</div>` : ""}</div></button>`; }).join("")
+      ${(p.mezzi || []).filter(x => x.mezzo).length ? `<div class="hint" style="margin-top:4px">${(p.mezzi || []).filter(x => x.mezzo).map(x => esc(U(x.mezzo)) + (x.acc ? " + " + esc(U(x.acc)) : "") + (x.ore ? " · " + fmtOre(x.ore) + " h" : "")).join(" — ")}</div>` : ""}</div></button>`; }).join("")
     : `<div class="card empty">Nessun rapportino negli ultimi 60 giorni.<br>Tocca <b>+ Nuovo rapportino</b> per iniziare.</div>`);
 }
 const fmtOre = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("it-IT");
@@ -255,11 +259,12 @@ function renderForm(m){
     <select class="f" id="fPau" ${dis}>${[0, 15, 30, 45, 60, 90, 120].map(v => `<option value="${v}" ${+p.pausa === v ? "selected" : ""}>${v ? (v >= 60 ? (v / 60).toLocaleString("it-IT") + (v === 60 ? " ora" : " ore") : v + " minuti") : "Nessuna pausa"}</option>`).join("")}</select>
     <div class="tot"><span>ORE LAVORATE</span><b id="oreTot">${fmtOre(p.ore)}</b></div>
   </div>
-  <div class="card"><h2>Mezzi usati</h2>
-    ${(p.mezzi || []).map((x, i) => `<div class="sub"><div class="row"><div class="sugw"><input class="f" data-sug="mezzi" data-mz="${i}" data-k="mezzo" value="${esc(x.mezzo)}" placeholder="Mezzo" autocomplete="off" ${dis} style="text-transform:uppercase"></div>
+  <div class="card"><h2>Macchine / mezzi d'opera</h2>
+    ${(p.mezzi || []).map((x, i) => `<div class="sub"><div class="row"><div class="sugw"><input class="f" data-sug="mezzi" data-mz="${i}" data-k="mezzo" value="${esc(x.mezzo)}" placeholder="Macchina / mezzo d'opera" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700"></div>
       ${ro ? "" : `<button class="x" data-delmz="${i}" aria-label="Togli mezzo">✕</button>`}</div>
+      <div class="row accR"><span class="accL">Accessorio</span><div class="sugw"><input class="f" data-sug="accessori" data-mz="${i}" data-k="acc" value="${esc(x.acc || "")}" placeholder="Nessuno / scrivi per cercare…" autocomplete="off" ${dis} style="text-transform:uppercase"></div></div>
       <div class="row"><input class="f" type="number" inputmode="decimal" step="0.5" min="0" data-mz="${i}" data-k="ore" value="${esc(x.ore)}" placeholder="Ore macchina" ${dis}></div></div>`).join("")}
-    ${ro ? "" : `<button class="btn sm" id="addMz" style="margin-top:10px">+ Aggiungi mezzo</button>`}
+    ${ro ? "" : `<button class="btn sm" id="addMz" style="margin-top:10px">+ Aggiungi macchina</button>`}
   </div>
   <div class="card"><h2>Materiali</h2>
     ${(p.materiali || []).map((x, i) => `<div class="sub"><div class="row"><input class="f" data-mt="${i}" data-k="desc" value="${esc(x.desc)}" placeholder="Materiale" ${dis} style="text-transform:uppercase">
@@ -282,7 +287,7 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !p.ferie) p.permesso = pm; else delete p.permesso;
   if ($("#fCan")) { p.cantiere = $("#fCan").value.trim(); p.lavorazione = U($("#fLavz").value); if (!p.lavorazione) delete p.lavorazione; p.inizio = $("#fIni").value; p.fine = $("#fFin").value; p.pausa = +$("#fPau").value; p.lavori = U($("#fLav").value); }
   p.note = $("#fNote").value.trim(); p.ore = p.ferie ? 0 : calcOre(p);
-  document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (x) x[e.dataset.k] = e.dataset.k === "mezzo" ? U(e.value) : e.value; });
+  document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (x) { const k = e.dataset.k, v = k === "ore" ? e.value : U(e.value); if (k === "acc" && !v) delete x.acc; else x[k] = v; } });
   document.querySelectorAll("[data-mt]").forEach(e => { const x = p.materiali[+e.dataset.mt]; if (x) x[e.dataset.k] = e.dataset.k === "desc" ? U(e.value) : e.value; }); }
 
 async function login(){
@@ -342,6 +347,8 @@ document.addEventListener("focusin", e => { if (e.target.dataset && e.target.dat
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.sug) mostraSug(e.target); });
 document.addEventListener("focusout", e => { if (e.target === sugIn) setTimeout(() => { if (document.activeElement !== sugIn) chiudiSug(); }, 200); });
 sugBox.addEventListener("pointerdown", e => e.preventDefault());
+document.addEventListener("keydown", e => { if (!sugIn || sugBox.hidden) return; if (e.key === "Escape") { chiudiSug(); return; }
+  if (e.key === "Enter") { const b = sugBox.querySelector("button[data-v]"); if (b && sugIn.value.trim()) { e.preventDefault(); b.click(); } } });
 sugBox.addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b || !sugIn) return; e.stopPropagation(); const inp = sugIn; inp.value = b.dataset.v; chiudiSug(); inp.blur(); inp.dispatchEvent(new Event("change", { bubbles: true })); });
 document.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
