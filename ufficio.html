@@ -3,7 +3,7 @@
   const SB_URL = "https://mzyvermpfusbbufhjwbu.supabase.co", SB_KEY = "sb_publishable_P_r6pi6oRahzgvfwU-PgeQ_lGecNqwo";
   const rpc = async (fn, args) => { const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY }, body: JSON.stringify(args || {}) });
     if (!r.ok) throw new Error("Errore " + r.status); return r.json(); };
-  const MSG = { PIN_ERRATO: "PIN errato.", NON_ABILITATO: "Non sei abilitato al Programma online: chiedi in ufficio.", SOLA_LETTURA: "Hai solo la visione del programma." };
+  const MSG = { PIN_FACILE: "PIN troppo semplice: evita cifre tutte uguali o in sequenza.", PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato.", NON_ABILITATO: "Non sei abilitato al Programma online: chiedi in ufficio.", SOLA_LETTURA: "Hai solo la visione del programma." };
   const msg = e => (e && String(e).startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + String(e).toLowerCase() + "." : (MSG[e] || e || "Errore");
   let ME = null; try { ME = JSON.parse(localStorage.getItem("za-uff-me") || "null"); } catch {}
   let pronto; const loginP = new Promise(r => pronto = r);
@@ -44,16 +44,32 @@
       <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}<button data-k="del">⌫</button><button data-k="0">0</button><button data-k="ok" style="background:#d4950f;border-color:#d4950f">OK</button></div>
       ${err ? `<div class="err">${err}</div>` : ""}<div class="hint">L'accesso al Programma lo abilita l'ufficio in Gestione dati → Personale.</div></div></div>`; }
   async function entra(nome, p){ try { const r = await rpc("gest_prog_login", { p_nome: nome, p_pin: p }); if (!r.ok) return msg(r.err); LV = r.lv;
-      ME = { nome, pin: p }; await scarica(); try { localStorage.setItem("za-uff-me", JSON.stringify(ME)); } catch {} return null; } catch (e) { return "Connessione non riuscita: riprova."; } }
+      ME = { nome, pin: p }; if (r.cambia) return "CAMBIA"; await scarica(); try { localStorage.setItem("za-uff-me", JSON.stringify(ME)); } catch {} return null; } catch (e) { return "Connessione non riuscita: riprova."; } }
+  /* primo accesso: scelta del PIN personale (come nei rapportini) */
+  let cp = null;
+  function disegnaCambia(err){ const el = document.getElementById("zaLogin"); const v = cp.step === 1 ? cp.a : cp.b;
+    el.innerHTML = `<div class="bx"><div class="hd"><b>ZA srl</b><span>Scegli il tuo PIN personale</span></div><div class="cd">
+      <p style="margin:0 0 6px"><b>${ME.nome.replace(/[<&]/g, "")}</b>, è il tuo primo accesso: scegli un PIN personale di 6 cifre che saprai solo tu. Varrà anche per i rapportini.</p>
+      <label>${cp.step === 1 ? "Nuovo PIN" : "Ripeti il nuovo PIN"}</label><div class="dots">${[0,1,2,3,4,5].map(i => `<i class="${i < v.length ? "on" : ""}"></i>`).join("")}</div>
+      <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-c="${n}">${n}</button>`).join("")}<button data-c="del">⌫</button><button data-c="0">0</button><button data-c="ok" style="background:#d4950f;border-color:#d4950f">OK</button></div>
+      ${err ? `<div class="err">${err}</div>` : ""}</div></div>`; }
+  document.addEventListener("click", async ev => { const b = ev.target.closest("#zaLogin [data-c]"); if (!b || !cp) return; const k = b.dataset.c, f = cp.step === 1 ? "a" : "b";
+    if (k === "del") cp[f] = cp[f].slice(0, -1); else if (k !== "ok" && cp[f].length < 6) cp[f] += k;
+    if (cp[f].length < 6) return disegnaCambia();
+    if (cp.step === 1) { cp.step = 2; return disegnaCambia(); }
+    if (cp.a !== cp.b) { cp = { step: 1, a: "", b: "" }; return disegnaCambia("I due PIN non coincidono: riprova."); }
+    try { const r = await rpc("rap_cambia_pin", { p_nome: ME.nome, p_pin: ME.pin, p_nuovo: cp.a }); if (!r.ok) { cp = { step: 1, a: "", b: "" }; return disegnaCambia(msg(r.err)); }
+      const nuovo = cp.a; cp = null; const e = await entra(ME.nome, nuovo); if (e) return disegna(e === "CAMBIA" ? "Riprova l'accesso con il nuovo PIN." : e); fatto(); }
+    catch { disegnaCambia("Connessione non riuscita: riprova."); } });
   async function avvio(){ const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
-    try { ops = (await rpc("rap_elenchi")).operatori || []; } catch {}
-    if (ME) { const e = await entra(ME.nome, ME.pin); if (!e) return fatto(); ME = null; try { localStorage.removeItem("za-uff-me"); } catch {} }
+    try { const el = await rpc("rap_elenchi"); ops = el.ufficio && el.ufficio.length ? el.ufficio : (el.operatori || []); } catch {}
+    if (ME) { const e = await entra(ME.nome, ME.pin); if (!e) return fatto(); if (e === "CAMBIA") { disegna(); cp = { step: 1, a: "", b: "" }; return disegnaCambia(); } ME = null; try { localStorage.removeItem("za-uff-me"); } catch {} }
     disegna();
     document.addEventListener("click", async ev => { const b = ev.target.closest("#zaLogin [data-k]"); if (!b) return; const k = b.dataset.k;
       if (k === "del") pin = pin.slice(0, -1); else if (k !== "ok" && pin.length < 6) pin += k;
       const nome = document.getElementById("zaOp").value; if (k !== "ok" && pin.length < 6) return disegna();
       if (!nome) { pin = ""; return disegna("Scegli il tuo nome."); }
-      if (pin.length !== 6) return disegna("Il PIN ha 6 cifre."); const e = await entra(nome, pin); pin = ""; if (e) return disegna(e); fatto(); }); }
+      if (pin.length !== 6) return disegna("Il PIN ha 6 cifre."); const e = await entra(nome, pin); pin = ""; if (e === "CAMBIA") { cp = { step: 1, a: "", b: "" }; return disegnaCambia(); } if (e) return disegna(e); fatto(); }); }
   function fatto(){ const el = document.getElementById("zaLogin"); if (el) el.remove(); pronto();
     setInterval(() => { if (!document.hidden) scarica().catch(e => console.warn(e)); }, 15000); document.addEventListener("visibilitychange", () => { if (!document.hidden) scarica().catch(() => {}); });
     const h = document.querySelector("header.top .hrow"); if (h && !document.getElementById("zaEsci")) { const b = document.createElement("button"); b.id = "zaEsci"; b.textContent = (ME.nome + " · Esci"); b.title = LV === "w" ? "Puoi modificare il programma" : "Solo visione";
@@ -304,7 +320,7 @@ function parseCant(label){
 }
 /* archiviati: dal dato del programma e, se c'è, dal gestionale che lo contiene (sempre aggiornato) */
 function archSet(){ try { if (window.parent !== window && typeof parent.zaPersArch === "function") return new Set(parent.zaPersArch()); } catch {} return new Set(); }
-function attivi(){ const a = archSet(); return S.ana.pers.filter(p => !p.arch && !a.has(U(p.nome))); }
+function attivi(){ const a = archSet(); return S.ana.pers.filter(p => !p.arch && p.reparto !== "Ufficio" && !a.has(U(p.nome))); }
 /* indirizzo del cantiere (Gestione dati → Commesse, sottoscheda): link a Google Maps */
 function mapsURL(label){ if (!label) return ""; const L = (S.ana && S.ana.can) || []; let c = L.find(x => x.label === label);
   if (!c || !c.indirizzo) { const k = parseCant(label).code; if (k) c = L.find(x => x.indirizzo && parseCant(x.label).code === k) || c; }
