@@ -249,6 +249,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
   .er .ra{grid-column:1/-1;justify-content:flex-end}
 }
 .side{display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,90px) + 10px)}
+.side .sec.na .nah2{margin:10px 0 5px;padding-top:8px;border-top:1px solid var(--line)}
 .side .sec.na .nalist{display:block;columns:2 150px;column-gap:6px}
 .side .sec.na .nalist .chip{display:block;break-inside:avoid;margin:0 0 2px;font-size:12px;line-height:1.3;padding:1px 7px}
 @media (max-width:960px){.side{position:static}
@@ -332,6 +333,7 @@ function parseCant(label){
 /* archiviati: dal dato del programma e, se c'è, dal gestionale che lo contiene (sempre aggiornato) */
 function archSet(){ try { if (window.parent !== window && typeof parent.zaPersArch === "function") return new Set(parent.zaPersArch()); } catch {} return new Set(); }
 function attivi(){ const a = archSet(); return S.ana.pers.filter(p => !p.arch && p.reparto !== "Ufficio" && !a.has(U(p.nome))); }
+function ufficioPers(){ const a = archSet(); return S.ana.pers.filter(p => !p.arch && p.reparto === "Ufficio" && !a.has(U(p.nome))); }
 /* indirizzo del cantiere (Gestione dati → Commesse, sottoscheda): link a Google Maps */
 function mapsURL(label){ if (!label) return ""; const L = (S.ana && S.ana.can) || []; let c = L.find(x => x.label === label);
   if (!c || !c.indirizzo) { const k = parseCant(label).code; if (k) c = L.find(x => x.indirizzo && parseCant(x.label).code === k) || c; }
@@ -606,10 +608,12 @@ function editHTML(){
 }
 function sideHTML(){
   const used = {}; S.prog.blocchi.forEach(b => { const vis = new Set(); b.righe.forEach(r => { const k = r.pers && U(r.pers); if (k && !vis.has(k)) { vis.add(k); used[k] = (used[k]||0) + 1; } }); });
-  const tutti = attivi().slice().sort((x, y) => U(x.nome).localeCompare(U(y.nome), "it"));
+  const ord = L => L.slice().sort((x, y) => U(x.nome).localeCompare(U(y.nome), "it"));
+  const chip = p => '<span class="chip" role="button" tabindex="0" data-act="addPers" data-n="'+esc(p.nome)+'" style="background:'+persColor(p.nome)+';color:'+inkFor(persColor(p.nome))+'">'+esc(U(p.nome))+'</span>';
+  const ope = ord(attivi()), uff = ord(ufficioPers());
   const st = progStats(S.prog);
-  return '<div class="sec na"><h3>Operatori ('+tutti.length+')</h3><div class="chips nalist">'+
-    tutti.map(p => '<span class="chip" role="button" tabindex="0" data-act="addPers" data-n="'+esc(p.nome)+'" style="background:'+persColor(p.nome)+';color:'+inkFor(persColor(p.nome))+'">'+esc(U(p.nome))+'</span>').join("")+'</div></div>'+
+  return '<div class="sec na"><h3>Operatori ('+ope.length+')</h3><div class="chips nalist">'+ope.map(chip).join("")+'</div>'+
+    (uff.length ? '<h3 class="nah2">Ufficio ('+uff.length+')</h3><div class="chips nalist">'+uff.map(chip).join("")+'</div>' : '')+'</div>'+
     '<div class="sec"><h3>Riepilogo</h3><div class="small">'+st.cant+' cantieri · '+st.pers+' persone · '+st.ass+' assegnazioni</div>'+
     '<div class="row" style="margin-top:8px"><button class="btn sm" data-act="wa">Copia per WhatsApp</button><button class="btn sm" data-act="tab" data-t="programma">Vedi come la squadra</button></div></div>';
 }
