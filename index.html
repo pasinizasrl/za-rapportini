@@ -123,6 +123,7 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .sfoglia>div{flex:1;text-align:center}.sfoglia b{display:block;font-size:15px}
 .sfoglia span{display:flex;gap:5px;justify-content:center;margin-top:4px}.sfoglia i{width:8px;height:8px;border-radius:50%;background:#ffffff55}.sfoglia i.on{background:#e8e22a}
 .sfoglia .btn{font-size:22px;min-width:48px;padding:6px 0}
+.radioR{display:flex;flex-wrap:nowrap;margin:10px 0 0 12px;align-items:center;gap:8px}.radioR .radioL{flex:1 1 auto;min-width:0}.radioR .oreI{flex:0 0 88px;width:88px;position:static}.radioL{display:inline-flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:0}.radioL input{width:20px;height:20px;accent-color:var(--accent)}.radioR.on .radioL{color:var(--accent-ink)}
 .oreI.auto{background:#fff3c4;transition:background .6s}
 .cnceAltrove{border-style:dashed;background:var(--panel2)}
 .ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
@@ -398,6 +399,7 @@ function cardRap(r){ const p = r.payload || {}, c = parseCant(p.cantiere);
       ${det ? `<div class="det">${ms.map((x, i) => `<div class="detL"><div class="detT">Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}</div>
         <div class="detR"><b>${esc(U(x.mezzo))}</b><span>${fmtOre(x.ore)} h</span></div>
         ${accs(x).map(a => `<div class="detR acc"><span>${esc(U(a.acc))}</span><span>${a.ore !== "" && a.ore != null ? fmtOre(String(a.ore).replace(",", ".")) + " h" : ""}</span></div>`).join("")}
+        ${x.radio != null ? `<div class="detR acc"><span>📡 RADIOCOMANDO</span><span>${fmtOre(num(x.radio))} h</span></div>` : ""}
         ${x.desc ? `<div class="ds">${esc(x.desc)}</div>` : ""}</div>`).join("")}
         ${p.lavori ? `<div class="ds">${esc(p.lavori)}</div>` : ""}${p.note ? `<div class="detN"><b>Note:</b> ${esc(p.note)}</div>` : ""}${p.ord != null ? `<div class="detN"><b>Ore:</b> ordinarie ${fmtOre(p.ord)}${p.stra ? " · straordinarie " + fmtOre(p.stra) : ""}${p.trasf ? " · trasferta " + fmtOre(p.trasf) : ""}${p.permesso ? " · permesso " + fmtOre(p.permesso) : ""}${p.pasto ? " · " + (p.pasto === "rist" ? "🍽 ristorante" : "🏠 a casa") : ""}${p.noteEc ? `<br><span class="hint">${esc(p.noteEc)}</span>` : ""}</div>` : ""}${(p.foto || []).length ? `<div class="fotoG" style="margin-top:8px">${p.foto.map(f => `<div class="fotoT"><button class="fotoV" data-vedi="${esc(f.th || "")}" aria-label="Ingrandisci">${f.th ? `<img src="${esc(f.th)}" alt="">` : "📷"}</button></div>`).join("")}</div>` : ""}</div>` : ""}</div>`; }
 function giornoHTML(perData){ const d = S.giorno, rs = d && perData[d]; if (!rs || rs.length < 2) return "";
@@ -449,6 +451,7 @@ function renderForm(m){
         ${ro ? "" : `<button class="x" data-delac="${i}|${j}" aria-label="Togli accessorio" ${x.accs.length ? "" : "style=\"visibility:hidden\""}>✕</button>`}</div>`; }).join("")}
       <div class="err accErr" id="accErr-${i}" ${accDiverse(x) ? "" : "hidden"}>${accDiverse(x) ? esc(msgAcc(x)) : ""}</div>
       ${ro ? "" : `<div class="addRow"><button class="addAc" data-addac="${i}"><b>+</b> Accessorio</button></div>`}
+      <div class="row radioR${x.radio != null ? " on" : ""}"><label class="radioL"><input type="checkbox" data-radio="${i}" ${x.radio != null ? "checked" : ""} ${dis}> 📡 Usato radiocomando</label>${x.radio != null ? `<input class="f oreI" type="number" inputmode="decimal" step="0.5" min="0" data-radioh="${i}" value="${esc(x.radio)}" placeholder="Ore" aria-label="Ore radiocomando" ${dis}><span class="hint">ore</span>` : ""}</div>
       <label class="l mzDl mzCat">Cat. di lavoro</label><div class="sugw mzL"><textarea rows="1" class="f grow" data-sug="lavorazioni" data-mz="${i}" data-k="lav" placeholder="Scrivi per cercare…" autocomplete="off" ${dis} style="text-transform:uppercase;font-weight:700">${esc(x.lav || "")}</textarea></div>
       <label class="l mzDl">Descrizione lavori</label><textarea class="f mzD grow" data-mz="${i}" data-k="desc" rows="2" placeholder="Cosa è stato fatto con questa macchina" ${dis}>${esc(x.desc || "")}</textarea>
       ${!ro && i === p.mezzi.length - 1 ? `<button class="addAc mz addMz" id="addMz"><b>+</b> Nuova lavorazione</button>` : ""}</div>`; }).join("")}
@@ -491,6 +494,8 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   p.note = $("#fNote").value.trim();
   document.querySelectorAll("[data-mz]").forEach(e => { const x = p.mezzi[+e.dataset.mz]; if (!x) return; const k = e.dataset.k, v = k === "ore" ? e.value : U(e.value); if ((k === "desc" || k === "lav") && !v) delete x[k]; else x[k] = v; });
   document.querySelectorAll("[data-ac]").forEach(e => { const [i, j] = e.dataset.ac.split("|").map(Number), x = p.mezzi[i]; if (!x) return; normMz(x); while (x.accs.length <= j) x.accs.push({ acc: "", ore: "" }); x.accs[j][e.dataset.k] = e.dataset.k === "ore" ? e.value : U(e.value); });
+  document.querySelectorAll("[data-radio]").forEach(e => { const x = p.mezzi[+e.dataset.radio]; if (!x) return; const h = document.querySelector(`[data-radioh="${e.dataset.radio}"]`);
+    if (e.checked) x.radio = h ? h.value : String(x.ore || ""); else delete x.radio; });
   p.ore = fuori(p) ? 0 : calcOre(p);
   if (!$("#fOrd") && !fuori(p) && cnceAltro(E)) CNCE_K.forEach(k => delete p[k]);
  }
@@ -530,7 +535,8 @@ function campiMancanti(p){
   const vuota = x => !x.mezzo && !num(x.ore) && !x.lav && !x.desc && !(x.accs || []).some(a => a.acc || a.ore);
   (p.mezzi || []).forEach((x, i) => { if (vuota(x) && p.mezzi.some(y => !vuota(y))) return; normMz(x);
     if (!x.mezzo) seg(q(i, "mezzo")); if (!num(x.ore)) seg(q(i, "ore")); if (!x.lav) seg(q(i, "lav")); if (!x.desc) seg(q(i, "desc"));
-    x.accs.forEach((a, j) => { if (isBenna(a, j)) return; if (a.acc && !num(a.ore)) seg(q(i, "ore", j)); if (!a.acc && num(a.ore)) seg(q(i, "acc", j)); }); });
+    x.accs.forEach((a, j) => { if (isBenna(a, j)) return; if (a.acc && !num(a.ore)) seg(q(i, "ore", j)); if (!a.acc && num(a.ore)) seg(q(i, "acc", j)); });
+    if (x.radio != null && (!(num(x.radio) > 0) || num(x.radio) > num(x.ore))) seg(document.querySelector(`[data-radioh="${i}"]`)); });
   if (!(p.mezzi || []).length) seg($("#addMz"));
   return out; }
 async function salva(){
@@ -631,6 +637,7 @@ document.addEventListener("click", e => {
   if (t.id === "del") return elimina();
 });
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
+  if (e.target.dataset && e.target.dataset.radio != null && S.edit) { const i = +e.target.dataset.radio; leggiForm(); if (S.edit.radioEd) delete S.edit.radioEd[i]; render(); if (e.target.checked) setTimeout(() => { const h = document.querySelector(`[data-radioh="${i}"]`); h && h.focus(); }, 30); return; }
   if ((e.target.id === "fPastoR" || e.target.id === "fPastoC") && S.edit) { if (e.target.checked) { const o = $(e.target.id === "fPastoR" ? "#fPastoC" : "#fPastoR"); if (o) o.checked = false; }
     document.querySelectorAll(".pasto label").forEach(l => l.classList.toggle("on", l.querySelector("input").checked)); return; }
   if (e.target.id === "fFoto" && S.edit) { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) aggiungiFoto(fs); return; }
@@ -642,6 +649,8 @@ document.addEventListener("input", e => { if (e.target.id === "fOrd" && S.edit) 
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.classList && e.target.classList.contains("mzD")) autoH(e.target); if (e.target.classList && e.target.classList.contains("req") && String(e.target.value).trim()) e.target.classList.remove("req"); });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number); leggiForm(); (S.edit.accEd = S.edit.accEd || {})[i] = j; syncAcc(i); return; }
+  if (e.target.dataset && e.target.dataset.radioh != null && S.edit) { (S.edit.radioEd = S.edit.radioEd || {})[e.target.dataset.radioh] = 1; return; }
+  if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit) { const i = e.target.dataset.mz, h = document.querySelector(`[data-radioh="${i}"]`); if (h && !(S.edit.radioEd || {})[i]) h.value = e.target.value; }
   if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit && $("#oreTot")) { leggiForm(); syncAcc(+e.target.dataset.mz); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
 
