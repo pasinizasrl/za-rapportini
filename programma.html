@@ -72,6 +72,7 @@ label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase
 .kv small{flex:0 0 132px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
 .kv span{font-weight:700;flex:1;min-width:0}
 .kv .note{color:var(--blue)}
+.pin{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:3px 9px;border-radius:999px;background:var(--accent);color:#1d1606;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;vertical-align:middle}
 .noteG{white-space:pre-wrap;font-weight:600}
 .lnk{display:block;text-align:center;margin:14px 0 4px;color:var(--muted);font-weight:600;font-size:14px}
 @media (max-width:420px){.kv small{flex-basis:118px;font-size:11px}}
@@ -123,7 +124,9 @@ const chip = n => n ? `<span class="chip" style="background:${esc(colore(n))};co
 const breve = n => (S.r && S.r.brevi || {})[U(n)] || U(n);
 const vuoto = v => !v || v === "-";
 const righeKV = r => `${vuoto(r.macc) ? "" : `<div class="kv"><small>Mezzo</small><span>${esc(breve(r.macc))}</span></div>`}${vuoto(r.trasf) ? "" : `<div class="kv"><small>Trasferimento</small><span>${esc(breve(r.trasf))}</span></div>`}${r.note ? `<div class="kv"><small>Lavori</small><span class="note">${esc(r.note)}</span></div>` : ""}`;
-const cantHTML = label => { const c = parseCant(label); return `${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}<b>${esc(c.cm || label || "—")}</b>${c.ds ? `<span class="ds">${esc(c.ds)}</span>` : ""}`; };
+function mapsURL(label){ const I = (S.r && S.r.indirizzi) || {}; let a = I[label]; if (!a) { const k = parseCant(label).code; if (k) { const l2 = Object.keys(I).find(x => parseCant(x).code === k); if (l2) a = I[l2]; } } return a ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(a) : ""; }
+const pin = label => { const u = mapsURL(label); return u ? `<a class="pin" href="${esc(u)}" target="_blank" rel="noopener" aria-label="Apri in Google Maps">📍 Mappa</a>` : ""; };
+const cantHTML = label => { const c = parseCant(label); return `${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}<b>${esc(c.cm || label || "—")}</b>${pin(label)}${c.ds ? `<span class="ds">${esc(c.ds)}</span>` : ""}`; };
 
 async function carica(data){
   try { const r = await rpc("rap_programma", { p_nome: S.me, p_pin: S.pin, p_data: data || null });
@@ -165,7 +168,7 @@ function renderProg(m){
   if (!p) { m.innerHTML = h + `<div class="card empty">Nessun programma pubblicato${d ? " per questo giorno" : ""}.<br>Il programma compare qui quando l'ufficio lo segna come pronto.</div><a class="lnk" href="index.html">📝 Vai ai rapportini</a>`; return; }
   const B = (p.blocchi || []).filter(b => (b.righe || []).length || b.cantiere);
   const miei = []; B.forEach(b => (b.righe || []).forEach(x => { if (U(x.pers) === me) miei.push({ b, x }); }));
-  h += `<div class="card mio"><h2>👷 Il tuo programma</h2>${miei.length ? miei.map(({ b, x }) => `<div class="it"><div class="cn">${(() => { const c = parseCant(b.cantiere); return (c.code ? `<span class="code">${esc(c.code)}</span>` : "") + esc(c.cm || b.cantiere || "—") + (c.ds ? ` · <span style="font-weight:600">${esc(c.ds)}</span>` : ""); })()}</div>${righeKV(x)}</div>`).join("")
+  h += `<div class="card mio"><h2>👷 Il tuo programma</h2>${miei.length ? miei.map(({ b, x }) => `<div class="it"><div class="cn">${(() => { const c = parseCant(b.cantiere); return (c.code ? `<span class="code">${esc(c.code)}</span>` : "") + esc(c.cm || b.cantiere || "—") + (c.ds ? ` · <span style="font-weight:600">${esc(c.ds)}</span>` : "") + pin(b.cantiere); })()}</div>${righeKV(x)}</div>`).join("")
     : `<p class="hint" style="margin:0">Oggi non sei assegnato a nessun cantiere in questo programma. Chiedi in ufficio se hai dubbi.</p>`}</div>`;
   h += `<div class="vis"><button data-vista="can" class="${S.vista === "can" ? "on" : ""}">Per cantiere</button><button data-vista="per" class="${S.vista === "per" ? "on" : ""}">Per persona</button></div>`;
   if (S.vista === "can") h += B.map(b => `<section class="blk"><div class="bh">${cantHTML(b.cantiere)}</div>${(b.righe || []).map(x => `<div class="ass${U(x.pers) === me ? " me" : ""}">${chip(x.pers)}${righeKV(x)}</div>`).join("")}</section>`).join("");
