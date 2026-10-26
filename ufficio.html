@@ -7,7 +7,11 @@
   const msg = e => (e && String(e).startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + String(e).toLowerCase() + "." : (MSG[e] || e || "Errore");
   let ME = null; try { ME = JSON.parse(localStorage.getItem("za-uff-me") || "null"); } catch {}
   let pronto; const loginP = new Promise(r => pronto = r);
-  window.claude = { use: async n => { await loginP; return n === "db" ? DB : n === "user" ? USER : null; } };
+  /* salvataggio file (immagine del programma, Excel): sul telefono apre la condivisione (WhatsApp…), sul computer scarica il file */
+  const DL = { save: async ({ filename, data }) => { const blob = data instanceof Blob ? data : new Blob([data]);
+    try { const f = new File([blob], filename, { type: blob.type || "application/octet-stream" }); if (/Android|iPhone|iPad/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: filename }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); } };
+  window.claude = { use: async n => { await loginP; return n === "db" ? DB : n === "user" ? USER : n === "downloads" ? DL : null; } };
   /* ---- database: cache locale + aggiornamenti ogni 15 secondi ---- */
   const cache = new Map(), subs = new Set(); let last = null, LV = "r";
   const snapDoc = p => ({ id: p.slice(p.indexOf("/") + 1), exists: cache.has(p), data: () => cache.has(p) ? JSON.parse(JSON.stringify(cache.get(p))) : undefined });
