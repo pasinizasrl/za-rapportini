@@ -125,6 +125,8 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .sfoglia .btn{font-size:22px;min-width:48px;padding:6px 0}
 .radioR{display:flex;flex-wrap:nowrap;margin:10px 0 0 12px;align-items:center;gap:8px}.radioR .radioL{flex:1 1 auto;min-width:0}.radioR .oreI{flex:0 0 88px;width:88px;position:static}.radioL{display:inline-flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:0}.radioL input{width:20px;height:20px;accent-color:var(--accent)}.radioR.on .radioL{color:var(--accent-ink)}
 .oreI.auto{background:#fff3c4;transition:background .6s}
+.ecAvv{background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 10px;font-size:14px;line-height:1.35}
+.pasto.req{outline:2px solid var(--bad);outline-offset:3px;border-radius:8px}
 .cnceAltrove{border-style:dashed;background:var(--panel2)}
 .ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
 .ecG label{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
@@ -467,8 +469,9 @@ function renderForm(m){
     <div class="assenze"><label class="ferie${p.ferie ? " on" : ""}"><input type="checkbox" id="fFerie" ${p.ferie ? "checked" : ""} ${dis}><span>Ferie<small>giornata intera</small></span></label>
       <label class="ferie mal${p.malattia ? " on" : ""}"><input type="checkbox" id="fMal" ${p.malattia ? "checked" : ""} ${dis}><span>Malattia<small>giornata intera</small></span></label>
       <label class="perm"><span>Permesso<small>ore</small></span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fPerm" value="${esc(p.permesso || "")}" placeholder="0" ${dis || (fuori(p) ? "disabled" : "")}></label></div>
+    ${fuori(p) || ro ? "" : `<div class="ecAvv">✍️ <b>Compila i campi</b>: ore ordinarie e pranzo sono obbligatori, senza non si salva. Puoi sempre spostare il cantiere di competenza successivamente.</div>`}
     ${fuori(p) ? "" : `<label class="l">Ore</label><div class="ecG">
-      <label><span>Ordinarie</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fOrd" value="${esc(p.ord ?? 8)}" ${dis}></label>
+      <label><span>Ordinarie</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fOrd" value="${esc(p.ord ?? "")}" placeholder="—" ${dis}></label>
       <label><span>Straord.</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fStra" value="${esc(p.stra || "")}" placeholder="0" ${dis}></label>
       <label><span>Trasferta</span><input class="f" type="number" inputmode="decimal" step="0.5" min="0" max="12" id="fTrasf" value="${esc(p.trasf || "")}" placeholder="0" ${dis}></label>
     </div>
@@ -486,7 +489,7 @@ function leggiForm(){ const E = S.edit, p = E.p; if (!$("#fData")) return;
   E.data = $("#fData").value; p.ferie = !!($("#fFerie") && $("#fFerie").checked); if (!p.ferie) delete p.ferie;
   p.malattia = !p.ferie && !!($("#fMal") && $("#fMal").checked); if (!p.malattia) delete p.malattia;
   const nn = id => { const e = $(id); if (!e) return null; const v = String(e.value).replace(",", ".").trim(); return v === "" ? null : +v; };
-  if ($("#fOrd")) { const o = nn("#fOrd"); p.ord = o == null ? 0 : o; const st = nn("#fStra"), tr = nn("#fTrasf"); if (st) p.stra = st; else delete p.stra; if (tr) p.trasf = tr; else delete p.trasf;
+  if ($("#fOrd")) { const o = nn("#fOrd"); if (o == null) delete p.ord; else p.ord = o; const st = nn("#fStra"), tr = nn("#fTrasf"); if (st) p.stra = st; else delete p.stra; if (tr) p.trasf = tr; else delete p.trasf;
     const ne = $("#fNoteEc").value.trim(); if (ne) p.noteEc = ne; else delete p.noteEc;
     const pr = $("#fPastoR") && $("#fPastoR").checked, pc = $("#fPastoC") && $("#fPastoC").checked; if (pr) p.pasto = "rist"; else if (pc) p.pasto = "casa"; else delete p.pasto; }
   const pm = $("#fPerm") ? +String($("#fPerm").value).replace(",", ".") || 0 : 0; if (pm > 0 && !fuori(p)) p.permesso = pm; else delete p.permesso;
@@ -538,6 +541,7 @@ function campiMancanti(p){
     x.accs.forEach((a, j) => { if (isBenna(a, j)) return; if (a.acc && !num(a.ore)) seg(q(i, "ore", j)); if (!a.acc && num(a.ore)) seg(q(i, "acc", j)); });
     if (x.radio != null && (!(num(x.radio) > 0) || num(x.radio) > num(x.ore))) seg(document.querySelector(`[data-radioh="${i}"]`)); });
   if (!(p.mezzi || []).length) seg($("#addMz"));
+  if ($("#fOrd") && !fuori(p)) { if (String($("#fOrd").value).trim() === "") seg($("#fOrd")); if (!p.pasto) seg(document.querySelector(".pasto")); }
   return out; }
 async function salva(){
   if ((S.upl || []).some(u => !u.err)) { // aspetta che finisca l'invio delle foto, poi salva da solo
@@ -553,7 +557,7 @@ async function salva(){
     else {
       const manca = campiMancanti(p);
       E.reqOn = !!manca.length;
-      if (manca.length) { er.innerHTML = `<div class="err">Compila i campi evidenziati in rosso${p.cantiere ? "" : " (oppure segna ferie o permesso)"}. Non salvato.</div>`; manca[0].scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+      if (manca.length) { er.innerHTML = `<div class="err">Compila i campi evidenziati in rosso${p.cantiere ? "" : " (oppure segna ferie o permesso)"}${$("#fOrd") && !fuori(p) && (String($("#fOrd").value).trim() === "" || !p.pasto) ? ", compresa la parte Cassa Edile (ore e pranzo)" : ""}. Non salvato.</div>`; manca[0].scrollIntoView({ block: "center", behavior: "smooth" }); return; }
       const troppe = (p.mezzi || []).find(x => { normMz(x); return x.mezzo && accDiverse(x); });
       if (troppe) { er.innerHTML = `<div class="err">${esc(U(troppe.mezzo))}: la somma delle ore degli accessori deve essere uguale alle ore della macchina. Non salvato.</div>`; const k = p.mezzi.indexOf(troppe), b = document.getElementById("accErr-" + k); (b || er).scrollIntoView({ block: "center", behavior: "smooth" }); return; }
     }
@@ -612,7 +616,7 @@ document.addEventListener("click", e => {
   if (t.dataset.delfoto != null && S.edit) { leggiForm(); S.edit.p.foto.splice(+t.dataset.delfoto, 1); render(); return; }
   if (t.dataset.vedi != null) { if (!t.dataset.vedi) return; const o = document.createElement("div"); o.className = "vediOv"; o.innerHTML = `<img src="${t.dataset.vedi}" alt=""><span>Tocca per chiudere</span>`; o.onclick = () => o.remove(); document.body.appendChild(o); return; }
   if (t.dataset.letto) { const id = t.dataset.letto; S.avvisi = (S.avvisi || []).filter(a => a.id !== id); render(); rpc("rap_avviso_letto", { p_nome: S.me, p_pin: S.pin, p_id: id }).catch(() => {}); return; }
-  if (t.id === "cnceQui" && S.edit) { leggiForm(); const r = cnceAltro(S.edit); if (!r) return; CNCE_K.forEach(k => { if (r.payload[k] != null) S.edit.p[k] = r.payload[k]; }); if (S.edit.p.ord == null) S.edit.p.ord = 8;
+  if (t.id === "cnceQui" && S.edit) { leggiForm(); const r = cnceAltro(S.edit); if (!r) return; CNCE_K.forEach(k => { if (r.payload[k] != null) S.edit.p[k] = r.payload[k]; }); 
     S.edit.cnceQui = true; S.edit.svuota = r.id; S.edit.ordToccato = true; render(); setTimeout(() => { const c = document.querySelector(".ecCard"); c && c.scrollIntoView({ block: "center", behavior: "smooth" }); }, 50); toast("Ore spostate qui: al salvataggio vengono tolte dall'altro rapportino."); return; }
   if (t.dataset.det) { S.det = S.det || {}; S.det[t.dataset.det] = !S.det[t.dataset.det]; render(); return; }
   if (t.id === "calTog") { S.calOpen = !S.calOpen; try { localStorage.setItem("za-rap-cal", S.calOpen ? "1" : ""); } catch {} render(); return; }
@@ -639,13 +643,13 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value;
   if (e.target.dataset && e.target.dataset.radio != null && S.edit) { const i = +e.target.dataset.radio; leggiForm(); if (S.edit.radioEd) delete S.edit.radioEd[i]; render(); if (e.target.checked) setTimeout(() => { const h = document.querySelector(`[data-radioh="${i}"]`); h && h.focus(); }, 30); return; }
   if ((e.target.id === "fPastoR" || e.target.id === "fPastoC") && S.edit) { if (e.target.checked) { const o = $(e.target.id === "fPastoR" ? "#fPastoC" : "#fPastoR"); if (o) o.checked = false; }
-    document.querySelectorAll(".pasto label").forEach(l => l.classList.toggle("on", l.querySelector("input").checked)); return; }
+    document.querySelectorAll(".pasto label").forEach(l => l.classList.toggle("on", l.querySelector("input").checked)); const pz = document.querySelector(".pasto"); if (pz && e.target.checked) pz.classList.remove("req"); return; }
   if (e.target.id === "fFoto" && S.edit) { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) aggiungiFoto(fs); return; }
   if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); leggiForm(); if (lk !== isBenna({ acc: e.target.value }, j)) { autoAcc(i); render(); } else syncAcc(i); return; }
   if ((e.target.id === "fFerie" || e.target.id === "fMal") && S.edit) { if (e.target.checked) { const o = $(e.target.id === "fFerie" ? "#fMal" : "#fFerie"); if (o) o.checked = false; } leggiForm(); if (fuori(S.edit.p)) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
 document.addEventListener("input", e => { if (e.target.id === "fOrd" && S.edit) S.edit.ordToccato = true;
-  if (e.target.id === "fPerm" && S.edit && !S.edit.ordToccato && $("#fOrd")) { const pm = +String(e.target.value).replace(",", ".") || 0; $("#fOrd").value = Math.max(0, 8 - pm); } });
+  if (e.target.id === "fPerm" && S.edit && !S.edit.ordToccato && $("#fOrd")) { const pm = +String(e.target.value).replace(",", ".") || 0; $("#fOrd").value = pm > 0 ? Math.max(0, 8 - pm) : ""; } });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.classList && e.target.classList.contains("mzD")) autoH(e.target); if (e.target.classList && e.target.classList.contains("req") && String(e.target.value).trim()) e.target.classList.remove("req"); });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number); leggiForm(); (S.edit.accEd = S.edit.accEd || {})[i] = j; syncAcc(i); return; }
