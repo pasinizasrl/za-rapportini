@@ -123,6 +123,7 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .sfoglia>div{flex:1;text-align:center}.sfoglia b{display:block;font-size:15px}
 .sfoglia span{display:flex;gap:5px;justify-content:center;margin-top:4px}.sfoglia i{width:8px;height:8px;border-radius:50%;background:#ffffff55}.sfoglia i.on{background:#e8e22a}
 .sfoglia .btn{font-size:22px;min-width:48px;padding:6px 0}
+.oreI.auto{background:#fff3c4;transition:background .6s}
 .cnceAltrove{border-style:dashed;background:var(--panel2)}
 .ecG{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
 .ecG label{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
@@ -338,6 +339,17 @@ function aggBenna(i){ const x = S.edit && S.edit.p.mezzi[i]; if (!x) return; con
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"]:not(.lock)`).forEach(a => a.classList.toggle("bad", over));
   document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"].lock`).forEach(a => { a.placeholder = first ? fmtOre(v) : "0"; first = false; }); }
 const isBenna = (a, j) => U(a.acc) === "BENNA";
+/* ore accessori automatiche (senza BENNA): un solo accessorio = ore della macchina;
+   con più accessori, il primo non toccato per ultimo prende le ore che restano */
+function autoAcc(i){ const x = S.edit && S.edit.p.mezzi[i]; if (!x) return; normMz(x); const A = x.accs, h = num(x.ore);
+  const nm = A.map((a, j) => j).filter(j => String(A[j].acc || "").trim()); if (!nm.length || !h || A.some((a, j) => isBenna(a, j))) return;
+  if (nm.length === 1) { A[nm[0]].ore = String(h); return; }
+  const ed = (S.edit.accEd || {})[i], jolly = nm.find(j => j !== ed), altri = nm.filter(j => j !== jolly).reduce((t, j) => t + num(A[j].ore), 0);
+  A[jolly].ore = String(Math.max(0, Math.round((h - altri) * 100) / 100)); }
+function syncAcc(i){ autoAcc(i); const x = S.edit && S.edit.p.mezzi[i]; if (!x) return;
+  document.querySelectorAll(`[data-ac^="${i}|"][data-k="ore"]:not(.lock)`).forEach(el => { const j = +el.dataset.ac.split("|")[1], v = (x.accs[j] || {}).ore || "";
+    if (el !== document.activeElement && el.value !== String(v)) { el.value = v; el.classList.add("auto"); setTimeout(() => el.classList.remove("auto"), 700); } });
+  aggBenna(i); }
 const mzTitolo = (x, i) => `Lavorazione ${i + 1}${x.lav ? ` : <b>${esc(U(x.lav))}</b>` : ""}`;
 /* foto cantiere → Google Drive (tramite script dell'ufficio) */
 function fotoCardHTML(p, ro){ const L = p.foto || [], U2 = S.upl || [];
@@ -612,7 +624,7 @@ document.addEventListener("click", e => {
   if (t.id === "addMz") { leggiForm(); S.edit.p.mezzi.push({ mezzo: "", ore: "" }); render(); const n = S.edit.p.mezzi.length - 1; setTimeout(() => { const el = document.querySelector(`[data-mz="${n}"][data-k="mezzo"]`); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 30); return; }
   if (t.id === "addMt") { leggiForm(); S.edit.p.materiali.push({ desc: "", qta: "", um: "mc" }); render(); return; }
   if (t.dataset.addac) { leggiForm(); const x = normMz(S.edit.p.mezzi[+t.dataset.addac]); if (!x.accs.length) x.accs.push({ acc: "", ore: "" }); x.accs.push({ acc: "", ore: "" }); render(); setTimeout(() => { const el = document.querySelector(`[data-ac="${t.dataset.addac}|${x.accs.length - 1}"][data-k="acc"]`); el && el.focus(); }, 30); return; }
-  if (t.dataset.delac) { leggiForm(); const [i, j] = t.dataset.delac.split("|").map(Number), x = normMz(S.edit.p.mezzi[i]); x.accs.splice(j, 1); render(); return; }
+  if (t.dataset.delac) { leggiForm(); const [i, j] = t.dataset.delac.split("|").map(Number), x = normMz(S.edit.p.mezzi[i]); x.accs.splice(j, 1); if (S.edit.accEd && S.edit.accEd[i] != null) { if (S.edit.accEd[i] === j) delete S.edit.accEd[i]; else if (S.edit.accEd[i] > j) S.edit.accEd[i]--; } autoAcc(i); render(); return; }
   if (t.dataset.delmz) { leggiForm(); S.edit.p.mezzi.splice(+t.dataset.delmz, 1); render(); return; }
   if (t.dataset.delmt) { leggiForm(); S.edit.p.materiali.splice(+t.dataset.delmt, 1); render(); return; }
   if (t.id === "save") return salva();
@@ -623,14 +635,14 @@ document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome
     document.querySelectorAll(".pasto label").forEach(l => l.classList.toggle("on", l.querySelector("input").checked)); return; }
   if (e.target.id === "fFoto" && S.edit) { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) aggiungiFoto(fs); return; }
   if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
-  if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); if (lk !== isBenna({ acc: e.target.value }, j)) { leggiForm(); render(); } return; }
+  if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "acc" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number), lk = !!document.querySelector(`[data-ac="${i}|${j}"][data-k="ore"].lock`); leggiForm(); if (lk !== isBenna({ acc: e.target.value }, j)) { autoAcc(i); render(); } else syncAcc(i); return; }
   if ((e.target.id === "fFerie" || e.target.id === "fMal") && S.edit) { if (e.target.checked) { const o = $(e.target.id === "fFerie" ? "#fMal" : "#fFerie"); if (o) o.checked = false; } leggiForm(); if (fuori(S.edit.p)) { S.edit.p.mezzi = S.edit.p.mezzi || []; } else { const q = S.edit.p; if (!(q.mezzi || []).length) q.mezzi = [{ mezzo: "", ore: "" }]; } render(); return; } if (e.target.id === "fData" && S.edit) aggData(e.target.value); });
 document.addEventListener("input", e => { if (e.target.id === "fOrd" && S.edit) S.edit.ordToccato = true;
   if (e.target.id === "fPerm" && S.edit && !S.edit.ordToccato && $("#fOrd")) { const pm = +String(e.target.value).replace(",", ".") || 0; $("#fOrd").value = Math.max(0, 8 - pm); } });
 document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.k === "lav" && e.target.dataset.mz != null) { const h = document.getElementById("mzN-" + e.target.dataset.mz); if (h) h.innerHTML = mzTitolo({ lav: e.target.value.trim() }, +e.target.dataset.mz); }
   if (e.target.classList && e.target.classList.contains("mzD")) autoH(e.target); if (e.target.classList && e.target.classList.contains("req") && String(e.target.value).trim()) e.target.classList.remove("req"); });
-document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { leggiForm(); aggBenna(+e.target.dataset.ac.split("|")[0]); return; }
-  if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit && $("#oreTot")) { leggiForm(); aggBenna(+e.target.dataset.mz); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
+document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.ac && e.target.dataset.k === "ore" && S.edit) { const [i, j] = e.target.dataset.ac.split("|").map(Number); leggiForm(); (S.edit.accEd = S.edit.accEd || {})[i] = j; syncAcc(i); return; }
+  if (e.target.dataset && e.target.dataset.mz != null && e.target.dataset.k === "ore" && S.edit && $("#oreTot")) { leggiForm(); syncAcc(+e.target.dataset.mz); $("#oreTot").textContent = fmtOre(S.edit.p.ore); } });
 document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { if (/^\d$/.test(e.key) && S.pinIn.length < 6 && document.activeElement?.id !== "op") { S.pinIn += e.key; S.loginNome = $("#op")?.value; render(); if (S.pinIn.length === 6 && S.loginNome) login(); } else if (e.key === "Backspace") { S.pinIn = S.pinIn.slice(0, -1); render(); } else if (e.key === "Enter") login(); } });
 
 (async () => {
