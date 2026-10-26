@@ -218,6 +218,10 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .pindots i.on{background:var(--accent);border-color:var(--accent)}
 .empty{text-align:center;color:var(--muted);padding:30px 10px}
 [hidden]{display:none !important}
+.sw{display:flex;gap:8px;max-width:760px;margin:12px auto 0;padding:0 16px}
+.sw a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border:2px solid var(--steel);border-radius:12px;background:var(--panel);color:var(--steel);font-weight:700;font-size:17px;text-decoration:none;text-transform:uppercase;letter-spacing:.03em}
+.sw a.on{background:var(--steel);color:#e8e22a;box-shadow:inset 0 -4px 0 var(--accent)}
+.sw a span{font-size:20px}
 </style>
 </head>
 <body>
@@ -225,6 +229,7 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
   <div><div class="b">ZA srl</div><div class="s">Rapportini</div></div>
   <div class="me" id="me" hidden></div>
 </header>
+<nav class="sw" id="sw" hidden><a href="index.html" class="on"><span>📝</span>Rapportini</a><a href="programma.html" class=""><span>📅</span>Programma</a></nav>
 <main id="main"><div class="empty">Caricamento…</div></main>
 <div class="toast" id="toast" hidden></div>
 <datalist id="dlCan"></datalist><datalist id="dlMez"></datalist>
@@ -279,7 +284,7 @@ function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; try { localStorage.re
 
 function render(){
   const m = $("#main");
-  $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="programma.html">Programma</a><a href="guida.html">Guida</a><button id="out">Esci</button>`;
+  $("#me").hidden = !S.me; $("#sw").hidden = !S.me || S.view === "cambia" || S.view === "form"; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="guida.html">Guida</a><button id="out">Esci</button>`;
   if (!S.me || S.view === "login") return renderLogin(m);
   if (S.view === "cambia") return renderCambia(m);
   if (S.view === "form") return renderForm(m);
