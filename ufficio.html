@@ -249,7 +249,11 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
   .er .ra{grid-column:1/-1;justify-content:flex-end}
 }
 .side{display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,90px) + 10px)}
-@media (max-width:960px){.side{position:static}}
+.side{max-height:calc(100vh - env(safe-area-inset-top,0px) - var(--toph,90px) - 20px)}
+.side .sec.na{flex:1 1 auto;min-height:0;overflow:auto}
+@media (max-width:960px){.side{position:static;max-height:none}
+  .side .sec.na{position:fixed;left:0;right:0;bottom:0;z-index:30;max-height:34vh;margin:0;border-radius:14px 14px 0 0;box-shadow:0 -6px 22px rgb(0 0 0/.18);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+  .page{padding-bottom:36vh}}
 .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .sec .chips .chip{cursor:pointer}
 textarea.f{resize:vertical;min-height:70px}
@@ -603,7 +607,7 @@ function sideHTML(){
   const st = progStats(S.prog);
   return '<div class="sec"><h3>Riepilogo</h3><div class="small">'+st.cant+' cantieri · '+st.pers+' persone · '+st.ass+' assegnazioni</div>'+
     '<div class="row" style="margin-top:8px"><button class="btn sm" data-act="wa">Copia per WhatsApp</button><button class="btn sm" data-act="tab" data-t="programma">Vedi come la squadra</button></div></div>'+
-    '<div class="sec"><h3>Non assegnati ('+free.length+')</h3><div class="small muted" style="margin-bottom:6px">Tocca un nome per aggiungerlo all\'ultimo cantiere.</div><div class="chips">'+
+    '<div class="sec na"><h3>Operatori non assegnati ('+free.length+')</h3><div class="small muted" style="margin-bottom:6px">Tocca un nome per aggiungerlo all\'ultimo cantiere.</div><div class="chips">'+
     (free.length ? free.map(p => '<span class="chip" role="button" tabindex="0" data-act="addPers" data-n="'+esc(p.nome)+'" style="background:'+persColor(p.nome)+';color:'+inkFor(persColor(p.nome))+'">'+esc(U(p.nome))+'</span>').join("") : '<span class="small muted">Tutti assegnati.</span>')+'</div></div>';
 }
 function refreshWarn(){ const cf = conflicts();
