@@ -4,22 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#26393d">
+<meta name="color-scheme" content="light">
 <title>ZA srl Guida rapportini</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 :root{
+  color-scheme:light;
   --bg:#f2f3f0; --panel:#ffffff; --panel2:#f7f8f5; --ink:#1c2320; --muted:#5b665f; --line:#d8dcd6;
   --steel:#26393d; --steel-2:#304a4f; --on-steel:#eef3f1; --on-steel-muted:#a9bcb8;
   --accent:#d4950f; --accent-ink:#7a5000; --accent-soft:#f6e7c4; --band:#f4f08a;
   --good:#2c7a4b; --good-soft:#dcefe2; --warn:#a96300; --warn-soft:#f7e6cc; --bad:#b0352d; --bad-soft:#f6dcd9; --blue:#1d3a6e;
   --font-display:"Barlow Condensed","Arial Narrow",sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
-@media (prefers-color-scheme: dark){:root{
-  --bg:#121614; --panel:#1b201e; --panel2:#171c1a; --ink:#e4eae6; --muted:#97a39c; --line:#2d3532;
-  --steel:#1d2e31; --steel-2:#253b3f; --on-steel:#e4eeeb; --on-steel-muted:#8fa6a1;
-  --accent:#e2a92e; --accent-ink:#f0c46a; --accent-soft:#3a2f17; --good:#5cc08a; --good-soft:#1f3a2a; --warn:#e0a24a; --warn-soft:#3a2c17; --bad:#ef7d72; --bad-soft:#3a1f1d; --blue:#9dbcf0;
-}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font-body);-webkit-text-size-adjust:100%}
 button{font:inherit;cursor:pointer}
@@ -253,6 +250,7 @@ ul.pt{margin:6px 0;padding-left:20px}ul.pt li{margin:4px 0}
   <li><span class="kp">+ Nuovo rapportino</span> in alto a destra: per compilare un rapportino.</li>
   <li><b>📢 Messaggio di servizio</b> (riquadro giallo): comunicazioni dall'ufficio. Leggilo e tocca <span class="k">✓ Ho letto</span>.</li>
   <li><b>⚠️ Ti mancano N rapportini</b> (riquadro rosso): i giorni lavorativi senza rapportino. Tocca un giorno per compilarlo subito.</li>
+  <li><b>Programma</b>: in alto, accanto a Guida, tocca <span class="k">Programma</span> per vedere dove lavori domani (o oggi): il riquadro <b>Il tuo programma</b> mostra cantiere, mezzo, trasferimento e lavori; sotto c'è il programma di tutta la squadra.</li>
   <li><b>📅 Calendario del mese</b>: tocca per aprirlo. Tocca un giorno rosso per compilarlo, uno verde per vederlo. Se quel giorno hai più rapportini (2, 3, 4…) compaiono tutti uno sotto l'altro; aperto un rapportino, con le frecce <span class="k">‹</span> <span class="k">›</span> in alto passi agli altri dello stesso giorno.</li>
   <li>L'elenco dei tuoi rapportini: tocca <span class="k">+ Dettagli</span> per vedere macchine, ore e foto.</li>
 </ul>

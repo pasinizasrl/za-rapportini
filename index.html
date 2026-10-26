@@ -4,22 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#26393d">
+<meta name="color-scheme" content="light">
 <title>ZA srl Rapportini</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 :root{
+  color-scheme:light;
   --bg:#f2f3f0; --panel:#ffffff; --panel2:#f7f8f5; --ink:#1c2320; --muted:#5b665f; --line:#d8dcd6;
   --steel:#26393d; --steel-2:#304a4f; --on-steel:#eef3f1; --on-steel-muted:#a9bcb8;
   --accent:#d4950f; --accent-ink:#7a5000; --accent-soft:#f6e7c4; --band:#f4f08a;
   --good:#2c7a4b; --good-soft:#dcefe2; --warn:#a96300; --warn-soft:#f7e6cc; --bad:#b0352d; --bad-soft:#f6dcd9; --blue:#1d3a6e;
   --font-display:"Barlow Condensed","Arial Narrow",sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
-@media (prefers-color-scheme: dark){:root{
-  --bg:#121614; --panel:#1b201e; --panel2:#171c1a; --ink:#e4eae6; --muted:#97a39c; --line:#2d3532;
-  --steel:#1d2e31; --steel-2:#253b3f; --on-steel:#e4eeeb; --on-steel-muted:#8fa6a1;
-  --accent:#e2a92e; --accent-ink:#f0c46a; --accent-soft:#3a2f17; --good:#5cc08a; --good-soft:#1f3a2a; --warn:#e0a24a; --warn-soft:#3a2c17; --bad:#ef7d72; --bad-soft:#3a1f1d; --blue:#9dbcf0;
-}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font-body);-webkit-text-size-adjust:100%}
 button{font:inherit;cursor:pointer}
@@ -282,7 +279,7 @@ function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; try { localStorage.re
 
 function render(){
   const m = $("#main");
-  $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="guida.html">Guida</a><button id="out">Esci</button>`;
+  $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="programma.html">Programma</a><a href="guida.html">Guida</a><button id="out">Esci</button>`;
   if (!S.me || S.view === "login") return renderLogin(m);
   if (S.view === "cambia") return renderCambia(m);
   if (S.view === "form") return renderForm(m);
@@ -298,7 +295,8 @@ function renderLogin(m){
     <div class="pindots">${[0,1,2,3,4,5].map(i => `<i class="${i < S.pinIn.length ? "on" : ""}"></i>`).join("")}</div>
     <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" aria-label="Cancella">⌫</button><button data-k="0">0</button><button data-k="ok" style="background:var(--accent);border-color:var(--accent);color:#1d1606">OK</button></div>
     <div id="lerr"></div></div>
-    <a class="guidaL" href="guida.html">❓ Come si compila il rapportino? Leggi la guida</a>`;
+    <a class="guidaL" href="guida.html">❓ Come si compila il rapportino? Leggi la guida</a>
+    <a class="guidaL" href="programma.html">📅 Vedi il programma dei cantieri</a>`;
 }
 /* calendario del mese */
 function pasqua(y){ const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1; return new Date(y, mo - 1, da, 12); }

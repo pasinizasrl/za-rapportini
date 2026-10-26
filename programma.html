@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#26393d">
+<meta name="color-scheme" content="light">
+<title>ZA srl Programma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f2f3f0; --panel:#ffffff; --panel2:#f7f8f5; --ink:#1c2320; --muted:#5b665f; --line:#d8dcd6;
+  --steel:#26393d; --steel-2:#304a4f; --on-steel:#eef3f1; --on-steel-muted:#a9bcb8;
+  --accent:#d4950f; --accent-ink:#7a5000; --accent-soft:#f6e7c4;
+  --good:#2c7a4b; --good-soft:#dcefe2; --bad:#b0352d; --bad-soft:#f6dcd9; --blue:#1d3a6e;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font-body);-webkit-text-size-adjust:100%}
+button{font:inherit;cursor:pointer}
+select{font:inherit;color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:3px solid var(--accent);padding:10px 16px;padding-top:max(10px, env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
+header .b{font-weight:700;font-size:21px;color:#e8e22a;letter-spacing:.01em}
+header .s{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-steel-muted)}
+header .me{margin-left:auto;text-align:right;font-size:13px;line-height:1.2}
+header .me b{display:block;font-size:14px;color:#fff;text-transform:uppercase}
+header .me a{color:var(--on-steel-muted);font-size:12px;margin-right:10px}
+header .me button{background:none;border:0;color:var(--on-steel-muted);padding:0;font-size:12px;text-decoration:underline}
+main{max-width:760px;margin:0 auto;padding:16px 16px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+h1{font-family:var(--font-display);font-weight:700;font-size:28px;text-transform:uppercase;letter-spacing:.02em;margin:4px 0 12px}
+h2{font-family:var(--font-display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px;color:var(--accent-ink)}
+label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 4px}
+.f{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:11px 12px;min-height:46px}
+.hint{color:var(--muted);font-size:13px}
+.err{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:10px 12px;font-weight:600;margin-top:12px}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pinpad button{min-height:58px;font-size:24px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:10px;color:var(--ink)}
+.pindots{display:flex;gap:12px;justify-content:center;margin:14px 0 4px}
+.pindots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted)}
+.pindots i.on{background:var(--accent);border-color:var(--accent)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:30px;background:var(--steel);color:var(--on-steel);padding:10px 16px;border-radius:8px;z-index:9;max-width:90vw;text-align:center}
+.code{font-family:var(--font-mono);font-size:12.5px;font-weight:500;background:var(--accent);color:#1c2320;border-radius:4px;padding:1px 6px;margin-right:6px}
+/* data */
+.dnav{display:flex;gap:8px;align-items:stretch;margin-bottom:12px}
+.dnav button{flex:0 0 54px;border:1px solid var(--line);background:var(--panel);border-radius:10px;font-size:24px;font-weight:700;color:var(--ink)}
+.dnav button:disabled{opacity:.35}
+.dnav .d{flex:1;text-align:center;background:var(--steel);color:#fff;border-radius:10px;padding:8px 6px;line-height:1.2}
+.dnav .d small{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#e8e22a}
+.dnav .d b{font-family:var(--font-display);font-size:24px;letter-spacing:.02em;text-transform:uppercase}
+.vis{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px;background:var(--panel)}
+.vis button{flex:1;border:0;background:none;padding:10px 6px;font-weight:600;color:var(--muted)}
+.vis button.on{background:var(--accent);color:#1d1606}
+/* il mio programma */
+.mio{border:2px solid var(--accent);background:var(--accent-soft)}
+.mio h2{margin-bottom:6px}
+.mio .it{background:var(--panel);border-radius:10px;padding:10px 12px;margin-top:8px}
+.mio .cn{font-weight:700;font-size:17px;line-height:1.3}
+/* blocchi */
+.blk{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.bh{padding:11px 14px;background:var(--steel);color:var(--on-steel);border-bottom:3px solid var(--accent);font-size:16px;line-height:1.3}
+.bh b{color:#fff}
+.bh .ds{display:block;color:var(--on-steel-muted);font-size:14px;margin-top:2px}
+.ass{padding:10px 14px;border-top:1px solid var(--line)}
+.ass:first-of-type{border-top:0}
+.ass.me{background:#fff8e1;box-shadow:inset 4px 0 0 var(--accent)}
+.chip{display:inline-block;border-radius:6px;padding:3px 10px;font-weight:700;font-size:15.5px;letter-spacing:.01em;border:1px solid rgb(0 0 0/.12);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kv{display:flex;gap:8px;align-items:baseline;margin-top:5px;font-size:16px}
+.kv small{flex:0 0 132px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.kv span{font-weight:700;flex:1;min-width:0}
+.kv .note{color:var(--blue)}
+.noteG{white-space:pre-wrap;font-weight:600}
+.lnk{display:block;text-align:center;margin:14px 0 4px;color:var(--muted);font-weight:600;font-size:14px}
+@media (max-width:420px){.kv small{flex-basis:118px;font-size:11px}}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="b">ZA srl</div><div class="s">Programma</div></div>
+  <div class="me" id="me" hidden></div>
+</header>
+<main id="main"><div class="empty">Caricamento…</div></main>
+<div class="toast" id="toast" hidden></div>
+<script>
+"use strict";
+/* Programma giornaliero in sola lettura per la squadra (stesso accesso con PIN dei rapportini) */
+const SB_URL = "https://mzyvermpfusbbufhjwbu.supabase.co", SB_KEY = "sb_publishable_P_r6pi6oRahzgvfwU-PgeQ_lGecNqwo";
+async function rpc(fn, args){
+  const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY }, body: JSON.stringify(args || {}) });
+  if (!r.ok) { let m = ""; try { m = (await r.json()).message || ""; } catch {} throw new Error("Errore " + r.status + (m ? ": " + m : "")); }
+  return r.json();
+}
+const $ = s => document.querySelector(s), esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const U = s => String(s || "").trim().toUpperCase();
+const iso = d => { const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); };
+const oggi = () => iso(new Date());
+const GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
+const itData = s => { const [y, m, d] = s.split("-"); return d + "." + m + "." + y; };
+const spostaGiorno = (s, n) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + n); return iso(d); };
+const quando = s => s === oggi() ? "Oggi" : s === spostaGiorno(oggi(), 1) ? "Domani" : s === spostaGiorno(oggi(), -1) ? "Ieri" : "Programma del";
+function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 3200); }
+function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{3,4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
+  let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
+  const i = rest.indexOf(":"); return { code, cm: i > 0 ? rest.slice(0, i).trim() : rest, ds: i > 0 ? rest.slice(i + 1).trim() : "" }; }
+const MSG = { PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato." };
+const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + e.toLowerCase() + "." : (MSG[e] || e || "Errore");
+
+const S = { el: { operatori: [] }, me: null, pin: "", pinIn: "", r: null, vista: "can" };
+try { const m = JSON.parse(localStorage.getItem("za-rap-me") || "null"); if (m && m.nome && m.pin) { S.me = m.nome; S.pin = m.pin; } } catch {}
+try { S.vista = localStorage.getItem("za-prog-vista") || "can"; } catch {}
+
+const colore = n => (S.r && S.r.colori || {})[U(n)] || "#e9ece8";
+function inkFor(hex){ const h = String(hex).replace("#", ""); if (h.length < 6) return "#111"; const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (r * 299 + g * 587 + b * 114) / 1000 > 140 ? "#111" : "#fff"; }
+const chip = n => n ? `<span class="chip" style="background:${esc(colore(n))};color:${inkFor(colore(n))}">${esc(U(n))}</span>` : `<span class="chip" style="background:var(--panel2);color:var(--muted)">—</span>`;
+const breve = n => (S.r && S.r.brevi || {})[U(n)] || U(n);
+const vuoto = v => !v || v === "-";
+const righeKV = r => `${vuoto(r.macc) ? "" : `<div class="kv"><small>Mezzo</small><span>${esc(breve(r.macc))}</span></div>`}${vuoto(r.trasf) ? "" : `<div class="kv"><small>Trasferimento</small><span>${esc(breve(r.trasf))}</span></div>`}${r.note ? `<div class="kv"><small>Lavori</small><span class="note">${esc(r.note)}</span></div>` : ""}`;
+const cantHTML = label => { const c = parseCant(label); return `${c.code ? `<span class="code">${esc(c.code)}</span>` : ""}<b>${esc(c.cm || label || "—")}</b>${c.ds ? `<span class="ds">${esc(c.ds)}</span>` : ""}`; };
+
+async function carica(data){
+  try { const r = await rpc("rap_programma", { p_nome: S.me, p_pin: S.pin, p_data: data || null });
+    if (!r.ok) { esci(msgErr(r.err)); return false; } S.r = r; render(); return true; }
+  catch (e) { toast("Connessione non riuscita: riprova."); return false; } }
+function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; S.r = null; try { localStorage.removeItem("za-rap-me"); } catch {} render(); if (msg) toast(msg); }
+async function login(){ const nome = $("#op") && $("#op").value; S.loginNome = nome;
+  if (!nome) { $("#lerr").innerHTML = `<div class="err">Scegli il tuo nome.</div>`; return; }
+  if (S.pinIn.length !== 6) { $("#lerr").innerHTML = `<div class="err">Il PIN ha 6 cifre.</div>`; return; }
+  const r = await rpc("rap_login", { p_nome: nome, p_pin: S.pinIn }).catch(() => null);
+  if (!r || !r.ok) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">${esc(msgErr(r && r.err))}</div>`; return; }
+  if (r.cambia) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">Primo accesso: apri prima i <a href="index.html">Rapportini</a> e scegli il tuo PIN personale.</div>`; return; }
+  S.me = nome; S.pin = S.pinIn; S.pinIn = ""; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome, pin: S.pin })); } catch {}
+  $("#main").innerHTML = `<div class="empty">Caricamento…</div>`; await carica(); }
+
+function render(){
+  const m = $("#main");
+  $("#me").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="index.html">Rapportini</a><button id="out">Esci</button>`;
+  if (!S.me) return renderLogin(m);
+  if (!S.r) { m.innerHTML = `<div class="empty">Caricamento…</div>`; return; }
+  renderProg(m);
+}
+function renderLogin(m){
+  const ops = S.el.operatori || [];
+  m.innerHTML = `<h1>Programma</h1><div class="card">
+    <label class="l" for="op">Il tuo nome</label>
+    <select class="f" id="op"><option value="">— Scegli il tuo nome —</option>${ops.map(o => `<option ${o === S.loginNome ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
+    <label class="l">PIN (lo stesso dei rapportini)</label>
+    <div class="pindots">${[0,1,2,3,4,5].map(i => `<i class="${i < S.pinIn.length ? "on" : ""}"></i>`).join("")}</div>
+    <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" aria-label="Cancella">⌫</button><button data-k="0">0</button><button data-k="ok" style="background:var(--accent);border-color:var(--accent);color:#1d1606">OK</button></div>
+    <div id="lerr"></div></div>`;
+}
+function renderProg(m){
+  const r = S.r, D = r.date || [], d = r.data, p = r.programma, i = D.indexOf(d), me = U(S.me);
+  const prev = i > 0 ? D[i - 1] : null, next = i >= 0 && i < D.length - 1 ? D[i + 1] : null;
+  let h = d ? `<div class="dnav"><button data-go="${esc(prev || "")}" ${prev ? "" : "disabled"} aria-label="Programma precedente">‹</button>
+    <div class="d"><small>${quando(d)}</small><b>${esc(GIORNI[new Date(d + "T12:00:00").getDay()])} ${esc(itData(d))}</b></div>
+    <button data-go="${esc(next || "")}" ${next ? "" : "disabled"} aria-label="Programma successivo">›</button></div>` : "";
+  if (!p) { m.innerHTML = h + `<div class="card empty">Nessun programma pubblicato${d ? " per questo giorno" : ""}.<br>Il programma compare qui quando l'ufficio lo segna come pronto.</div><a class="lnk" href="index.html">📝 Vai ai rapportini</a>`; return; }
+  const B = (p.blocchi || []).filter(b => (b.righe || []).length || b.cantiere);
+  const miei = []; B.forEach(b => (b.righe || []).forEach(x => { if (U(x.pers) === me) miei.push({ b, x }); }));
+  h += `<div class="card mio"><h2>👷 Il tuo programma</h2>${miei.length ? miei.map(({ b, x }) => `<div class="it"><div class="cn">${(() => { const c = parseCant(b.cantiere); return (c.code ? `<span class="code">${esc(c.code)}</span>` : "") + esc(c.cm || b.cantiere || "—") + (c.ds ? ` · <span style="font-weight:600">${esc(c.ds)}</span>` : ""); })()}</div>${righeKV(x)}</div>`).join("")
+    : `<p class="hint" style="margin:0">Oggi non sei assegnato a nessun cantiere in questo programma. Chiedi in ufficio se hai dubbi.</p>`}</div>`;
+  h += `<div class="vis"><button data-vista="can" class="${S.vista === "can" ? "on" : ""}">Per cantiere</button><button data-vista="per" class="${S.vista === "per" ? "on" : ""}">Per persona</button></div>`;
+  if (S.vista === "can") h += B.map(b => `<section class="blk"><div class="bh">${cantHTML(b.cantiere)}</div>${(b.righe || []).map(x => `<div class="ass${U(x.pers) === me ? " me" : ""}">${chip(x.pers)}${righeKV(x)}</div>`).join("")}</section>`).join("");
+  else { const by = new Map(); B.forEach(b => (b.righe || []).forEach(x => { const k = U(x.pers) || "—"; if (!by.has(k)) by.set(k, []); by.get(k).push({ b, x }); }));
+    h += [...by.keys()].sort((a, b) => (b === me) - (a === me) || a.localeCompare(b)).map(k => `<section class="blk"><div class="bh" style="background:${esc(colore(k))};color:${inkFor(colore(k))}"><b style="color:inherit">${esc(k)}</b></div>${by.get(k).map(({ b, x }) => `<div class="ass${k === me ? " me" : ""}"><div style="font-size:15px">${cantHTML(b.cantiere).replace('class="ds"', 'class="hint" style="display:block"')}</div>${righeKV(x)}</div>`).join("")}</section>`).join(""); }
+  if (p.noteGen) h += `<div class="card"><h2>📢 Note generali</h2><div class="noteG">${esc(p.noteGen)}</div></div>`;
+  h += `<a class="lnk" href="index.html">📝 Vai ai rapportini</a>`;
+  m.innerHTML = h;
+}
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "out") return esci();
+  if (t.dataset.go) { S.r && (S.r.data = t.dataset.go); carica(t.dataset.go); window.scrollTo(0, 0); return; }
+  if (t.dataset.vista) { S.vista = t.dataset.vista; try { localStorage.setItem("za-prog-vista", S.vista); } catch {} render(); return; }
+  if (t.dataset.k) { const k = t.dataset.k; if (k === "del") S.pinIn = S.pinIn.slice(0, -1); else if (k === "ok") return login(); else if (S.pinIn.length < 6) S.pinIn += k;
+    const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
+});
+document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value; });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && S.me && S.r) carica(S.r.data); });
+
+(async () => {
+  try { S.el = await rpc("rap_elenchi"); } catch { $("#main").innerHTML = `<div class="card err">Impossibile collegarsi al server. Controlla la connessione e ricarica la pagina.</div>`; return; }
+  if (S.me) await carica(); else render();
+})();
+</script>
+</body>
+</html>
