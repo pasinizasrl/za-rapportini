@@ -3,7 +3,7 @@
   const SB_URL = "https://mzyvermpfusbbufhjwbu.supabase.co", SB_KEY = "sb_publishable_P_r6pi6oRahzgvfwU-PgeQ_lGecNqwo";
   const rpc = async (fn, args) => { const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY }, body: JSON.stringify(args || {}) });
     if (!r.ok) throw new Error("Errore " + r.status); return r.json(); };
-  const MSG = { PIN_FACILE: "PIN troppo semplice: evita cifre tutte uguali o in sequenza.", PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato.", NON_ABILITATO: "Non sei abilitato al Programma online: chiedi in ufficio.", SOLA_LETTURA: "Hai solo la visione del programma." };
+  const MSG = { BLOCCATO_GIORNO: "Programma bloccato: il giorno è già iniziato, solo l'amministratore può modificarlo.", PIN_FACILE: "PIN troppo semplice: evita cifre tutte uguali o in sequenza.", PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato.", NON_ABILITATO: "Non sei abilitato al Programma online: chiedi in ufficio.", SOLA_LETTURA: "Hai solo la visione del programma." };
   const msg = e => (e && String(e).startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + String(e).toLowerCase() + "." : (MSG[e] || e || "Errore");
   let ME = null; try { ME = JSON.parse(localStorage.getItem("za-uff-me") || "null"); } catch {}
   let pronto; const loginP = new Promise(r => pronto = r);
@@ -353,7 +353,20 @@ function progStats(p){ const pers = new Set(); let n = 0; p.blocchi.forEach(b =>
 /* ---------------- salvataggio ---------------- */
 let progTimer = null, anaTimer = null;
 function touchProg(){ S.lastEdit = Date.now(); S.prog.agg = Date.now(); setSave("busy","Salvataggio…"); clearTimeout(progTimer); progTimer = setTimeout(saveProg, 700); }
+/* blocco: dalla mezzanotte il programma del giorno (e quelli passati) non si modifica più; solo l'amministratore lo sblocca col lucchetto */
+const oggiRoma = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
+const progAdmin = () => { try { return window.parent !== window && typeof parent.zaProgAdmin === "function" && !!parent.zaProgAdmin(); } catch { return false; } };
+S.sblocchi = {};
+const bloccato = () => !!(S.prog && S.prog.data && S.prog.data <= oggiRoma() && !S.sblocchi[S.prog.data]);
+const SAFE_LOCK = new Set(["tab", "goto", "rpGo", "rpReset", "rpXls", "day", "today", "wa", "img", "lockTog"]);
+["click", "change", "input"].forEach(ev => document.addEventListener(ev, e => { if (S.tab !== "compila" || !bloccato()) return; const m = document.getElementById("main"); if (!m || !m.contains(e.target)) return;
+  const t = e.target.closest ? e.target.closest("[data-act],[data-tab],input,select,textarea,button") : null; if (!t) return;
+  if (t.closest(".datebar") || t.id === "dpick" || t.id === "allCant" || (t.dataset && (t.dataset.tab || SAFE_LOCK.has(t.dataset.act)))) return;
+  e.preventDefault(); e.stopImmediatePropagation(); if (ev !== "input") toast("Programma bloccato: il giorno è già iniziato." + (progAdmin() ? " Clicca sul lucchetto per sbloccarlo." : " Solo l'amministratore può modificarlo.")); }, true));
+function bloccaEditor(){ if (S.tab !== "compila" || !bloccato()) return; const m = document.getElementById("main"); if (!m) return;
+  m.querySelectorAll("#editor input, #editor textarea, #editor select, #pronto, #noteGen, [data-act='copyPrev'], [data-act='clear']").forEach(el => { if (el.tagName === "INPUT" && el.type !== "checkbox" || el.tagName === "TEXTAREA") el.readOnly = true; else el.disabled = true; }); }
 async function saveProg(){
+  if (bloccato()) { toast("Programma bloccato: modifiche non salvate."); return; }
   const p = clone(S.prog);
   try {
     const vuoto = !p.blocchi.length && !String(p.noteGen||"").trim();
@@ -488,7 +501,7 @@ function render(){
   if (!S.tab || !S.prog) return;
   const m = $("#main");
   if (S.tab === "programma") m.innerHTML = '<div class="col">'+dateBar(false)+viewHTML()+'</div>';
-  else if (S.tab === "compila") { m.innerHTML = '<div class="wide">'+editHTML()+'</div>'; m.querySelectorAll("textarea.nt").forEach(autoH); }
+  else if (S.tab === "compila") { m.innerHTML = '<div class="wide">'+editHTML()+'</div>'; m.querySelectorAll("textarea.nt").forEach(autoH); bloccaEditor(); }
   else if (S.tab === "riepilogo") { m.innerHTML = '<div class="wide">'+rpHTML()+'</div>'; }
   else m.innerHTML = '<div class="wide">'+anaHTML()+'</div>';
 }
@@ -552,10 +565,14 @@ function rowWarn(b, r, cf){
   const ms = r.macc && cf.mc.get(U(r.macc)); if (ms && ms.size > 1) out.push("Mezzo anche su " + [...ms].filter(x => x !== code).join(", "));
   return out.map(w => '<span class="warnb">'+esc(w)+'</span>').join("");
 }
+function lockHTML(){ const p = S.prog; if (!p || p.data > oggiRoma()) return "";
+  const aperto = !!S.sblocchi[p.data];
+  if (progAdmin()) return '<button class="btn sm" data-act="lockTog" title="'+(aperto ? "Sbloccato da te: clicca per bloccarlo di nuovo" : "Bloccato perché il giorno è iniziato: clicca per sbloccarlo e modificarlo")+'" style="font-weight:700;'+(aperto ? "" : "background:#f6e7c4;border-color:#d4950f")+'">'+(aperto ? "🔓 Sbloccato" : "🔒 Bloccato")+'</button>';
+  return '<span class="small" style="font-weight:700;color:#7a5000;background:#f6e7c4;border:1px solid #d4950f;border-radius:6px;padding:4px 8px" title="Dalla mezzanotte il programma del giorno non si modifica più">🔒 Bloccato · solo l\'amministratore può modificarlo</span>'; }
 function editHTML(){
   const p = S.prog, cf = conflicts();
   let h = '<div class="cgrid"><div style="display:flex;flex-direction:column;gap:12px;min-width:0">';
-  h += '<div class="toolbar">'+dateBar(true)+'<div class="row"><span class="ptitle" style="padding:4px 10px"><h1 style="font-size:20px">Programma di '+dayName(p.data)+' '+itDate(p.data)+'</h1></span>'+
+  h += '<div class="toolbar">'+dateBar(true)+'<div class="row"><span class="ptitle" style="padding:4px 10px"><h1 style="font-size:20px">Programma di '+dayName(p.data)+' '+itDate(p.data)+'</h1></span>'+lockHTML()+
     '<span class="grow"></span><label class="ck"><input type="checkbox" id="pronto" '+(p.pronto?"checked":"")+'> Pronto per la squadra</label></div>'+
     '<div class="row"><button class="btn" data-act="copyPrev">Copia dal programma precedente</button><button class="btn ghost danger" data-act="clear" '+(p.blocchi.length?"":"disabled")+'>Svuota</button>'+
     '<span class="grow"></span><label class="ck small muted"><input type="checkbox" id="allCant" '+(S.showAllCant?"checked":"")+'> Mostra anche cantieri sospesi e chiusi</label></div><div id="clearAsk"></div></div>';
@@ -634,6 +651,7 @@ document.addEventListener("click", async e => {
     case "today": openDate(iso(new Date())); return;
     case "tomorrow": { let d = addDays(iso(new Date()), 1); if (fromIso(d).getDay() === 0) d = addDays(d, 1); openDate(d); return; }
     case "view": S.view = t.dataset.v; render(); return;
+    case "lockTog": { if (!progAdmin()) return; const d = S.prog.data; S.sblocchi[d] = !S.sblocchi[d]; toast(S.sblocchi[d] ? "Programma sbloccato: ora puoi modificarlo (solo tu)." : "Programma bloccato di nuovo."); render(); return; }
     case "wa": copyWA(); return;
     case "img": saveImage(); return;
     case "bAdd": P.blocchi.push({ id:uid(), cantiere:"", righe:[{ id:uid(), pers:"", macc:"", trasf:"", note:"" }] }); touchProg(); render(); setTimeout(() => { const l = document.querySelectorAll('#editor [data-fb="cantiere"]'); l[l.length-1]?.focus(); }, 0); return;
