@@ -249,11 +249,13 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
   .er .ra{grid-column:1/-1;justify-content:flex-end}
 }
 .side{display:flex;flex-direction:column;gap:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,90px) + 10px)}
-.side{max-height:calc(100vh - env(safe-area-inset-top,0px) - var(--toph,90px) - 20px)}
-.side .sec.na{flex:1 1 auto;min-height:0;overflow:auto}
-@media (max-width:960px){.side{position:static;max-height:none}
-  .side .sec.na{position:fixed;left:0;right:0;bottom:0;z-index:30;max-height:34vh;margin:0;border-radius:14px 14px 0 0;box-shadow:0 -6px 22px rgb(0 0 0/.18);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-  .page{padding-bottom:36vh}}
+.side .sec.na .chips{gap:4px}
+.side .sec.na .chip{font-size:12px;padding:1px 6px}
+@media (max-width:960px){.side{position:static}
+  .side .sec.na{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;border-radius:14px 14px 0 0;box-shadow:0 -6px 22px rgb(0 0 0/.18);padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px))}
+  .side .sec.na h3{margin:0 0 5px}
+  .side .sec.na .chip{font-size:11px;padding:1px 5px}
+  .page{padding-bottom:calc(var(--nah,120px) + 16px)}}
 .sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .sec .chips .chip{cursor:pointer}
 textarea.f{resize:vertical;min-height:70px}
@@ -605,14 +607,16 @@ function sideHTML(){
   const used = new Set(); S.prog.blocchi.forEach(b => b.righe.forEach(r => r.pers && used.add(U(r.pers))));
   const free = attivi().filter(p => !used.has(U(p.nome)));
   const st = progStats(S.prog);
-  return '<div class="sec"><h3>Riepilogo</h3><div class="small">'+st.cant+' cantieri · '+st.pers+' persone · '+st.ass+' assegnazioni</div>'+
-    '<div class="row" style="margin-top:8px"><button class="btn sm" data-act="wa">Copia per WhatsApp</button><button class="btn sm" data-act="tab" data-t="programma">Vedi come la squadra</button></div></div>'+
-    '<div class="sec na"><h3>Operatori non assegnati ('+free.length+')</h3><div class="small muted" style="margin-bottom:6px">Tocca un nome per aggiungerlo all\'ultimo cantiere.</div><div class="chips">'+
-    (free.length ? free.map(p => '<span class="chip" role="button" tabindex="0" data-act="addPers" data-n="'+esc(p.nome)+'" style="background:'+persColor(p.nome)+';color:'+inkFor(persColor(p.nome))+'">'+esc(U(p.nome))+'</span>').join("") : '<span class="small muted">Tutti assegnati.</span>')+'</div></div>';
+  return '<div class="sec na"><h3>Operatori ('+free.length+')</h3><div class="chips">'+
+    (free.length ? free.map(p => '<span class="chip" role="button" tabindex="0" data-act="addPers" data-n="'+esc(p.nome)+'" style="background:'+persColor(p.nome)+';color:'+inkFor(persColor(p.nome))+'">'+esc(U(p.nome))+'</span>').join("") : '<span class="small muted">Tutti assegnati.</span>')+'</div></div>'+
+    '<div class="sec"><h3>Riepilogo</h3><div class="small">'+st.cant+' cantieri · '+st.pers+' persone · '+st.ass+' assegnazioni</div>'+
+    '<div class="row" style="margin-top:8px"><button class="btn sm" data-act="wa">Copia per WhatsApp</button><button class="btn sm" data-act="tab" data-t="programma">Vedi come la squadra</button></div></div>';
 }
 function refreshWarn(){ const cf = conflicts();
   document.querySelectorAll("#editor [data-r]").forEach(el => { const b = findB(el.closest("[data-b]").dataset.b), r = b && b.righe.find(x => x.id === el.dataset.r); const w = el.querySelector(".wb"); if (r && w) w.innerHTML = rowWarn(b, r, cf); }); }
-function refreshSide(){ const s = $("#side"); if (s) s.innerHTML = sideHTML(); }
+function refreshSide(){ const s = $("#side"); if (s) s.innerHTML = sideHTML(); fitNa(); }
+function fitNa(){ requestAnimationFrame(() => { const n = document.querySelector(".side .sec.na"); document.documentElement.style.setProperty("--nah", (n ? n.offsetHeight : 0)+"px"); }); }
+try { new MutationObserver(fitNa).observe(document.body || document.documentElement, {childList:true, subtree:true}); addEventListener("resize", fitNa); } catch(e){}
 function findB(id){ return S.prog.blocchi.find(b => b.id === id); }
 
 /* ---- anagrafiche ---- */
