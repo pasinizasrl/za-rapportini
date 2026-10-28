@@ -433,7 +433,7 @@ async function defaultDate(){
 }
 function fillLists(){
   const uniq = a => [...new Set(a.map(x => U(x)).filter(Boolean))];
-  $("#dlPers").innerHTML = uniq(attivi().map(p => p.nome)).map(v => '<option value="'+esc(v)+'">').join("");
+  $("#dlPers").innerHTML = uniq(attivi().map(p => p.nome)).map(v => '<option value="'+esc(v)+'">').join("") + uniq(ufficioPers().map(p => p.nome)).map(v => '<option value="'+esc(v)+'" label="Ufficio">').join("");
   $("#dlMac").innerHTML = uniq((S.ana.mac || []).filter(n => !(((S.ana.macp || {})[U(n)] || {}).a)).map(MB)).map(v => '<option value="'+esc(v)+'">').join("");
   $("#dlTra").innerHTML = ['<option value="-">'].concat(uniq((S.ana.tra || []).filter(n => !(((S.ana.trap || {})[U(n)] || {}).a)).map(TB)).map(v => '<option value="'+esc(v)+'">')).join("");
   const cs = S.ana.can.filter(c => S.showAllCant || c.stato === "IN CORSO" || c.stato === "DA FARE");
