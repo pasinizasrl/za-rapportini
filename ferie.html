@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#26393d">
+<meta name="color-scheme" content="light">
+<title>ZA srl Ferie e permessi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f2f3f0; --panel:#ffffff; --panel2:#f7f8f5; --ink:#1c2320; --muted:#5b665f; --line:#d8dcd6;
+  --steel:#26393d; --steel-2:#304a4f; --on-steel:#eef3f1; --on-steel-muted:#a9bcb8;
+  --accent:#d4950f; --accent-ink:#7a5000; --accent-soft:#f6e7c4;
+  --good:#2c7a4b; --good-soft:#dcefe2; --bad:#b0352d; --bad-soft:#f6dcd9; --blue:#1d3a6e;
+  --font-display:"Barlow Condensed","Arial Narrow",sans-serif; --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font-body);-webkit-text-size-adjust:100%}
+button{font:inherit;cursor:pointer}
+select{font:inherit;color:var(--ink)}
+header{position:sticky;top:0;z-index:5;background:var(--steel);color:var(--on-steel);border-bottom:3px solid var(--accent);padding:10px 16px;padding-top:max(10px, env(safe-area-inset-top));display:flex;align-items:center;gap:10px}
+header .b{font-weight:700;font-size:21px;color:#e8e22a;letter-spacing:.01em}
+header .s{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-steel-muted)}
+header .me{margin-left:auto;text-align:right;font-size:13px;line-height:1.2}
+header .me b{display:block;font-size:14px;color:#fff;text-transform:uppercase}
+header .me a{color:var(--on-steel-muted);font-size:12px;margin-right:10px}
+header .me button{background:none;border:0;color:var(--on-steel-muted);padding:0;font-size:12px;text-decoration:underline}
+main{max-width:760px;margin:0 auto;padding:16px 16px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+h1{font-family:var(--font-display);font-weight:700;font-size:28px;text-transform:uppercase;letter-spacing:.02em;margin:4px 0 12px}
+h2{font-family:var(--font-display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px;color:var(--accent-ink)}
+label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 4px}
+.f{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:11px 12px;min-height:46px}
+.hint{color:var(--muted);font-size:13px}
+.err{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:10px 12px;font-weight:600;margin-top:12px}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pinpad button{min-height:58px;font-size:24px;font-weight:600;border:1px solid var(--line);background:var(--panel);border-radius:10px;color:var(--ink)}
+.pindots{display:flex;gap:12px;justify-content:center;margin:14px 0 4px}
+.pindots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted)}
+.pindots i.on{background:var(--accent);border-color:var(--accent)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:30px;background:var(--steel);color:var(--on-steel);padding:10px 16px;border-radius:8px;z-index:9;max-width:90vw;text-align:center}
+.code{font-family:var(--font-mono);font-size:12.5px;font-weight:500;background:var(--accent);color:#1c2320;border-radius:4px;padding:1px 6px;margin-right:6px}
+/* ferie */
+.tipi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.tipi button{min-height:52px;border:2px solid var(--line);background:var(--panel);border-radius:10px;font-weight:700;font-size:16px;color:var(--ink)}
+.tipi button.on{border-color:var(--accent);background:var(--accent-soft)}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.row2 .f{min-width:0;padding:11px 6px}
+.bt{display:block;width:100%;min-height:52px;border:0;border-radius:10px;background:var(--accent);color:#1d1606;font-weight:700;font-size:17px;margin-top:16px}
+.bt.sec{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-weight:600;margin-top:8px}
+.it{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--panel);display:flex;gap:8px;align-items:center}
+.it .tx{flex:1;min-width:0;line-height:1.45}.it .tx b{font-size:16px}
+.st{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:700}
+.st.Richiesta{background:#fff3cd;color:#7a5000}.st.Approvata{background:var(--good-soft);color:var(--good)}.st.Rifiutata{background:var(--bad-soft);color:var(--bad)}
+.tp{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12.5px;font-weight:700;margin-right:6px}
+.tp.Ferie{background:#d7ecd8;color:#2e7d32}.tp.Permesso{background:#fbe3c0;color:#b26a00}.tp.Malattia{background:#f6d5d2;color:#b3261e}
+.ib{border:1px solid var(--line);background:var(--panel);border-radius:8px;min-width:44px;min-height:42px;font-size:18px}
+input.f{font:inherit;color:var(--ink)}
+.sw{display:flex;gap:8px;max-width:760px;margin:12px auto 0;padding:0 16px}
+.sw a{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border:2px solid var(--steel);border-radius:12px;background:var(--panel);color:var(--steel);font-weight:700;font-size:17px;text-decoration:none;text-transform:uppercase;letter-spacing:.03em}
+.sw a.on{background:var(--steel);color:#e8e22a;box-shadow:inset 0 -4px 0 var(--accent)}
+.sw a span{font-size:20px}
+.sw{gap:6px}.sw a{font-size:13px;letter-spacing:.02em;gap:1px;padding:4px 2px;min-width:0;flex-direction:column;min-height:54px;line-height:1.1}.sw a span{font-size:19px}
+.sw{gap:6px}.sw a{font-size:13px;letter-spacing:.02em;gap:1px;padding:4px 2px;min-width:0;flex-direction:column;min-height:54px;line-height:1.1}.sw a span{font-size:19px}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="b">ZA srl</div><div class="s">Ferie e permessi</div></div>
+  <div class="me" id="me" hidden></div>
+</header>
+<nav class="sw" id="sw" hidden><a href="index.html" class=""><span>📝</span>Rapportini</a><a href="programma.html" class=""><span>📅</span>Programma</a><a href="ferie.html" class="on"><span>🌴</span>Ferie</a></nav>
+<main id="main"><div class="empty">Caricamento…</div></main>
+<div class="toast" id="toast" hidden></div>
+<script>
+"use strict";
+/* Ferie, permessi e malattia dal telefono (stesso accesso con PIN dei rapportini): le richieste arrivano al gestionale, sezione Ferie e permessi */
+const SB_URL = "https://mzyvermpfusbbufhjwbu.supabase.co", SB_KEY = "sb_publishable_P_r6pi6oRahzgvfwU-PgeQ_lGecNqwo";
+async function rpc(fn, args){
+  const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json", apikey: SB_KEY }, body: JSON.stringify(args || {}) });
+  if (!r.ok) { let m = ""; try { m = (await r.json()).message || ""; } catch {} throw new Error("Errore " + r.status + (m ? ": " + m : "")); }
+  return r.json();
+}
+const $ = s => document.querySelector(s), esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const iso = d => { const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); };
+const oggi = () => iso(new Date());
+const itD = s => s ? s.split("-").reverse().join("/") : "";
+const GIORNI = ["dom","lun","mar","mer","gio","ven","sab"];
+const gg = s => GIORNI[new Date(s + "T12:00:00").getDay()] + " " + itD(s);
+function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 3500); }
+const MSG = { PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato." };
+const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + e.toLowerCase() + "." : (MSG[e] || e || "Errore");
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
+
+const S = { el: { operatori: [] }, me: null, pin: "", pinIn: "", list: null, ed: null, del: null, busy: false };
+try { const m = JSON.parse(localStorage.getItem("za-rap-me") || "null"); if (m && m.nome && m.pin) { S.me = m.nome; S.pin = m.pin; } } catch {}
+
+async function carica(){
+  try { const r = await rpc("fer_mie", { p_nome: S.me, p_pin: S.pin }); if (!r.ok) { esci(msgErr(r.err)); return; } S.list = r.ferie || []; S.oggi = r.oggi || oggi(); render(); }
+  catch (e) { toast("Connessione non riuscita: riprova."); } }
+function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; S.list = null; try { localStorage.removeItem("za-rap-me"); } catch {} render(); if (msg) toast(msg); }
+async function login(){ const nome = $("#op") && $("#op").value; S.loginNome = nome;
+  if (!nome) { $("#lerr").innerHTML = `<div class="err">Scegli il tuo nome.</div>`; return; }
+  if (S.pinIn.length !== 6) { $("#lerr").innerHTML = `<div class="err">Il PIN ha 6 cifre.</div>`; return; }
+  const r = await rpc("rap_login", { p_nome: nome, p_pin: S.pinIn }).catch(() => null);
+  if (!r || !r.ok) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">${esc(msgErr(r && r.err))}</div>`; return; }
+  if (r.cambia) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">Primo accesso: apri prima i <a href="index.html">Rapportini</a> e scegli il tuo PIN personale.</div>`; return; }
+  S.me = nome; S.pin = S.pinIn; S.pinIn = ""; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome, pin: S.pin })); } catch {}
+  $("#main").innerHTML = `<div class="empty">Caricamento…</div>`; await carica(); }
+
+function render(){
+  const m = $("#main");
+  $("#me").hidden = !S.me; $("#sw").hidden = !S.me; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="guida.html">Guida</a><button id="out">Esci</button>`;
+  if (!S.me) return renderLogin(m);
+  if (!S.list) { m.innerHTML = `<div class="empty">Caricamento…</div>`; return; }
+  if (S.ed) return renderForm(m);
+  renderLista(m);
+}
+function renderLogin(m){
+  const ops = S.el.operatori || [];
+  m.innerHTML = `<h1>Ferie e permessi</h1><div class="card">
+    <label class="l" for="op">Il tuo nome</label>
+    <select class="f" id="op"><option value="">— Scegli il tuo nome —</option>${ops.map(o => `<option ${o === S.loginNome ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
+    <label class="l">PIN (lo stesso dei rapportini)</label>
+    <div class="pindots">${[0,1,2,3,4,5].map(i => `<i class="${i < S.pinIn.length ? "on" : ""}"></i>`).join("")}</div>
+    <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}<button data-k="del" aria-label="Cancella">⌫</button><button data-k="0">0</button><button data-k="ok" style="background:var(--accent);border-color:var(--accent);color:#1d1606">OK</button></div>
+    <div id="lerr"></div></div>`;
+}
+const periodo = x => (x.al && x.al !== x.dal ? `dal ${gg(x.dal)} al ${gg(x.al)}` : gg(x.dal)) + (x.tipo === "Permesso" && (x.dalle || x.alle) ? ` · dalle ${esc(x.dalle || "…")} alle ${esc(x.alle || "…")}` : "");
+const riga = x => `<div class="it"><div class="tx"><span class="tp ${esc(x.tipo)}">${esc(x.tipo)}</span><span class="st ${esc(x.stato || "Richiesta")}">${esc(x.stato || "Richiesta")}</span><br><b>${periodo(x)}</b>${x.note ? `<div class="hint">${esc(x.note)}</div>` : ""}</div>
+  ${x.stato === "Approvata" ? "" : S.del === x.id ? `<button class="ib" data-delok="${esc(x.id)}" style="color:var(--bad);font-size:14px;font-weight:700">Elimina</button><button class="ib" data-del0="1" style="font-size:14px">No</button>` : `<button class="ib" data-mod="${esc(x.id)}" aria-label="Modifica">✎</button><button class="ib" data-delq="${esc(x.id)}" aria-label="Elimina" style="color:var(--bad)">🗑</button>`}</div>`;
+function renderLista(m){
+  const o = S.oggi || oggi(), L = S.list.slice().sort((a, b) => a.dal.localeCompare(b.dal)), pross = L.filter(x => (x.al || x.dal) >= o), pass = L.filter(x => (x.al || x.dal) < o).reverse();
+  m.innerHTML = `<h1>Ferie e permessi</h1>
+    <div class="card"><h2>➕ Nuova richiesta</h2><div class="tipi"><button data-nuovo="Ferie">🌴 Ferie</button><button data-nuovo="Permesso">⏱ Permesso</button><button data-nuovo="Malattia">🤒 Malattia</button></div>
+      <p class="hint" style="margin:10px 0 0">Le <b>ferie</b> vanno chieste almeno <b>una settimana prima</b>, i <b>permessi</b> almeno <b>due giorni prima</b>: l'ufficio le vede subito e le tiene presenti nel programma.</p></div>
+    <div class="card"><h2>📅 Le tue prossime assenze</h2>${pross.map(riga).join("") || `<p class="hint" style="margin:0">Nessuna richiesta.</p>`}</div>
+    ${pass.length ? `<div class="card"><h2>Passate</h2>${pass.slice(0, 15).map(riga).join("")}</div>` : ""}`;
+}
+function renderForm(m){ const x = S.ed, perm = x.tipo === "Permesso", mal = x.tipo === "Malattia", o = S.oggi || oggi();
+  const tard = !mal && x.dal && Math.round((new Date(x.dal + "T12:00") - new Date(o + "T12:00")) / 864e5) < (perm ? 2 : 7);
+  m.innerHTML = `<h1>${x.nuovo ? "Nuova richiesta" : "Modifica richiesta"}</h1><div class="card">
+    <label class="l">Tipo</label><div class="tipi">${["Ferie", "Permesso", "Malattia"].map(t => `<button data-tipo="${t}" class="${x.tipo === t ? "on" : ""}">${t === "Ferie" ? "🌴" : t === "Permesso" ? "⏱" : "🤒"} ${t}</button>`).join("")}</div>
+    ${perm ? `<label class="l" for="dal">Giorno</label><input class="f" type="date" id="dal" value="${esc(x.dal || "")}">
+      <div class="row2"><div><label class="l" for="dalle">Dalle</label><input class="f" type="time" id="dalle" value="${esc(x.dalle || "")}"></div><div><label class="l" for="alle">Alle</label><input class="f" type="time" id="alle" value="${esc(x.alle || "")}"></div></div>`
+    : `<div class="row2"><div><label class="l" for="dal">Dal</label><input class="f" type="date" id="dal" value="${esc(x.dal || "")}"></div><div><label class="l" for="al">Al (compreso)</label><input class="f" type="date" id="al" value="${esc(x.al || "")}"></div></div>`}
+    <label class="l" for="note">Note (facoltative)</label><input class="f" id="note" value="${esc(x.note || "")}" placeholder="${mal ? "es. certificato n. …" : perm ? "es. visita medica" : "es. matrimonio, viaggio…"}" maxlength="300">
+    ${tard ? `<div class="err" style="background:#fff3cd;color:#7a5000">Attenzione: ${perm ? "i permessi vanno chiesti almeno 2 giorni prima" : "le ferie vanno chieste almeno una settimana prima"}. Puoi inviarla lo stesso, ma avvisa anche l'ufficio.</div>` : ""}
+    <button class="bt" id="invia" ${S.busy ? "disabled" : ""}>${S.busy ? "Invio…" : "Invia all'ufficio"}</button><button class="bt sec" id="annulla">Annulla</button></div>`;
+}
+function leggiForm(){ const x = S.ed; ["dal", "al", "dalle", "alle", "note"].forEach(k => { const e = document.getElementById(k); if (e) x[k] = e.value; }); }
+async function invia(){ leggiForm(); const x = S.ed;
+  if (!x.dal) return toast("Metti la data."); if (x.tipo !== "Permesso" && x.al && x.al < x.dal) return toast("La data di fine è prima di quella di inizio.");
+  S.busy = true; render();
+  try { const r = await rpc("fer_salva", { p_nome: S.me, p_pin: S.pin, p_id: x.id, p_tipo: x.tipo, p_dal: x.dal, p_al: x.tipo === "Permesso" ? x.dal : (x.al || x.dal), p_dalle: x.dalle || null, p_alle: x.alle || null, p_note: x.note || null });
+    S.busy = false; if (!r.ok) { render(); return toast(msgErr(r.err)); } S.ed = null; toast("Richiesta inviata all'ufficio."); await carica(); }
+  catch (e) { S.busy = false; render(); toast("Invio non riuscito: controlla la connessione."); } }
+
+document.addEventListener("click", async e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "out") return esci();
+  if (t.dataset.nuovo) { const d = new Date(); d.setDate(d.getDate() + (t.dataset.nuovo === "Ferie" ? 7 : t.dataset.nuovo === "Permesso" ? 2 : 0)); S.ed = { id: uuid(), nuovo: true, tipo: t.dataset.nuovo, dal: iso(d), al: iso(d) }; render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.tipo) { leggiForm(); S.ed.tipo = t.dataset.tipo; render(); return; }
+  if (t.id === "invia") return invia();
+  if (t.id === "annulla") { S.ed = null; render(); return; }
+  if (t.dataset.mod) { const x = S.list.find(y => y.id === t.dataset.mod); if (x) { S.ed = Object.assign({}, x); render(); window.scrollTo(0, 0); } return; }
+  if (t.dataset.delq) { S.del = t.dataset.delq; render(); return; }
+  if (t.dataset.del0) { S.del = null; render(); return; }
+  if (t.dataset.delok) { const id = t.dataset.delok; S.del = null; try { const r = await rpc("fer_elimina", { p_nome: S.me, p_pin: S.pin, p_id: id }); toast(r.ok ? "Richiesta eliminata." : "Non eliminabile (forse è già approvata)."); } catch { toast("Connessione non riuscita."); } await carica(); return; }
+  if (t.dataset.k) { const k = t.dataset.k; if (k === "del") S.pinIn = S.pinIn.slice(0, -1); else if (k === "ok") return login(); else if (S.pinIn.length < 6) S.pinIn += k;
+    const nome = $("#op") && $("#op").value; S.loginNome = nome; render(); if (S.pinIn.length === 6 && nome) login(); return; }
+});
+document.addEventListener("change", e => { if (e.target.id === "op") S.loginNome = e.target.value; if (S.ed && e.target.id === "dal") { leggiForm(); if (!S.ed.al || S.ed.al < S.ed.dal) S.ed.al = S.ed.dal; render(); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && S.me && S.list && !S.ed) carica(); });
+
+(async () => {
+  try { S.el = await rpc("rap_elenchi"); } catch { $("#main").innerHTML = `<div class="card err">Impossibile collegarsi al server. Controlla la connessione e ricarica la pagina.</div>`; return; }
+  if (S.me) await carica(); else render();
+})();
+</script>
+</body>
+</html>
