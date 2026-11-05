@@ -81,6 +81,7 @@ label.l{display:block;font-size:12px;color:var(--muted);text-transform:uppercase
 .sw a.on{background:var(--steel);color:#e8e22a;box-shadow:inset 0 -4px 0 var(--accent)}
 .sw a span{font-size:20px}
 .sw{gap:6px}.sw a{font-size:13px;letter-spacing:.02em;gap:1px;padding:4px 2px;min-width:0;flex-direction:column;min-height:54px;line-height:1.1}.sw a span{font-size:19px}
+.sw a[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -112,7 +113,7 @@ function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; c
 function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{3,4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
   let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
   const i = rest.indexOf(":"); return { code, cm: i > 0 ? rest.slice(0, i).trim() : rest, ds: i > 0 ? rest.slice(i + 1).trim() : "" }; }
-const MSG = { PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato." };
+const MSG = { NON_ABILITATO: "Sezione non abilitata per il tuo utente: chiedi all'ufficio.", PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato." };
 const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + e.toLowerCase() + "." : (MSG[e] || e || "Errore");
 
 const S = { el: { operatori: [] }, me: null, pin: "", pinIn: "", r: null, vista: "can" };
@@ -134,6 +135,10 @@ async function carica(data){
     if (!r.ok) { esci(msgErr(r.err)); return false; } S.r = r; render(); return true; }
   catch (e) { toast("Connessione non riuscita: riprova."); return false; } }
 function esci(msg){ S.me = null; S.pin = ""; S.pinIn = ""; S.r = null; try { localStorage.removeItem("za-rap-me"); } catch {} render(); if (msg) toast(msg); }
+const APP_PAGE = { "index.html": "rap", "programma.html": "prog", "ferie.html": "fer" };
+function appApply(a){ if (a) S.app = a; const ap = S.app || {}; document.querySelectorAll("#sw a").forEach(l => { const k = APP_PAGE[l.getAttribute("href")]; l.hidden = !!k && ap[k] === false; }); }
+function appGuard(k){ const ap = S.app || {}; if (ap[k] !== false) return true; const dest = Object.keys(APP_PAGE).find(h => ap[APP_PAGE[h]] !== false);
+  if (dest) location.replace(dest); else { $("#sw").hidden = true; $("#main").innerHTML = `<div class="card err">Il tuo utente non è abilitato a nessuna sezione dal telefono. Chiedi all'ufficio.</div>`; } return false; }
 async function login(){ const nome = $("#op") && $("#op").value; S.loginNome = nome;
   if (!nome) { $("#lerr").innerHTML = `<div class="err">Scegli il tuo nome.</div>`; return; }
   if (S.pinIn.length !== 6) { $("#lerr").innerHTML = `<div class="err">Il PIN ha 6 cifre.</div>`; return; }
@@ -141,11 +146,12 @@ async function login(){ const nome = $("#op") && $("#op").value; S.loginNome = n
   if (!r || !r.ok) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">${esc(msgErr(r && r.err))}</div>`; return; }
   if (r.cambia) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">Primo accesso: apri prima i <a href="index.html">Rapportini</a> e scegli il tuo PIN personale.</div>`; return; }
   S.me = nome; S.pin = S.pinIn; S.pinIn = ""; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome, pin: S.pin })); } catch {}
+  appApply(r.app); if (!appGuard("prog")) return;
   $("#main").innerHTML = `<div class="empty">Caricamento…</div>`; await carica(); }
 
 function render(){
   const m = $("#main");
-  $("#me").hidden = !S.me; $("#sw").hidden = !S.me || S.view === "cambia"; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="guida.html">Guida</a><button id="out">Esci</button>`;
+  appApply(); $("#me").hidden = !S.me; $("#sw").hidden = !S.me || S.view === "cambia"; if (S.me) $("#me").innerHTML = `<b>${esc(S.me)}</b><a href="guida.html">Guida</a><button id="out">Esci</button>`;
   if (!S.me) return renderLogin(m);
   if (!S.r) { m.innerHTML = `<div class="empty">Caricamento…</div>`; return; }
   renderProg(m);
@@ -193,7 +199,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && S.
 
 (async () => {
   try { S.el = await rpc("rap_elenchi"); } catch { $("#main").innerHTML = `<div class="card err">Impossibile collegarsi al server. Controlla la connessione e ricarica la pagina.</div>`; return; }
-  if (S.me) await carica(); else render();
+  if (S.me) { const lg = await rpc("rap_login", { p_nome: S.me, p_pin: S.pin }).catch(() => null); if (lg && lg.ok) { appApply(lg.app); if (!appGuard("prog")) return; } await carica(); } else render();
 })();
 </script>
 </body>

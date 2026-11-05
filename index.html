@@ -224,6 +224,7 @@ textarea.f.mzD{margin-left:12px;width:calc(100% - 12px);text-transform:uppercase
 .sw a.on{background:var(--steel);color:#e8e22a;box-shadow:inset 0 -4px 0 var(--accent)}
 .sw a span{font-size:20px}
 .sw{gap:6px}.sw a{font-size:13px;letter-spacing:.02em;gap:1px;padding:4px 2px;min-width:0;flex-direction:column;min-height:54px;line-height:1.1}.sw a span{font-size:19px}
+.sw a[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -270,7 +271,7 @@ function toast(t){ const e = $("#toast"); e.textContent = t; e.hidden = false; c
 function parseCant(label){ const s = String(label || "").trim().replace(/\s+/g, " "); const m = s.match(/(^|[^\d.])(\d{3,4}\.\d{2}(?:\.[A-Z]{1,4})?)(?![\d.])/i);
   let code = "", rest = s; if (m) { code = m[2].toUpperCase(); const k = m.index + m[1].length; rest = (s.slice(0, k) + " " + s.slice(k + m[2].length)).replace(/\s*[-–]\s*[-–]\s*/g, " - ").replace(/\s{2,}/g, " ").trim().replace(/^[\s\-–:·,;/_]+|[\s\-–:·,;/_]+$/g, ""); }
   return { code, rest }; }
-const MSG = { PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato.", DATA_NON_VALIDA: "Data non valida: puoi inserire rapportini degli ultimi 60 giorni.", NON_MODIFICABILE: "Questo rapportino è già stato approvato e non si può modificare." };
+const MSG = { NON_ABILITATO: "Sezione non abilitata per il tuo utente: chiedi all'ufficio.", PIN_NON_VALIDO: "Il PIN deve avere 6 cifre.", PIN_ERRATO: "PIN errato.", DATA_NON_VALIDA: "Data non valida: puoi inserire rapportini degli ultimi 60 giorni.", NON_MODIFICABILE: "Questo rapportino è già stato approvato e non si può modificare." };
 const msgErr = e => (e && e.startsWith && e.startsWith("BLOCCATO")) ? "Troppi tentativi: accesso " + e.toLowerCase().replace("bloccato", "bloccato") + "." : (MSG[e] || e || "Errore");
 
 const S = { el: { operatori: [], cantieri: [], mezzi: [] }, me: null, pin: "", list: [], view: "login", edit: null, pinIn: "" };
@@ -527,6 +528,10 @@ async function salvaPinNuovo(){ const c = S.cp;
     S.pin = c.a; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome: S.me, pin: S.pin })); } catch {}
     S.cp = null; await caricaMiei(); S.view = "lista"; render(); toast("PIN personale salvato. Da ora usa questo PIN."); }
   catch { S.cp.err = "Connessione non riuscita: riprova."; render(); } }
+const APP_PAGE = { "index.html": "rap", "programma.html": "prog", "ferie.html": "fer" };
+function appApply(a){ if (a) S.app = a; const ap = S.app || {}; document.querySelectorAll("#sw a").forEach(l => { const k = APP_PAGE[l.getAttribute("href")]; l.hidden = !!k && ap[k] === false; }); }
+function appGuard(k){ const ap = S.app || {}; if (ap[k] !== false) return true; const dest = Object.keys(APP_PAGE).find(h => ap[APP_PAGE[h]] !== false);
+  if (dest) location.replace(dest); else { $("#sw").hidden = true; $("#main").innerHTML = `<div class="card err">Il tuo utente non è abilitato a nessuna sezione dal telefono. Chiedi all'ufficio.</div>`; } return false; }
 async function login(){
   const nome = $("#op") && $("#op").value; S.loginNome = nome;
   if (!nome) { $("#lerr").innerHTML = `<div class="err">Scegli il tuo nome.</div>`; return; }
@@ -535,7 +540,8 @@ async function login(){
   try { const r = await rpc("rap_login", { p_nome: nome, p_pin: S.pinIn });
     if (!r.ok) { S.pinIn = ""; render(); $("#lerr").innerHTML = `<div class="err">${esc(msgErr(r.err))}</div>`; return; }
     S.me = nome; S.pin = S.pinIn; S.pinIn = ""; try { localStorage.setItem("za-rap-me", JSON.stringify({ nome, pin: S.pin })); } catch {}
-    if (r.cambia) { S.view = "cambia"; S.cp = { step: 1, a: "", b: "" }; render(); return; }
+    appApply(r.app); if (r.cambia) { S.view = "cambia"; S.cp = { step: 1, a: "", b: "" }; render(); return; }
+    if (!appGuard("rap")) return;
     await caricaMiei(); S.view = "lista"; render(); toast("Ciao " + nome + "!");
   } catch (e) { $("#lerr").innerHTML = `<div class="err">Connessione non riuscita. Controlla internet e riprova.</div>`; }
 }
@@ -670,7 +676,8 @@ document.addEventListener("keydown", e => { if (S.view === "login" && !S.me) { i
 
 (async () => {
   try { await caricaElenchi(); } catch (e) { $("#main").innerHTML = `<div class="card err">Impossibile collegarsi al server. Controlla la connessione e ricarica la pagina.</div>`; return; }
-  if (S.me) { S.view = "lista"; try { const lg = await rpc("rap_login", { p_nome: S.me, p_pin: S.pin }); if (lg && lg.ok && lg.cambia) { S.view = "cambia"; S.cp = { step: 1, a: "", b: "" }; render(); return; }
+  if (S.me) { S.view = "lista"; try { const lg = await rpc("rap_login", { p_nome: S.me, p_pin: S.pin }); if (lg && lg.ok) appApply(lg.app); if (lg && lg.ok && lg.cambia) { S.view = "cambia"; S.cp = { step: 1, a: "", b: "" }; render(); return; }
+      if (lg && lg.ok && !appGuard("rap")) return;
       if (!(await caricaMiei())) return; } catch { toast("Connessione lenta: riprova."); } }
   render();
 })();
