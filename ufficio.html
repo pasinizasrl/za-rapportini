@@ -29,6 +29,14 @@
       set: async d => { cache.set(p, JSON.parse(JSON.stringify(d))); notify([p]); if (!p.startsWith("programmi/")) return; const r = await rpc("gest_prog_salva", { p_nome: ME.nome, p_pin: ME.pin, p_path: p, p_data: d, p_del: false }); if (!r.ok) throw new Error(msg(r.err)); },
       delete: async () => { cache.delete(p); notify([p]); if (!p.startsWith("programmi/")) return; const r = await rpc("gest_prog_salva", { p_nome: ME.nome, p_pin: ME.pin, p_path: p, p_data: {}, p_del: true }); if (!r.ok) throw new Error(msg(r.err)); } }; }
   const DB = { doc, collection: c => query(c) };
+  /* ferie e permessi (dal gestionale): avviso nel Compila — ferie dalla settimana prima, permessi da 3 giorni prima */
+  const FPRE = { Ferie: 7, Permesso: 3, Malattia: 0 }, fIT = x => x ? String(x).split("-").reverse().join("/") : "", fGG = (a, b) => Math.round((new Date(b + "T12:00") - new Date(a + "T12:00")) / 864e5);
+  window.zaFerieAvviso = (nome, data) => { try { const n = String(nome || "").trim().toUpperCase(), g = data || new Date().toISOString().slice(0, 10); if (!n) return null;
+    const L = [...cache.keys()].filter(p => p.startsWith("ferie/")).map(p => cache.get(p)).filter(x => x && x.stato !== "Rifiutata" && x.dal && String(x.nome || "").trim().toUpperCase() === n)
+      .map(x => { const al = x.al || x.dal, pre = FPRE[x.tipo] ?? 3; if (g > al || fGG(g, x.dal) > pre) return null; return { x, tra: fGG(g, x.dal) }; }).filter(Boolean).sort((a, b) => a.tra - b.tra);
+    if (!L.length) return null; const { x, tra } = L[0], oggi = tra <= 0, tipo = x.tipo || "Assenza";
+    const per = (x.al && x.al !== x.dal ? "dal " + fIT(x.dal) + " al " + fIT(x.al) : "il " + fIT(x.dal)) + (tipo === "Permesso" && (x.dalle || x.alle) ? " dalle " + (x.dalle || "…") + " alle " + (x.alle || "…") : "");
+    return { tipo, oggi, testo: n + ": " + tipo.toLowerCase() + " " + per + (oggi ? (tipo === "Permesso" ? " — oggi in permesso" : " — è assente questo giorno") : " — tra " + tra + (tra === 1 ? " giorno" : " giorni")) + (x.stato === "Richiesta" ? " (da approvare)" : "") }; } catch { return null; } };
   const USER = { can: async () => LV === "w", id: async () => ME && ME.nome, me: async () => ({ id: ME.nome, name: ME.nome, isOwner: false, canEdit: LV === "w" }) };
   /* ---- schermata di accesso ---- */
   const css = `#zaLogin{position:fixed;inset:0;z-index:99;background:#f2f3f0;display:flex;align-items:flex-start;justify-content:center;overflow:auto;font:16px/1.45 "IBM Plex Sans",system-ui,sans-serif;color:#1c2320}
@@ -568,11 +576,15 @@ function conflicts(){
   }));
   return { pc, mc };
 }
+/* ferie e permessi: avviso a chi fa il programma (ferie: dalla settimana prima · permessi: 3 giorni prima) */
+function feAvv(nome, data){ try { const fn = (window.parent !== window && typeof parent.zaFerieAvviso === "function") ? parent.zaFerieAvviso : window.zaFerieAvviso; if (nome && typeof fn === "function") return fn(U(nome), data || (S.prog && S.prog.data)); } catch {} return null; }
+function feToast(nome){ const a = feAvv(nome); if (a) toast("⚠ " + a.testo); }
 function rowWarn(b, r, cf){
   const code = parseCant(b.cantiere).code || parseCant(b.cantiere).cm || "?"; const out = [];
   const ps = r.pers && cf.pc.get(U(r.pers)); if (ps && ps.size > 1) out.push("Anche su " + [...ps].filter(x => x !== code).join(", "));
   const ms = r.macc && cf.mc.get(U(r.macc)); if (ms && ms.size > 1) out.push("Mezzo anche su " + [...ms].filter(x => x !== code).join(", "));
-  return out.map(w => '<span class="warnb">'+esc(w)+'</span>').join("");
+  const fa = feAvv(r.pers); const fh = fa ? '<span class="warnb" style="background:'+(fa.oggi ? "#f6d5d2;color:#8a1f17" : "#d7ecd8;color:#1f5f24")+';font-weight:700" title="Da Ferie/permessi">'+(fa.tipo === "Ferie" ? "🌴 " : "⏱ ")+esc(fa.testo)+'</span>' : "";
+  return fh + out.map(w => '<span class="warnb">'+esc(w)+'</span>').join("");
 }
 function lockHTML(){ const p = S.prog; if (!p || p.data > oggiRoma()) return "";
   const aperto = !!S.sblocchi[p.data];
@@ -609,7 +621,7 @@ function editHTML(){
 function sideHTML(){
   const used = {}; S.prog.blocchi.forEach(b => { const vis = new Set(); b.righe.forEach(r => { const k = r.pers && U(r.pers); if (k && !vis.has(k)) { vis.add(k); used[k] = (used[k]||0) + 1; } }); });
   const ord = L => L.slice().sort((x, y) => U(x.nome).localeCompare(U(y.nome), "it"));
-  const chip = p => '<span class="chip" role="button" tabindex="0" data-act="addPers" data-n="'+esc(p.nome)+'" style="background:'+persColor(p.nome)+';color:'+inkFor(persColor(p.nome))+'">'+esc(U(p.nome))+'</span>';
+  const chip = p => { const fa = feAvv(p.nome); return '<span class="chip" role="button" tabindex="0" data-act="addPers" data-n="'+esc(p.nome)+'"'+(fa ? ' title="'+esc(fa.testo)+'"' : '')+' style="background:'+persColor(p.nome)+';color:'+inkFor(persColor(p.nome))+(fa ? ';outline:2px dashed '+(fa.oggi ? "#b3261e" : "#2e7d32")+';outline-offset:1px' : '')+'">'+(fa ? (fa.tipo === "Ferie" ? "🌴 " : "⏱ ") : "")+esc(U(p.nome))+'</span>'; };
   const ope = ord(attivi()), uff = ord(ufficioPers());
   const st = progStats(S.prog);
   return '<div class="sec na"><h3>Operatori ('+ope.length+')</h3><div class="chips nalist">'+ope.map(chip).join("")+'</div>'+
@@ -675,7 +687,7 @@ document.addEventListener("click", async e => {
     case "rDel": b.righe.splice(ri, 1); touchProg(); render(); return;
     case "rUp": case "rDown": { const j = a === "rUp" ? ri-1 : ri+1; if (ri < 0 || j < 0 || j >= b.righe.length) return; [b.righe[ri], b.righe[j]] = [b.righe[j], b.righe[ri]]; touchProg(); render(); return; }
     case "addPers": { if (!P.blocchi.length) P.blocchi.push({ id:uid(), cantiere:"", righe:[] }); const lb = P.blocchi[P.blocchi.length-1];
-      const emptyRow = lb.righe.find(r => !r.pers); if (emptyRow) emptyRow.pers = U(t.dataset.n); else lb.righe.push({ id:uid(), pers:U(t.dataset.n), macc:"", trasf:"", note:"" }); touchProg(); render(); return; }
+      const emptyRow = lb.righe.find(r => !r.pers); if (emptyRow) emptyRow.pers = U(t.dataset.n); else lb.righe.push({ id:uid(), pers:U(t.dataset.n), macc:"", trasf:"", note:"" }); touchProg(); render(); feToast(t.dataset.n); return; }
     case "copyPrev": { const pp = await prevProgram().catch(() => null); if (!pp) { toast("Non c'è un programma precedente da copiare."); return; }
       const keep = P.blocchi.length; P.blocchi = pp.blocchi.map(x => ({ id:uid(), cantiere:x.cantiere, righe:x.righe.map(r => Object.assign({}, r, { id:uid() })) }));
       if (!P.noteGen) P.noteGen = ""; P.pronto = false; touchProg(); render(); toast("Copiato il programma di "+dayName(pp.data)+" "+itDate(pp.data)+(keep ? " al posto di quello che c'era." : ".")); return; }
@@ -726,7 +738,7 @@ document.addEventListener("change", e => {
   if (t.closest("#editor") && (t.dataset.f === "pers" || t.dataset.f === "macc" || t.dataset.f === "trasf")) {
     t.value = U(t.value);
     const b = findB(t.closest("[data-b]").dataset.b); const r = b.righe.find(x => x.id === t.closest("[data-r]").dataset.r); r[t.dataset.f] = t.value;
-    touchProg(); refreshWarn(); refreshSide(); return;
+    touchProg(); refreshWarn(); refreshSide(); if (t.dataset.f === "pers") feToast(t.value); return;
   }
   const ar = t.closest(".ar");
   if (ar && ar.dataset.k === "pers" && t.dataset.af === "nome" && !t.value.trim()) { S.ana.pers.splice(+ar.dataset.i, 1); touchAna(); render(); }
