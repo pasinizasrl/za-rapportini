@@ -416,9 +416,9 @@ function openDate(d){
   if (S.db) {
     S.unsubProg = S.db.doc("programmi/"+d).onSnapshot(snap => {
       if (S.date !== d) return;
-      if (Date.now() - S.lastEdit < 3000 && S.tab === "compila") return;
+      if (Date.now() - S.lastEdit < 20000 && S.tab === "compila") return; /* si sta scrivendo: niente ridisegno per 20 s dall'ultimo tasto */
       S.progExists = snap.exists; S.prog = normProg(snap.exists ? snap.data() : null, d);
-      if (S.tab === "compila" && document.activeElement && document.activeElement.closest && document.activeElement.closest("#editor")) { refreshSide(); return; }
+      if (S.tab === "compila" && document.activeElement && document.activeElement.closest && (document.activeElement.closest("#editor") || document.activeElement.id === "noteGen")) { refreshSide(); return; }
       render();
     }, () => { setSave("err","Programma non disponibile"); });
   } else {
@@ -864,7 +864,7 @@ async function start(){
       S.ana = { ...d, pers:(d.pers||[]).map(p => typeof p === "string" ? { nome:p } : p), mac:d.mac||[], tra:d.tra||[], can:(d.can||[]).map(c => typeof c === "string" ? { label:c, stato:"IN CORSO" } : c), imp:d.imp||null };
       S.anaLoaded = true; fillLists();
       if (S.tab === "anagrafiche" && document.activeElement && document.activeElement.closest(".agrid")) return;
-      if (S.tab === "compila" && document.activeElement && document.activeElement.closest("#editor")) { refreshSide(); return; }
+      if (S.tab === "compila" && document.activeElement && (document.activeElement.closest("#editor") || document.activeElement.id === "noteGen")) { refreshSide(); return; }
       render();
     });
     db.collection("programmi").onSnapshot(q => { S.all = q.docs.map(d => d.data()); if (S.tab === "riepilogo") rpRefresh(); });
