@@ -235,6 +235,16 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .er .nt{text-transform:uppercase}
 .er textarea.nt{resize:vertical;min-height:34px;line-height:1.35;font:inherit;display:block}
 .er .ra{display:flex;gap:1px;align-items:center}
+.dg{cursor:grab;color:var(--muted);font-size:15px;padding:0 4px;user-select:none;line-height:1}
+.eb .ebh .dg{color:#fff;opacity:.75}.dg:hover{color:var(--accent)!important;opacity:1}
+.dragging{opacity:.45}
+.er.dropb,section.eb.dropb{box-shadow:inset 0 3px 0 #5fae49}
+.er.dropa{box-shadow:inset 0 -3px 0 #5fae49}section.eb.dropa{box-shadow:0 3px 0 #5fae49}
+/* editor più compatto */
+#editor .f{padding:4px 7px;font-size:13px}
+#editor .er{padding:4px 8px;gap:5px}
+#editor .eb .ebh{padding:5px 8px}
+#editor .er textarea.nt{min-height:28px;line-height:1.25}
 .eh span:last-child{width:118px!important}
 .er .nt::placeholder{text-transform:none}
 .rpn{text-transform:uppercase}
@@ -369,6 +379,30 @@ function progStats(p){ const pers = new Set(); let n = 0; p.blocchi.forEach(b =>
 
 /* ---------------- salvataggio ---------------- */
 let progTimer = null, anaTimer = null;
+/* trascina e rilascia: cantieri su/giù e persone (anche da un cantiere all'altro) */
+(function(){ var D = null;
+  function pul(){ document.querySelectorAll(".dropb,.dropa,.dragging").forEach(function(x){ x.classList.remove("dropb","dropa","dragging"); }); }
+  function bersaglio(e){ if (!D) return null; return D.t === "b" ? e.target.closest && e.target.closest("section.eb[data-b]") : e.target.closest && (e.target.closest(".er[data-r]") || e.target.closest("section.eb[data-b]")); }
+  document.addEventListener("dragstart", function(e){ var g = e.target.closest && e.target.closest("[data-dgb],[data-dgr]"); if (!g) return;
+    D = g.dataset.dgb ? { t:"b", id:g.dataset.dgb } : { t:"r", id:g.dataset.dgr }; var el = g.closest(D.t === "b" ? "section.eb" : ".er");
+    try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", "x"); e.dataTransfer.setDragImage(el, 16, 16); } catch(_){}
+    setTimeout(function(){ if (el) el.classList.add("dragging"); }, 0); });
+  document.addEventListener("dragover", function(e){ var t = bersaglio(e); if (!t) return; e.preventDefault(); e.dataTransfer.dropEffect = "move";
+    var r = t.getBoundingClientRect(); document.querySelectorAll(".dropb,.dropa").forEach(function(x){ x.classList.remove("dropb","dropa"); });
+    t.classList.add(t.matches("section.eb") && D.t === "r" ? "dropa" : (e.clientY > r.top + r.height/2 ? "dropa" : "dropb")); });
+  document.addEventListener("drop", function(e){ var t = bersaglio(e); if (!t) return; e.preventDefault(); var d = D; D = null; pul(); var P = S.prog; if (!P) return;
+    var r = t.getBoundingClientRect(), dopo = e.clientY > r.top + r.height/2;
+    if (d.t === "b") { var i = P.blocchi.findIndex(function(b){ return b.id === d.id; }); if (i < 0 || t.dataset.b === d.id) return; var blk = P.blocchi.splice(i,1)[0];
+      var j = P.blocchi.findIndex(function(b){ return b.id === t.dataset.b; }) + (dopo ? 1 : 0); P.blocchi.splice(j, 0, blk); }
+    else { var src = P.blocchi.find(function(b){ return b.righe.some(function(x){ return x.id === d.id; }); }); if (!src) return; var ri = src.righe.findIndex(function(x){ return x.id === d.id; });
+      var dst, at; if (t.matches(".er")) { if (t.dataset.r === d.id) return; dst = P.blocchi.find(function(b){ return b.righe.some(function(x){ return x.id === t.dataset.r; }); }); }
+      else { dst = P.blocchi.find(function(b){ return b.id === t.dataset.b; }); }
+      if (!dst) return; var riga = src.righe.splice(ri,1)[0];
+      if (t.matches(".er")) { at = dst.righe.findIndex(function(x){ return x.id === t.dataset.r; }) + (dopo ? 1 : 0); } else at = dst.righe.length;
+      dst.righe.splice(at, 0, riga); }
+    touchProg(); render(); });
+  document.addEventListener("dragend", function(){ if (D) { D = null; pul(); } });
+})();
 function touchProg(){ S.lastEdit = Date.now(); S.prog.agg = Date.now(); setSave("busy","Salvataggio…"); clearTimeout(progTimer); progTimer = setTimeout(saveProg, 700); }
 /* blocco: dalla mezzanotte il programma del giorno (e quelli passati) non si modifica più; solo l'amministratore lo sblocca col lucchetto */
 const oggiRoma = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Rome" });
@@ -600,7 +634,7 @@ function editHTML(){
   h += '<div id="editor" style="display:flex;flex-direction:column;gap:12px">';
   if (!p.blocchi.length) h += '<div class="empty"><b>Programma vuoto</b>Aggiungi il primo cantiere, oppure copia il programma precedente e modifica solo quello che cambia.</div>';
   p.blocchi.forEach((b, bi) => {
-    h += '<section class="eb" data-b="'+b.id+'"><div class="ebh"><input class="f" list="dlCan" data-fb="cantiere" value="'+esc(b.cantiere)+'" placeholder="Commessa / cantiere" aria-label="Cantiere">'+pinHTML(b.cantiere)+
+    h += '<section class="eb" data-b="'+b.id+'"><div class="ebh"><span class="dg" draggable="true" data-dgb="'+b.id+'" title="Trascina per spostare il cantiere su o giù">⠿</span><input class="f" list="dlCan" data-fb="cantiere" value="'+esc(b.cantiere)+'" placeholder="Commessa / cantiere" aria-label="Cantiere">'+pinHTML(b.cantiere)+
       '<button class="btn ic ghost" data-act="bUp" '+(bi===0?"disabled":"")+' aria-label="Sposta su">↑</button><button class="btn ic ghost" data-act="bDown" '+(bi===p.blocchi.length-1?"disabled":"")+' aria-label="Sposta giù">↓</button>'+
       '<button class="btn ic ghost danger" data-act="bDel" aria-label="Elimina cantiere">✕</button></div>';
     if (b.righe.length) h += '<div class="eh"><span>Personale</span><span>Macchina operatrice</span><span>Trasferimento</span><span>Descrizione lavori</span><span></span></div>';
@@ -609,7 +643,7 @@ function editHTML(){
         '<input class="f" list="dlMac" data-f="macc" value="'+esc(r.macc)+'" placeholder="Macchina" aria-label="Macchina operatrice">'+
         '<input class="f" list="dlTra" data-f="trasf" value="'+esc(r.trasf)+'" placeholder="-" aria-label="Trasferimento in cantiere">'+
         '<textarea class="f nt" data-f="note" rows="1" placeholder="Descrizione lavori" aria-label="Descrizione lavori" title="Trascina l\'angolo in basso a destra per allargare">'+esc(r.note)+'</textarea>'+
-        '<div class="ra"><button class="btn ic ghost" data-act="rUp" '+(rIdx===0?"disabled":"")+' aria-label="Sposta riga su" title="Sposta su">↑</button><button class="btn ic ghost" data-act="rDown" '+(rIdx===b.righe.length-1?"disabled":"")+' aria-label="Sposta riga giù" title="Sposta giù">↓</button><button class="btn ic ghost" data-act="rDup" aria-label="Duplica riga" title="Duplica riga">⧉</button><button class="btn ic ghost danger" data-act="rDel" aria-label="Elimina riga">✕</button></div></div>';
+        '<div class="ra"><span class="dg" draggable="true" data-dgr="'+r.id+'" title="Trascina per spostare la persona (anche in un altro cantiere)">⠿</span><button class="btn ic ghost" data-act="rUp" '+(rIdx===0?"disabled":"")+' aria-label="Sposta riga su" title="Sposta su">↑</button><button class="btn ic ghost" data-act="rDown" '+(rIdx===b.righe.length-1?"disabled":"")+' aria-label="Sposta riga giù" title="Sposta giù">↓</button><button class="btn ic ghost" data-act="rDup" aria-label="Duplica riga" title="Duplica riga">⧉</button><button class="btn ic ghost danger" data-act="rDel" aria-label="Elimina riga">✕</button></div></div>';
     });
     h += '<div class="ebf"><button class="btn sm" data-act="rAdd">+ Aggiungi persona</button></div></section>';
   });
