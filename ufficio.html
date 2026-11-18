@@ -873,6 +873,18 @@ function drawImage(){
     const c = document.createElement("canvas"), x = c.getContext("2d");
     const F = (w, s, f) => w+" "+s+"px "+(f || '"IBM Plex Sans", Arial, sans-serif');
     const wrap = (t, maxW, font) => { x.font = font; const out = []; String(t).split("\n").forEach(par => { let line = ""; par.split(" ").forEach(w => { const tr = line ? line+" "+w : w; if (x.measureText(tr).width > maxW && line) { out.push(line); line = w; } else line = tr; }); out.push(line); }); return out; };
+    /* descrizione con **grassetto** e ==rosso==: va a capo per parole mantenendo gli stili, come a video */
+    const NF = st => F(st.b || st.r ? 800 : 500, 24);
+    const richWrap = (t, maxW) => { const runs = []; let b = false, r = false;
+      String(t).split(/(\*\*|==)/).forEach(part => { if (part === "**") { b = !b; return; } if (part === "==") { r = !r; return; } if (part) runs.push({ t: part, b, r }); });
+      const lines = []; let line = [], lw = 0;
+      const nuova = () => { lines.push(line); line = []; lw = 0; };
+      runs.forEach(run => { run.t.split(/(\n| )/).forEach(tok => { if (tok === "") return; if (tok === "\n") { nuova(); return; }
+        x.font = NF(run); const w = x.measureText(tok).width;
+        if (tok !== " " && lw + w > maxW && lw > 0) { while (line.length && line[line.length - 1].t === " ") line.pop(); nuova(); }
+        if (tok === " " && lw === 0) return;
+        const last = line[line.length - 1]; if (last && last.b === run.b && last.r === run.r) { last.t += tok; last.w += w; } else line.push({ t: tok, b: run.b, r: run.r, w }); lw += w; }); });
+      if (line.length || !lines.length) lines.push(line); return lines; };
     const ops = []; let y = 0;
     const push = (h, fn) => { const yy = y; ops.push(() => fn(yy)); y += h; };
     push(130, yy => { x.fillStyle = "#26393d"; x.fillRect(0, yy, W, 130); x.fillStyle = "#d4950f"; x.fillRect(0, yy+126, W, 4); });
@@ -890,14 +902,16 @@ function drawImage(){
         const LBS = ["MEZZO :", "TRASFERIMENTO :", "DESCRIZIONE LAVORI :"]; x.font = F(600, 17); const LW = Math.max(...LBS.map(t => x.measureText(t).width)) + 14, VW = W-2*PAD-330-LW;
         const items = []; if (r.macc) items.push([LBS[0], wrap(MB(r.macc), VW, F(700, 24)), F(700, 24), "#1c2320"]);
         if (r.trasf && r.trasf !== "-") items.push([LBS[1], wrap(TB(r.trasf), VW, F(700, 24)), F(700, 24), "#1c2320"]);
-        if (r.note) items.push([LBS[2], wrap(U(pulNota(r.note)), VW, F(700, 24)), F(700, 24), /==/.test(r.note) ? "#c62828" : "#1d3a6e"]);
+        if (r.note) items.push([LBS[2], richWrap(U(r.note), VW), null, "#1d3a6e", true]);
         const nLines = items.reduce((a, it) => a + it[1].length, 0);
         const rh = Math.max(56, 16 + nLines*31 + 12);
         push(rh, yy => { x.fillStyle = "#ffffff"; x.fillRect(PAD, yy, W-2*PAD, rh); x.fillStyle = "#d8dcd6"; x.fillRect(PAD, yy+rh-1, W-2*PAD, 1);
           const col = persColor(r.pers); x.fillStyle = col; x.fillRect(PAD+12, yy+12, 290, 34); x.fillStyle = inkFor(col); x.font = F(600, 21); x.textBaseline = "middle";
           let nm = U(r.pers) || "—"; while (x.measureText(nm).width > 272 && nm.length > 3) nm = nm.slice(0, -2)+"…"; x.fillText(nm, PAD+22, yy+30);
           x.textBaseline = "top"; let k = 0;
-          items.forEach(([lb, lines, font, colr]) => lines.forEach((l, i) => { const yl = yy+14+k*31; if (i === 0) { x.fillStyle = "#5b665f"; x.font = F(600, 17); x.fillText(lb, PAD+320, yl+5); } x.fillStyle = colr; x.font = font; x.fillText(l, PAD+320+LW, yl); k++; })); });
+          items.forEach(([lb, lines, font, colr, rich]) => lines.forEach((l, i) => { const yl = yy+14+k*31; if (i === 0) { x.fillStyle = "#5b665f"; x.font = F(600, 17); x.fillText(lb, PAD+320, yl+5); }
+            if (rich) { let xx = PAD+320+LW; l.forEach(seg => { x.font = NF(seg); if (seg.r) { x.fillStyle = "#ffe1e1"; x.fillRect(xx - 2, yl - 3, seg.w + 4, 30); x.fillStyle = "#c62828"; } else x.fillStyle = colr; x.fillText(seg.t, xx, yl); xx += seg.w; }); }
+            else { x.fillStyle = colr; x.font = font; x.fillText(l, PAD+320+LW, yl); } k++; })); });
       });
       push(18, () => {});
     });
