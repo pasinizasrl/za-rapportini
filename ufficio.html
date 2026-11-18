@@ -350,11 +350,17 @@ function ceVal(el){ let out = ""; const walk = (n, top) => { n.childNodes.forEac
 document.addEventListener("mousedown", e => { if (e.target.closest && e.target.closest("[data-fmt]")) e.preventDefault(); }, true);
 document.addEventListener("click", e => { const bt = e.target.closest && e.target.closest("[data-fmt]"); if (!bt) return; e.preventDefault(); e.stopPropagation();
   const row = bt.closest(".er"), ce = row && row.querySelector(".ce"); if (!ce || ce.getAttribute("contenteditable") !== "true") return;
-  const sel = getSelection(); if (!sel.rangeCount || !ce.contains(sel.anchorNode) || sel.isCollapsed) { ce.focus(); const rg = document.createRange(); rg.selectNodeContents(ce); sel.removeAllRanges(); sel.addRange(rg); }
+  const sel = getSelection(); const dentro = sel.rangeCount && ce.contains(sel.anchorNode);
+  /* cursore fermo dentro un testo rosso: il rosso si toglie da quel pezzo */
+  if (bt.dataset.fmt === "r" && dentro && sel.isCollapsed) { let n = sel.anchorNode; n = n.nodeType === 3 ? n.parentNode : n; const mk = n.closest && n.closest("mark.nr"); if (mk && ce.contains(mk)) { const un = m => { while (m.firstChild) m.parentNode.insertBefore(m.firstChild, m); m.remove(); }; un(mk); ce.normalize(); ce.dispatchEvent(new Event("input", { bubbles: true })); return; } }
+  if (!dentro || sel.isCollapsed) { ce.focus(); const rg = document.createRange(); rg.selectNodeContents(ce); sel.removeAllRanges(); sel.addRange(rg); }
   if (bt.dataset.fmt === "b") { try { document.execCommand("styleWithCSS", false, false); } catch {} document.execCommand("bold"); }
-  else { const rg = sel.getRangeAt(0); let n = rg.commonAncestorContainer; n = n.nodeType === 3 ? n.parentNode : n; const mk = n.closest && n.closest("mark.nr");
-    if (mk && ce.contains(mk)) { while (mk.firstChild) mk.parentNode.insertBefore(mk.firstChild, mk); mk.remove(); }
-    else { const m = document.createElement("mark"); m.className = "nr"; m.appendChild(rg.extractContents()); rg.insertNode(m); sel.removeAllRanges(); const r2 = document.createRange(); r2.selectNodeContents(m); sel.addRange(r2); } }
+  else { const rg = sel.getRangeAt(0); let n = rg.commonAncestorContainer; n = n.nodeType === 3 ? n.parentNode : n;
+    /* se la selezione tocca del testo rosso, torna nero; altrimenti diventa rosso */
+    const tocca = [...ce.querySelectorAll("mark.nr")].filter(m => rg.intersectsNode(m)), sopra = n.closest && n.closest("mark.nr");
+    if (sopra && ce.contains(sopra) && !tocca.includes(sopra)) tocca.push(sopra);
+    if (tocca.length) { tocca.forEach(m => { while (m.firstChild) m.parentNode.insertBefore(m.firstChild, m); m.remove(); }); ce.normalize(); }
+    else { const m = document.createElement("mark"); m.className = "nr"; m.appendChild(rg.extractContents()); m.querySelectorAll("mark.nr").forEach(x => { while (x.firstChild) x.parentNode.insertBefore(x.firstChild, x); x.remove(); }); rg.insertNode(m); sel.removeAllRanges(); const r2 = document.createRange(); r2.selectNodeContents(m); sel.addRange(r2); } }
   ce.dispatchEvent(new Event("input", { bubbles: true })); }, true);
 document.addEventListener("paste", e => { const ce = e.target.closest && e.target.closest(".ce"); if (!ce) return; e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, t); });
 const uid = () => Math.random().toString(36).slice(2,9);
@@ -676,7 +682,7 @@ function editHTML(){
         '<input class="f" list="dlMac" data-f="macc" value="'+esc(r.macc)+'" placeholder="Macchina" aria-label="Macchina operatrice">'+
         '<input class="f" list="dlTra" data-f="trasf" value="'+esc(r.trasf)+'" placeholder="-" aria-label="Trasferimento in cantiere">'+
         '<div class="f nt ce" contenteditable="true" data-f="note" data-ph="Descrizione lavori" role="textbox" aria-multiline="true" aria-label="Descrizione lavori" title="Seleziona le parole e usa B (grassetto) o A (rosso)">'+fmtNota(r.note)+'</div>'+
-        '<div class="ra"><span class="dg" draggable="true" data-dgr="'+r.id+'" title="Trascina per spostare la persona (anche in un altro cantiere)">⠿</span><button class="btn ic ghost fmtb" data-fmt="b" title="Grassetto sul testo selezionato della descrizione (selezionalo e premi)"><b>B</b></button><button class="btn ic ghost fmtr" data-fmt="r" title="Evidenzia in rosso il testo selezionato della descrizione">A</button><button class="btn ic ghost" data-act="rUp" '+(rIdx===0?"disabled":"")+' aria-label="Sposta riga su" title="Sposta su">↑</button><button class="btn ic ghost" data-act="rDown" '+(rIdx===b.righe.length-1?"disabled":"")+' aria-label="Sposta riga giù" title="Sposta giù">↓</button><button class="btn ic ghost" data-act="rDup" aria-label="Duplica riga" title="Duplica riga">⧉</button><button class="btn ic ghost danger" data-act="rDel" aria-label="Elimina riga">✕</button></div></div>';
+        '<div class="ra"><span class="dg" draggable="true" data-dgr="'+r.id+'" title="Trascina per spostare la persona (anche in un altro cantiere)">⠿</span><button class="btn ic ghost fmtb" data-fmt="b" title="Grassetto sul testo selezionato della descrizione (selezionalo e premi)"><b>B</b></button><button class="btn ic ghost fmtr" data-fmt="r" title="Rosso: seleziona il testo e premi; ripremi sul testo rosso (o metti il cursore dentro) per farlo tornare nero">A</button><button class="btn ic ghost" data-act="rUp" '+(rIdx===0?"disabled":"")+' aria-label="Sposta riga su" title="Sposta su">↑</button><button class="btn ic ghost" data-act="rDown" '+(rIdx===b.righe.length-1?"disabled":"")+' aria-label="Sposta riga giù" title="Sposta giù">↓</button><button class="btn ic ghost" data-act="rDup" aria-label="Duplica riga" title="Duplica riga">⧉</button><button class="btn ic ghost danger" data-act="rDel" aria-label="Elimina riga">✕</button></div></div>';
     });
     h += '<div class="ebf"><button class="btn sm" data-act="rAdd">+ Aggiungi persona</button></div></section>';
   });
