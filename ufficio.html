@@ -237,6 +237,10 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background
 .er .ra{display:flex;gap:1px;align-items:center}
 .note b,.rpn b{font-weight:900}
 mark.nr{background:#ffe1e1;color:#c62828;font-weight:800;padding:0 3px;border-radius:3px}
+.er .ce{min-height:28px;white-space:pre-wrap;overflow-wrap:anywhere;cursor:text;line-height:1.3;outline:none}
+.er .ce:empty::before{content:attr(data-ph);color:var(--muted);text-transform:none;pointer-events:none}
+.er .ce:focus{border-color:var(--accent)}
+.er .ce b{font-weight:900}
 .fmtb{font-family:Georgia,serif}.fmtr{color:#c62828!important;font-weight:800;text-decoration:underline 3px #ffb3b3}
 .dg{cursor:grab;color:var(--muted);font-size:15px;padding:0 4px;user-select:none;line-height:1}
 .eb .ebh .dg{color:#fff;opacity:.75}.dg:hover{color:var(--accent)!important;opacity:1}
@@ -332,15 +336,24 @@ const fmtNota = s => esc(s).replace(/\*\*([\s\S]+?)\*\*/g, "<b>$1</b>").replace(
 const pulNota = s => String(s || "").replace(/\*\*([\s\S]+?)\*\*/g, "$1").replace(/==([\s\S]+?)==/g, "$1");
 const waNota = s => String(s || "").replace(/\*\*([\s\S]+?)\*\*/g, "$1").replace(/==([\s\S]+?)==/g, "🔴 $1");
 /* pulsanti B e rosso accanto alla descrizione: applicano il formato al testo selezionato */
+/* descrizione lavori modificabile "a vista": grassetto e rosso si vedono mentre si scrive (si salvano come **testo** e ==testo==) */
+function ceVal(el){ let out = ""; const walk = (n, top) => { n.childNodes.forEach((c, i) => {
+    if (c.nodeType === 3) { out += c.data.replace(/ /g, " "); return; } if (c.nodeType !== 1) return; const tg = c.tagName;
+    if (tg === "BR") { out += "\n"; return; }
+    const blk = (tg === "DIV" || tg === "P") && (out.length && !out.endsWith("\n")); if (blk) out += "\n";
+    const st = c.style || {}, bold = tg === "B" || tg === "STRONG" || +st.fontWeight >= 600 || st.fontWeight === "bold", red = tg === "MARK" || (c.classList && c.classList.contains("nr"));
+    if (red) out += "=="; if (bold) out += "**"; walk(c); if (bold) out += "**"; if (red) out += "=="; }); };
+  walk(el); return out.replace(/\*\*\*\*/g, "").replace(/====/g, "").replace(/\n+$/, ""); }
 document.addEventListener("mousedown", e => { if (e.target.closest && e.target.closest("[data-fmt]")) e.preventDefault(); }, true);
 document.addEventListener("click", e => { const bt = e.target.closest && e.target.closest("[data-fmt]"); if (!bt) return; e.preventDefault(); e.stopPropagation();
-  const row = bt.closest(".er"), ta = row && row.querySelector("textarea.nt"); if (!ta) return; const m = bt.dataset.fmt === "b" ? "**" : "==";
-  let a = ta.selectionStart, z = ta.selectionEnd, v = ta.value; if (a === z) { a = 0; z = v.length; } if (a === z) { ta.focus(); return; }
-  const sel = v.slice(a, z); let nv, na, nz;
-  if (sel.startsWith(m) && sel.endsWith(m) && sel.length >= 2 * m.length) { const inn = sel.slice(m.length, sel.length - m.length); nv = v.slice(0, a) + inn + v.slice(z); na = a; nz = a + inn.length; }
-  else if (v.slice(a - m.length, a) === m && v.slice(z, z + m.length) === m) { nv = v.slice(0, a - m.length) + sel + v.slice(z + m.length); na = a - m.length; nz = na + sel.length; }
-  else { nv = v.slice(0, a) + m + sel + m + v.slice(z); na = a; nz = z + 2 * m.length; }
-  ta.value = nv; ta.focus(); ta.setSelectionRange(na, nz); ta.dispatchEvent(new Event("input", { bubbles: true })); }, true);
+  const row = bt.closest(".er"), ce = row && row.querySelector(".ce"); if (!ce || ce.getAttribute("contenteditable") !== "true") return;
+  const sel = getSelection(); if (!sel.rangeCount || !ce.contains(sel.anchorNode) || sel.isCollapsed) { ce.focus(); const rg = document.createRange(); rg.selectNodeContents(ce); sel.removeAllRanges(); sel.addRange(rg); }
+  if (bt.dataset.fmt === "b") { try { document.execCommand("styleWithCSS", false, false); } catch {} document.execCommand("bold"); }
+  else { const rg = sel.getRangeAt(0); let n = rg.commonAncestorContainer; n = n.nodeType === 3 ? n.parentNode : n; const mk = n.closest && n.closest("mark.nr");
+    if (mk && ce.contains(mk)) { while (mk.firstChild) mk.parentNode.insertBefore(mk.firstChild, mk); mk.remove(); }
+    else { const m = document.createElement("mark"); m.className = "nr"; m.appendChild(rg.extractContents()); rg.insertNode(m); sel.removeAllRanges(); const r2 = document.createRange(); r2.selectNodeContents(m); sel.addRange(r2); } }
+  ce.dispatchEvent(new Event("input", { bubbles: true })); }, true);
+document.addEventListener("paste", e => { const ce = e.target.closest && e.target.closest(".ce"); if (!ce) return; e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData("text/plain"); document.execCommand("insertText", false, t); });
 const uid = () => Math.random().toString(36).slice(2,9);
 const clone = o => JSON.parse(JSON.stringify(o));
 const pad = n => String(n).padStart(2,"0");
@@ -432,7 +445,7 @@ const SAFE_LOCK = new Set(["tab", "goto", "rpGo", "rpReset", "rpXls", "day", "to
   if (t.closest(".datebar") || t.id === "dpick" || t.id === "allCant" || (t.dataset && (t.dataset.tab || SAFE_LOCK.has(t.dataset.act)))) return;
   e.preventDefault(); e.stopImmediatePropagation(); if (ev !== "input") toast("Programma bloccato: il giorno è già iniziato." + (progAdmin() ? " Clicca sul lucchetto per sbloccarlo." : " Solo l'amministratore può modificarlo.")); }, true));
 function bloccaEditor(){ if (S.tab !== "compila" || !bloccato()) return; const m = document.getElementById("main"); if (!m) return;
-  m.querySelectorAll("#editor input, #editor textarea, #editor select, #pronto, #noteGen, [data-act='copyPrev'], [data-act='clear']").forEach(el => { if (el.tagName === "INPUT" && el.type !== "checkbox" || el.tagName === "TEXTAREA") el.readOnly = true; else el.disabled = true; }); }
+  m.querySelectorAll("#editor input, #editor textarea, #editor select, #pronto, #noteGen, [data-act='copyPrev'], [data-act='clear']").forEach(el => { if (el.tagName === "INPUT" && el.type !== "checkbox" || el.tagName === "TEXTAREA") el.readOnly = true; else el.disabled = true; }); m.querySelectorAll("#editor .ce").forEach(el => el.setAttribute("contenteditable", "false")); }
 async function saveProg(){
   if (bloccato()) { toast("Programma bloccato: modifiche non salvate."); return; }
   const p = clone(S.prog);
@@ -659,7 +672,7 @@ function editHTML(){
       h += '<div class="er" data-r="'+r.id+'"><div class="pw"><input class="f" list="dlPers" data-f="pers" value="'+esc(r.pers)+'" placeholder="Dipendente" aria-label="Personale"><i class="sw" style="background:'+persColor(r.pers)+'"></i>'+rowWarn(b, r, cf)+'</div>'+
         '<input class="f" list="dlMac" data-f="macc" value="'+esc(r.macc)+'" placeholder="Macchina" aria-label="Macchina operatrice">'+
         '<input class="f" list="dlTra" data-f="trasf" value="'+esc(r.trasf)+'" placeholder="-" aria-label="Trasferimento in cantiere">'+
-        '<textarea class="f nt" data-f="note" rows="1" placeholder="Descrizione lavori" aria-label="Descrizione lavori" title="Trascina l\'angolo in basso a destra per allargare">'+esc(r.note)+'</textarea>'+
+        '<div class="f nt ce" contenteditable="true" data-f="note" data-ph="Descrizione lavori" role="textbox" aria-multiline="true" aria-label="Descrizione lavori" title="Seleziona le parole e usa B (grassetto) o A (rosso)">'+fmtNota(r.note)+'</div>'+
         '<div class="ra"><span class="dg" draggable="true" data-dgr="'+r.id+'" title="Trascina per spostare la persona (anche in un altro cantiere)">⠿</span><button class="btn ic ghost fmtb" data-fmt="b" title="Grassetto sul testo selezionato della descrizione (selezionalo e premi)"><b>B</b></button><button class="btn ic ghost fmtr" data-fmt="r" title="Evidenzia in rosso il testo selezionato della descrizione">A</button><button class="btn ic ghost" data-act="rUp" '+(rIdx===0?"disabled":"")+' aria-label="Sposta riga su" title="Sposta su">↑</button><button class="btn ic ghost" data-act="rDown" '+(rIdx===b.righe.length-1?"disabled":"")+' aria-label="Sposta riga giù" title="Sposta giù">↓</button><button class="btn ic ghost" data-act="rDup" aria-label="Duplica riga" title="Duplica riga">⧉</button><button class="btn ic ghost danger" data-act="rDel" aria-label="Elimina riga">✕</button></div></div>';
     });
     h += '<div class="ebf"><button class="btn sm" data-act="rAdd">+ Aggiungi persona</button></div></section>';
@@ -762,7 +775,7 @@ document.addEventListener("input", e => {
   if (t.closest("#editor")) {
     const b = findB(t.closest("[data-b]").dataset.b);
     if (t.dataset.fb) b.cantiere = t.value;
-    else if (t.dataset.f) { const r = b.righe.find(x => x.id === t.closest("[data-r]").dataset.r); r[t.dataset.f] = t.value;
+    else if (t.dataset.f) { const r = b.righe.find(x => x.id === t.closest("[data-r]").dataset.r); r[t.dataset.f] = t.isContentEditable ? ceVal(t) : t.value;
       if (t.dataset.f === "pers") { const sw = t.parentElement.querySelector(".sw"); if (sw) sw.style.background = persColor(t.value); } }
     touchProg(); return;
   }
